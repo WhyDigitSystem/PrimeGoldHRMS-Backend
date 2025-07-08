@@ -286,6 +286,7 @@ public class MasterServiceImpl implements MasterService {
 	private EmployeeVO getEmployeeVOFromEmployeeDTO(EmployeeVO employeeVO, EmployeeDTO employeeDTO) throws ApplicationException {
 	    employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
 	    employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
+	    employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
 	    employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
 	    employeeVO.setGender(employeeDTO.getGender());
 	    employeeVO.setBranch(employeeDTO.getBranch());
@@ -320,10 +321,10 @@ public class MasterServiceImpl implements MasterService {
 	    employeeVO.setReportningPersonCode(employeeDTO.getReportningPersonCode());
 	    employeeVO.setReportingRole(employeeDTO.getReportingRole());
 	    employeeVO.setResignDate(employeeDTO.getResignDate());
-//	    employeeVO.setPfFlag(employeeDTO.isPfFlag());
-//	    employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
-//	    employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
-//	    employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
+	    employeeVO.setPfFlag(employeeDTO.isPfFlag());
+	    employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
+	    employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
+	    employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
 
 
 	    	UserLoginRolesVO userLoginRolesVO =userLoginRolesRepo.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(),employeeDTO.getOrgId());

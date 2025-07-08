@@ -18,6 +18,7 @@ public class EmployeeDTO {
 	private Long id;
     private String employeeCode;
     private String employeeName;
+	private String employeeType;
 	private String employeeAddress;
     private String gender;
     private String branch;
@@ -53,10 +54,10 @@ public class EmployeeDTO {
     private Long orgId;
     private boolean active;
 
-//    private boolean pfFlag;
-//	private boolean esiFlag;
-//	private BigDecimal pfPercentage;
-//	private BigDecimal esiPercentage;
+    private boolean pfFlag;
+	private boolean esiFlag;
+	private BigDecimal pfPercentage;
+	private BigDecimal esiPercentage;
     
 	private List<EmployeeLeaveDTO> employeeLeaveDTO;
     

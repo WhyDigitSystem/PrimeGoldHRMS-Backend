@@ -39,7 +39,8 @@ public class SecurityConfig {
 						"/api/user/**", "/images/**", "/api/transaction/**", "/api/GlobalParam/**",
 						"/api/arreceivable/**", "/api/transaction/**", "/api/GlobalParam/**", "/api/payable/**",
 						"/api/documentType/**", "/api/taxInvoice/**", "/api/arapAdjustments/**","/api/goalsController/**",
-						"/api/costdebitnote/**", "/api/costInvoice/**","/api/irnCreditNote/**","/api/basicmaster/**","/api/employeemaster/**","/api/sequenceConfig/**","/api/leaveprocess/**","/api/employeedocuments/**","/api/timesheet/**","/api/ticketcontroller/**","/api/managetax/**")
+						"/api/costdebitnote/**", "/api/costInvoice/**","/api/irnCreditNote/**","/api/basicmaster/**","/api/employeemaster/**","/api/sequenceConfig/**","/api/leaveprocess/**","/api/employeedocuments/**","/api/timesheet/**","/api/ticketcontroller/**","/api/managetax/**",
+						"/api/shiftmaster/**")
 
 				.permitAll().antMatchers("/api/**").hasAnyRole("USER", "GUEST_USER").anyRequest().authenticated();
 		http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
