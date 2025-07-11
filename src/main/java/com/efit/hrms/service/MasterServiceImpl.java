@@ -14,6 +14,7 @@ import javax.transaction.Transactional;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,8 @@ import com.efit.hrms.dto.DesignationLeaveDTO;
 import com.efit.hrms.dto.EmployeeDTO;
 import com.efit.hrms.dto.EmployeeLeaveDTO;
 import com.efit.hrms.dto.ProjectMasterDTO;
+import com.efit.hrms.entity.AemployeeLeaveVO;
+import com.efit.hrms.entity.AemployeeVO;
 import com.efit.hrms.entity.BranchVO;
 import com.efit.hrms.entity.DesignationLeaveVO;
 import com.efit.hrms.entity.EmployeeLeaveVO;
@@ -32,6 +35,8 @@ import com.efit.hrms.entity.ProjectMasterVO;
 import com.efit.hrms.entity.UserLoginRolesVO;
 import com.efit.hrms.entity.UserVO;
 import com.efit.hrms.exception.ApplicationException;
+import com.efit.hrms.repo.AemployeeLeaveRepo;
+import com.efit.hrms.repo.AemployeeRepo;
 import com.efit.hrms.repo.BranchRepo;
 import com.efit.hrms.repo.DesignationLeaveRepo;
 import com.efit.hrms.repo.EmployeeLeaveRepo;
@@ -51,6 +56,9 @@ public class MasterServiceImpl implements MasterService {
 	BranchRepo branchRepo;
 
 	@Autowired
+    private ExcelHelper excelHelper;
+	
+	@Autowired
 	EmployeeRepo employeeRepo;
 
 	@Autowired
@@ -61,15 +69,20 @@ public class MasterServiceImpl implements MasterService {
 
 	@Autowired
 	DesignationLeaveRepo designationLeaveRepo;
-	
-    @Autowired
-    ProjectMasterRepo projectMasterRepo;
-    
-    @Autowired
-    UserLoginRolesRepo userLoginRolesRepo;
-    
-    @Autowired
-    UserRepo userRepo;
+
+	@Autowired
+	ProjectMasterRepo projectMasterRepo;
+
+	@Autowired
+	UserLoginRolesRepo userLoginRolesRepo;
+
+	@Autowired
+	UserRepo userRepo;
+
+	@Autowired
+	AemployeeRepo aEmployeeRepo;
+	@Autowired
+	AemployeeLeaveRepo aEmployeeLeaveRepo;
 
 	// Branch
 
@@ -177,21 +190,18 @@ public class MasterServiceImpl implements MasterService {
 
 	@Override
 	public List<Map<String, Object>> getEmployeesWithCompanyInfoByOrgId(Long orgId) {
-	    return employeeRepo.getEmployeesWithCompanyInfoByOrgId(orgId);
+		return employeeRepo.getEmployeesWithCompanyInfoByOrgId(orgId);
 	}
 
-	
-	
-
 	@Override
-	public List<EmployeeVO> getAllEmployeeByOrgIdAndEmployeeCode(Long orgId,String employeeCode) {
-		return employeeRepo.getAllEmployeeByOrgIdAndEmployeeCode(orgId,employeeCode);
+	public List<EmployeeVO> getAllEmployeeByOrgIdAndEmployeeCode(Long orgId, String employeeCode) {
+		return employeeRepo.getAllEmployeeByOrgIdAndEmployeeCode(orgId, employeeCode);
 	}
 
 	@Override
 	public List<EmployeeVO> getAllEmployee() {
 		return employeeRepo.findAll();
-	} 
+	}
 
 	@Override
 	public Optional<EmployeeVO> getEmployeeById(Long employeeid) {
@@ -199,8 +209,8 @@ public class MasterServiceImpl implements MasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getReportingNameForEmployee(Long orgId,String branchCode,String employeeCode) {
-		Set<Object[]> result = employeeRepo.findReportingNameForEmployee(orgId,branchCode,employeeCode);
+	public List<Map<String, Object>> getReportingNameForEmployee(Long orgId, String branchCode, String employeeCode) {
+		Set<Object[]> result = employeeRepo.findReportingNameForEmployee(orgId, branchCode, employeeCode);
 		return getReportingNameForEmployee(result);
 	}
 
@@ -213,8 +223,6 @@ public class MasterServiceImpl implements MasterService {
 			object.put("email", fs[2] != null ? fs[2].toString() : "");
 			object.put("employeeCode", fs[3] != null ? fs[3].toString() : "");
 
-
-
 			details.add(object); // Add the map to the list
 
 		}
@@ -222,6 +230,7 @@ public class MasterServiceImpl implements MasterService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, Object> createEmployee(EmployeeDTO employeeDTO) throws ApplicationException {
 		EmployeeVO employeeVO;
 		String message = null;
@@ -282,150 +291,181 @@ public class MasterServiceImpl implements MasterService {
 		return response;
 	}
 
-	
-	private EmployeeVO getEmployeeVOFromEmployeeDTO(EmployeeVO employeeVO, EmployeeDTO employeeDTO) throws ApplicationException {
-	    employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-	    employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
-	    employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
-	    employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
-	    employeeVO.setGender(employeeDTO.getGender());
-	    employeeVO.setBranch(employeeDTO.getBranch());
-	    employeeVO.setBranchCode(employeeDTO.getBranchCode());
-	    
+	private EmployeeVO getEmployeeVOFromEmployeeDTO(EmployeeVO employeeVO, EmployeeDTO employeeDTO)
+			throws ApplicationException {
+		employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+		employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
+		employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
+		employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
+		employeeVO.setGender(employeeDTO.getGender());
+		employeeVO.setBranch(employeeDTO.getBranch());
+		employeeVO.setBranchCode(employeeDTO.getBranchCode());
+		employeeVO.setFlagValue(employeeDTO.getFlagValue());
+		employeeVO.setFlag(employeeDTO.isFlag());
 
-	    UserVO userVO =userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(),employeeDTO.getOrgId());
-    	
-    	if(userVO!=null) {
-    		userVO.setDepartment(employeeDTO.getDepartment());
-    		userVO.setDesignation(employeeDTO.getDesignation());
-    	userRepo.save(userVO);
-    	}
-	    
-	    employeeVO.setDepartment(employeeDTO.getDepartment());
-	    employeeVO.setDesignation(employeeDTO.getDesignation());
-	    employeeVO.setDateOfBirth(employeeDTO.getDateOfBirth());
-	    employeeVO.setJoiningDate(employeeDTO.getJoiningDate());
-	    employeeVO.setEmail(employeeDTO.getEmail());
-	    employeeVO.setBloodGroup(employeeDTO.getBloodGroup());
-	    employeeVO.setMobileNo(employeeDTO.getMobileNo());
-	    employeeVO.setAlternativeMobileNo(employeeDTO.getAlternativeMobileNo());
-	    employeeVO.setAadharNo(employeeDTO.getAadharNo());
-	    employeeVO.setPanNo(employeeDTO.getPanNo());
-	    employeeVO.setAccountNo(employeeDTO.getAccountNo());
-	    employeeVO.setBankName(employeeDTO.getBankName());
-	    employeeVO.setIfscCode(employeeDTO.getIfscCode());
-	    employeeVO.setGrade(employeeDTO.getGrade());
-	    employeeVO.setTeam(employeeDTO.getTeam());
-	    employeeVO.setReportnigPerson(employeeDTO.getReportingPerson());
-	    employeeVO.setReportnigPersonEmail(employeeDTO.getReportingPersonEmail());
-	    employeeVO.setReportningPersonCode(employeeDTO.getReportningPersonCode());
-	    employeeVO.setReportingRole(employeeDTO.getReportingRole());
-	    employeeVO.setResignDate(employeeDTO.getResignDate());
-	    employeeVO.setPfFlag(employeeDTO.isPfFlag());
-	    employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
-	    employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
-	    employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
+		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 
+		if (userVO != null) {
+			userVO.setDepartment(employeeDTO.getDepartment());
+			userVO.setDesignation(employeeDTO.getDesignation());
+			userRepo.save(userVO);
+		}
 
-	    	UserLoginRolesVO userLoginRolesVO =userLoginRolesRepo.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(),employeeDTO.getOrgId());
-	    	
-	    	if(userLoginRolesVO!=null) {
-	    	userLoginRolesVO.setEndDate(employeeDTO.getResignDate());
-	    	userLoginRolesRepo.save(userLoginRolesVO);
-	    	}
-	    
-	    employeeVO.setOrgId(employeeDTO.getOrgId());
-	    employeeVO.setActive(employeeDTO.isActive());
-	    employeeVO.setUanNo(employeeDTO.getUanNo());
+		employeeVO.setDepartment(employeeDTO.getDepartment());
+		employeeVO.setDesignation(employeeDTO.getDesignation());
+		employeeVO.setDateOfBirth(employeeDTO.getDateOfBirth());
+		employeeVO.setJoiningDate(employeeDTO.getJoiningDate());
+		employeeVO.setEmail(employeeDTO.getEmail());
+		employeeVO.setBloodGroup(employeeDTO.getBloodGroup());
+		employeeVO.setMobileNo(employeeDTO.getMobileNo());
+		employeeVO.setAlternativeMobileNo(employeeDTO.getAlternativeMobileNo());
+		employeeVO.setAadharNo(employeeDTO.getAadharNo());
+		employeeVO.setPanNo(employeeDTO.getPanNo());
+		employeeVO.setAccountNo(employeeDTO.getAccountNo());
+		employeeVO.setBankName(employeeDTO.getBankName());
+		employeeVO.setIfscCode(employeeDTO.getIfscCode());
+		employeeVO.setGrade(employeeDTO.getGrade());
+		employeeVO.setTeam(employeeDTO.getTeam());
+		employeeVO.setReportingPerson(employeeDTO.getReportingPerson());
+		employeeVO.setReportingPersonEmail(employeeDTO.getReportingPersonEmail());
+		employeeVO.setReportingPersonCode(employeeDTO.getReportingPersonCode());
+		employeeVO.setReportingRole(employeeDTO.getReportingRole());
+		employeeVO.setResignDate(employeeDTO.getResignDate());
+		employeeVO.setPfFlag(employeeDTO.isPfFlag());
+		employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
+		employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
+		employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
 
+		UserLoginRolesVO userLoginRolesVO = userLoginRolesRepo
+				.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 
-	    // 1. Fetch existing leave records for this employee (if updating or checking duplicates)
-	    List<EmployeeLeaveVO> existingLeaves = employeeLeaveRepo.findByEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
-	        employeeDTO.getEmployeeCode(), employeeDTO.getOrgId()
-	    );
+		if (userLoginRolesVO != null) {
+			userLoginRolesVO.setEndDate(employeeDTO.getResignDate());
+			userLoginRolesRepo.save(userLoginRolesVO);
+		}
 
-	    // 2. Store existing leave codes
-	    Set<String> existingLeaveCodes = existingLeaves.stream()
-	        .map(EmployeeLeaveVO::getLeaveCode)
-	        .collect(Collectors.toSet());
+		employeeVO.setOrgId(employeeDTO.getOrgId());
+		employeeVO.setActive(employeeDTO.isActive());
+		employeeVO.setUanNo(employeeDTO.getUanNo());
 
-	    // 3. Validate new leave records to prevent duplicates in the request
-	    Set<String> newLeaveCodes = new HashSet<>();
-	    for (EmployeeLeaveDTO leaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
-	        String leaveCode = leaveDTO.getLeaveCode();
+		// 1. Fetch existing leave records for this employee (if updating or checking
+		// duplicates)
+		List<EmployeeLeaveVO> existingLeaves = employeeLeaveRepo.findByEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
+				employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 
-	        // Check for duplicate leaveCode in the same request
-	        if (newLeaveCodes.contains(leaveCode)) {
-	            throw new ApplicationException("Duplicate Leave Entry Found in Request: " + leaveCode);
-	        }
-	        newLeaveCodes.add(leaveCode);
+		// 2. Store existing leave codes
+		Set<String> existingLeaveCodes = existingLeaves.stream().map(EmployeeLeaveVO::getLeaveCode)
+				.collect(Collectors.toSet());
 
-	        // Check if leaveCode already exists for the same employee in DB
-	        if (!existingLeaveCodes.contains(leaveCode) && 
-	            employeeLeaveRepo.existsByLeaveCodeAndEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
-	                leaveCode, employeeDTO.getEmployeeCode(), employeeDTO.getOrgId()
-	            )) {
-	            throw new ApplicationException("Duplicate Leave Entry Found: " + leaveCode + " already exists for this employee.");
-	        }
-	    }
+		// 3. Validate new leave records to prevent duplicates in the request
+		Set<String> newLeaveCodes = new HashSet<>();
+		for (EmployeeLeaveDTO leaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
+			String leaveCode = leaveDTO.getLeaveCode();
 
-	    // 4. If updating, delete existing leave & balance records before inserting new ones
-	    if (employeeDTO.getId() != null) {
-	        employeeLeaveRepo.deleteAll(existingLeaves);
+			// Check for duplicate leaveCode in the same request
+			if (newLeaveCodes.contains(leaveCode)) {
+				throw new ApplicationException("Duplicate Leave Entry Found in Request: " + leaveCode);
+			}
+			newLeaveCodes.add(leaveCode);
 
-	        List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo.findByEmployeeCodeAndOrgId(
-	            employeeDTO.getEmployeeCode(), employeeDTO.getOrgId()
-	        );
-	        leaveBalanceRepo.deleteAll(leaveBalanceVOs);
-	    }
+			// Check if leaveCode already exists for the same employee in DB
+			if (!existingLeaveCodes.contains(leaveCode)
+					&& employeeLeaveRepo.existsByLeaveCodeAndEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(leaveCode,
+							employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+				throw new ApplicationException(
+						"Duplicate Leave Entry Found: " + leaveCode + " already exists for this employee.");
+			}
+		}
 
-	    List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
-	    List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+		// 4. If updating, delete existing leave & balance records before inserting new
+		// ones
+		if (employeeDTO.getId() != null) {
+			employeeLeaveRepo.deleteAll(existingLeaves);
 
-	    // 5. Process validated leave records
-	    for (EmployeeLeaveDTO employeeLeaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
-	        String leaveCode = employeeLeaveDTO.getLeaveCode();
+			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
+					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
+		}
 
-	        // Create EmployeeLeaveVO object
-	        EmployeeLeaveVO employeeLeaveVO = new EmployeeLeaveVO();
-	        employeeLeaveVO.setLeaveCode(leaveCode);
-	        employeeLeaveVO.setLeaveType(employeeLeaveDTO.getLeaveType());
-	        employeeLeaveVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
-	        employeeLeaveVO.setEffectiveFrom(employeeLeaveDTO.getEffectiveFrom());
-	        employeeLeaveVO.setEmployeeVO(employeeVO);
-	        employeeLeaveVOs.add(employeeLeaveVO);
+		List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+		List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
 
-	        // Create LeaveBalanceVO object
-	        LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
-	        leaveBalanceVO.setLeaveCode(leaveCode);
-	        leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
-	        leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
-	        leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
-	        leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-	        leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
-	        leaveBalanceVO.setBranch(employeeDTO.getBranch());
-	        leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
-	        leaveBalanceVO.setLeaveStatus("Assigned");
-	        leaveBalanceVOs.add(leaveBalanceVO);
-	    }
+		// 5. Process validated leave records
+		for (EmployeeLeaveDTO employeeLeaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
+			String leaveCode = employeeLeaveDTO.getLeaveCode();
 
-	    // 6. Save new leave records
-	    leaveBalanceRepo.saveAll(leaveBalanceVOs);
-	    employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+			// Create EmployeeLeaveVO object
+			EmployeeLeaveVO employeeLeaveVO = new EmployeeLeaveVO();
+			employeeLeaveVO.setLeaveCode(leaveCode);
+			employeeLeaveVO.setLeaveType(employeeLeaveDTO.getLeaveType());
+			employeeLeaveVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
+			employeeLeaveVO.setEffectiveFrom(employeeLeaveDTO.getEffectiveFrom());
+			employeeLeaveVO.setEmployeeVO(employeeVO);
+			employeeLeaveVOs.add(employeeLeaveVO);
 
-	    return employeeVO;
+			// Create LeaveBalanceVO object
+			LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
+			leaveBalanceVO.setLeaveCode(leaveCode);
+			leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
+			leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
+			leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
+			leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+			leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
+			leaveBalanceVO.setBranch(employeeDTO.getBranch());
+			leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
+			leaveBalanceVO.setLeaveStatus("Assigned");
+			leaveBalanceVOs.add(leaveBalanceVO);
+		}
+
+		// 6. Save new leave records
+		leaveBalanceRepo.saveAll(leaveBalanceVOs);
+		employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+
+		if (!employeeDTO.isFlag()) {
+			// Check if AemployeeVO already exists
+			AemployeeVO aemployeeVO = aEmployeeRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(),
+					employeeDTO.getOrgId());
+
+			if (aemployeeVO == null) {
+				aemployeeVO = new AemployeeVO();
+				BeanUtils.copyProperties(employeeVO, aemployeeVO);
+				aemployeeVO.setId(null);
+			} else {
+				BeanUtils.copyProperties(employeeVO, aemployeeVO, "id", "aEmployeeLeaveVO");
+			}
+
+			// Remove old leave records for this Aemployee (if any)
+			List<AemployeeLeaveVO> existingALeaves = aEmployeeLeaveRepo
+					.findByAemployeeVO_EmployeeCodeAndAemployeeVO_OrgId(employeeDTO.getEmployeeCode(),
+							employeeDTO.getOrgId());
+
+			aEmployeeLeaveRepo.deleteAll(existingALeaves);
+
+			// Create fresh leave records
+			List<AemployeeLeaveVO> aemployeeLeaves = new ArrayList<>();
+			for (EmployeeLeaveVO empLeave : employeeVO.getEmployeeLeaveVO()) {
+				AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
+				BeanUtils.copyProperties(empLeave, aLeave);
+				aLeave.setId(null);
+				aLeave.setAemployeeVO(aemployeeVO); // Now allowed
+				aemployeeLeaves.add(aLeave);
+			}
+
+			aemployeeVO.setAemployeeLeaveVO(aemployeeLeaves);
+			aEmployeeRepo.save(aemployeeVO);
+		}
+
+		return employeeVO;
 	}
-
 
 	@Override
 	public EmployeeVO uploadEmployeeImageInBloob(MultipartFile file, Long id) throws IOException, java.io.IOException {
 		EmployeeVO employeeVO = employeeRepo.findById(id).get();
-		 if (file != null && !file.isEmpty()) {
-		        employeeVO.setProfileImage(file.getBytes());
-		    }
-		 return employeeRepo.save(employeeVO);
+		if (file != null && !file.isEmpty()) {
+			employeeVO.setProfileImage(file.getBytes());
+		}
+		return employeeRepo.save(employeeVO);
 	}
-
 
 	@Override
 	public void deleteEmployee(Long employeeid) {
@@ -483,7 +523,8 @@ public class MasterServiceImpl implements MasterService {
 			if (!designationLeaveVO.getDesignation().equalsIgnoreCase(designationLeaveDTO.getDesignation())) {
 				if (designationLeaveRepo.existsByDesignationAndLeaveTypeAndOrgId(designationLeaveDTO.getDesignation(),
 						designationLeaveDTO.getLeaveType(), designationLeaveDTO.getOrgId())) {
-					String errorMessage = String.format("The Designation: %s already exists in This Organization and LeaveType.",
+					String errorMessage = String.format(
+							"The Designation: %s already exists in This Organization and LeaveType.",
 							designationLeaveDTO.getDesignation());
 					throw new ApplicationException(errorMessage);
 				}
@@ -496,7 +537,8 @@ public class MasterServiceImpl implements MasterService {
 
 			if (designationLeaveRepo.existsByDesignationAndLeaveTypeAndOrgId(designationLeaveDTO.getDesignation(),
 					designationLeaveDTO.getLeaveType(), designationLeaveDTO.getOrgId())) {
-				String errorMessage = String.format("The Designation: %s already exists in This Organization and LeaveType.",
+				String errorMessage = String.format(
+						"The Designation: %s already exists in This Organization and LeaveType.",
 						designationLeaveDTO.getDesignation());
 				throw new ApplicationException(errorMessage);
 			}
@@ -538,8 +580,10 @@ public class MasterServiceImpl implements MasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getLeaveDetailsFromDesignationLeave(Long orgId, String designationCode,String leaveApplicable) {
-		Set<Object[]> result = designationLeaveRepo.getLeaveDetailsFromDesignationLeave(orgId, designationCode,leaveApplicable);
+	public List<Map<String, Object>> getLeaveDetailsFromDesignationLeave(Long orgId, String designationCode,
+			String leaveApplicable) {
+		Set<Object[]> result = designationLeaveRepo.getLeaveDetailsFromDesignationLeave(orgId, designationCode,
+				leaveApplicable);
 		return getLeaveDetailsFromDesignationLeave(result);
 	}
 
@@ -561,9 +605,9 @@ public class MasterServiceImpl implements MasterService {
 		}
 		return details;
 	}
-	
-	//PROJECT MASTER
-	
+
+	// PROJECT MASTER
+
 	@Override
 	public Map<String, Object> createUpdateProjectMaster(ProjectMasterDTO projectMasterDTO)
 			throws ApplicationException {
@@ -574,8 +618,10 @@ public class MasterServiceImpl implements MasterService {
 			projectMasterVO = projectMasterRepo.findById(projectMasterDTO.getId())
 					.orElseThrow(() -> new ApplicationException("Invalid projectMaster Type details"));
 			if (!projectMasterVO.getProjectName().equalsIgnoreCase(projectMasterDTO.getProjectName())) {
-				if (projectMasterRepo.existsByProjectNameAndOrgId(projectMasterDTO.getProjectName(), projectMasterDTO.getOrgId())) {
-					String errorMessage = String.format("The Project: %s already exists in This Organization and LeaveType.",
+				if (projectMasterRepo.existsByProjectNameAndOrgId(projectMasterDTO.getProjectName(),
+						projectMasterDTO.getOrgId())) {
+					String errorMessage = String.format(
+							"The Project: %s already exists in This Organization and LeaveType.",
 							projectMasterDTO.getProjectName());
 					throw new ApplicationException(errorMessage);
 				}
@@ -587,8 +633,9 @@ public class MasterServiceImpl implements MasterService {
 		} else {
 
 			if (projectMasterRepo.existsByProjectNameAndOrgId(projectMasterDTO.getProjectName(),
-					 projectMasterDTO.getOrgId())) {
-				String errorMessage = String.format("The Project: %s already exists in This Organization and LeaveType.",
+					projectMasterDTO.getOrgId())) {
+				String errorMessage = String.format(
+						"The Project: %s already exists in This Organization and LeaveType.",
 						projectMasterDTO.getProjectName());
 				throw new ApplicationException(errorMessage);
 			}
@@ -615,7 +662,6 @@ public class MasterServiceImpl implements MasterService {
 
 	}
 
-	
 	@Override
 	public List<ProjectMasterVO> getProjectMasterByOrgId(Long orgId) {
 		// TODO Auto-generated method stub
@@ -627,5 +673,237 @@ public class MasterServiceImpl implements MasterService {
 
 		return projectMasterRepo.getProjectMasterById(id);
 	}
+
+	// UploadExcelEmployee
+
+//	@Override
+//	@Transactional
+//	public Map<String, Object> uploadEmployeeExcel(MultipartFile file) throws ApplicationException, IOException {
+//	    List<EmployeeDTO> employeeDTOs = new ArrayList<>();
+//	    try {
+//	        employeeDTOs = excelHelper.parseExcelToEmployeeDTO(file);
+//	    } catch (IOException | java.io.IOException e) {
+//	        throw new ApplicationException("Failed to read Excel file: " + e.getMessage());
+//	    }
+//
+//	    List<EmployeeVO> savedEmployees = new ArrayList<>();
+//
+//	    for (EmployeeDTO dto : employeeDTOs) {
+//	        EmployeeVO employeeVO = new EmployeeVO();
+//	        System.out.println(dto.getReportingPerson() +" testing");
+//	        System.out.println(dto.getReportingPersonEmail() + " testing");
+//
+//	        BeanUtils.copyProperties(dto, employeeVO);
+//	        employeeVO.setCreatedBy(dto.getCreatedBy());
+//	        employeeVO.setUpdatedBy(dto.getCreatedBy());
+//
+//	        // Handle Leave
+//	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+//	        List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+//
+//	        for (EmployeeLeaveDTO leaveDTO : dto.getEmployeeLeaveDTO()) {
+//	            EmployeeLeaveVO leaveVO = new EmployeeLeaveVO();
+//	            BeanUtils.copyProperties(leaveDTO, leaveVO);
+//	            leaveVO.setEmployeeVO(employeeVO);
+//	            employeeLeaveVOs.add(leaveVO);
+//
+//	            LeaveBalanceVO balanceVO = new LeaveBalanceVO();
+//	            BeanUtils.copyProperties(leaveDTO, balanceVO);
+//	            balanceVO.setEmployeeName(dto.getEmployeeName());
+//	            balanceVO.setEmployeeCode(dto.getEmployeeCode());
+//	            balanceVO.setOrgId(dto.getOrgId());
+//	            balanceVO.setBranch(dto.getBranch());
+//	            balanceVO.setBranchCode(dto.getBranchCode());
+//	            balanceVO.setLeaveStatus("Assigned");
+//	            leaveBalanceVOs.add(balanceVO);
+//	        }
+//
+//	        employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+//
+//	        // Save Main
+//	        employeeRepo.save(employeeVO);
+//	        employeeLeaveRepo.saveAll(employeeLeaveVOs);
+//	        leaveBalanceRepo.saveAll(leaveBalanceVOs);
+//
+//	        // Aemployee Logic
+//	        if (!dto.isFlag()) {
+//	            AemployeeVO aEmpVO = new AemployeeVO();
+//	            BeanUtils.copyProperties(employeeVO, aEmpVO);
+//	            aEmpVO.setId(null);
+//
+//	            List<AemployeeLeaveVO> aLeaves = new ArrayList<>();
+//	            for (EmployeeLeaveVO empLeave : employeeLeaveVOs) {
+//	                AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
+//	                BeanUtils.copyProperties(empLeave, aLeave);
+//	                aLeave.setId(null);
+//	                aLeave.setAemployeeVO(aEmpVO);
+//	                aLeaves.add(aLeave);
+//	            }
+//
+//	            aEmpVO.setAemployeeLeaveVO(aLeaves);
+//	            aEmployeeRepo.save(aEmpVO);
+//	            aEmployeeLeaveRepo.saveAll(aLeaves);
+//	        }
+//
+//	        savedEmployees.add(employeeVO);
+//	    }
+//
+//	    Map<String, Object> response = new HashMap<>();
+//	    response.put("message", "Successfully uploaded employees");
+//	    response.put("totalSaved", savedEmployees.size());
+//	    return response;
+//	}
+
 	
+	
+	@Override
+	@Transactional
+	public Map<String, Object> uploadEmployeeExcel(MultipartFile file) throws ApplicationException, IOException {
+	    List<EmployeeDTO> employeeDTOs;
+	    try {
+	        employeeDTOs = excelHelper.parseExcelToEmployeeDTO(file);
+	    } catch (IOException | java.io.IOException e) {
+	        throw new ApplicationException("Failed to read Excel file: " + e.getMessage());
+	    }
+
+	    Set<String> seenCodes = new HashSet<>();
+	    Set<String> seenNames = new HashSet<>();
+	    Set<String> seenEmails = new HashSet<>();
+	    List<String> duplicateErrors = new ArrayList<>();
+	    List<EmployeeVO> savedEmployees = new ArrayList<>();
+
+	    for (EmployeeDTO dto : employeeDTOs) {
+
+	        // Excel-level duplicate check
+	        if (!seenCodes.add(dto.getEmployeeCode())) {
+	            duplicateErrors.add("Duplicate employeeCode in Excel: " + dto.getEmployeeCode());
+	            continue;
+	        }
+	        if (!seenNames.add(dto.getEmployeeName())) {
+	            duplicateErrors.add("Duplicate employeeName in Excel: " + dto.getEmployeeName());
+	            continue;
+	        }
+	        if (!seenEmails.add(dto.getEmail())) {
+	            duplicateErrors.add("Duplicate email in Excel: " + dto.getEmail());
+	            continue;
+	        }
+
+	        // DB-level duplicate check
+	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ||
+	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ||
+	                             employeeRepo.existsByEmail(dto.getEmail());
+
+	        if (existsInDb) {
+	            duplicateErrors.add("Already exists in DB - Code: " + dto.getEmployeeCode() +
+	                                ", Name: " + dto.getEmployeeName() +
+	                                ", Email: " + dto.getEmail());
+	            continue;
+	        }
+
+	        // Manual mapping without BeanUtils
+	        EmployeeVO employeeVO = new EmployeeVO();
+	        employeeVO.setAlternativeMobileNo(dto.getAlternativeMobileNo());
+	        employeeVO.setAadharNo(dto.getAadharNo());
+	        employeeVO.setAccountNo(dto.getAccountNo());
+	        employeeVO.setActive(dto.isActive());
+	        employeeVO.setBankName(dto.getBankName());
+	        employeeVO.setBloodGroup(dto.getBloodGroup());
+	        employeeVO.setBranch(dto.getBranch());
+	        employeeVO.setBranchCode(dto.getBranchCode());
+	        employeeVO.setCreatedBy(dto.getCreatedBy());
+	        employeeVO.setUpdatedBy(dto.getCreatedBy());
+	        employeeVO.setDateOfBirth(dto.getDateOfBirth());
+	        employeeVO.setDepartment(dto.getDepartment());
+	        employeeVO.setDesignation(dto.getDesignation());
+	        employeeVO.setEmail(dto.getEmail());
+	        employeeVO.setEmployeeAddress(dto.getEmployeeAddress());
+	        employeeVO.setEmployeeCode(dto.getEmployeeCode());
+	        employeeVO.setEmployeeName(dto.getEmployeeName());
+	        employeeVO.setEmployeeType(dto.getEmployeeType());
+	        employeeVO.setGender(dto.getGender());
+	        employeeVO.setGrade(dto.getGrade());
+	        employeeVO.setIfscCode(dto.getIfscCode());
+	        employeeVO.setJoiningDate(dto.getJoiningDate());
+	        employeeVO.setMobileNo(dto.getMobileNo());
+	        employeeVO.setOrgId(dto.getOrgId());
+	        employeeVO.setPanNo(dto.getPanNo());
+	        employeeVO.setReportingRole(dto.getReportingRole());
+	        employeeVO.setReportingPerson(dto.getReportingPerson());
+	        employeeVO.setReportingPersonEmail(dto.getReportingPersonEmail());
+	        employeeVO.setReportingPersonCode(dto.getReportingPersonCode());
+	        employeeVO.setResignDate(dto.getResignDate());
+	        employeeVO.setTeam(dto.getTeam());
+	        employeeVO.setUanNo(dto.getUanNo());
+	        employeeVO.setPfFlag(dto.isPfFlag());
+	        employeeVO.setPfPercentage(dto.getPfPercentage());
+	        employeeVO.setEsiFlag(dto.isEsiFlag());
+	        employeeVO.setEsiPercentage(dto.getEsiPercentage());
+	        employeeVO.setFlag(dto.isFlag());
+	        employeeVO.setFlagValue(dto.getFlagValue());
+
+	        // Leave handling
+	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+	        List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+
+	        for (EmployeeLeaveDTO leaveDTO : dto.getEmployeeLeaveDTO()) {
+	            EmployeeLeaveVO leaveVO = new EmployeeLeaveVO();
+	            leaveVO.setLeaveCode(leaveDTO.getLeaveCode());
+	            leaveVO.setLeaveType(leaveDTO.getLeaveType());
+	            leaveVO.setTotalLeave(leaveDTO.getTotalLeave());
+	            leaveVO.setEffectiveFrom(leaveDTO.getEffectiveFrom());
+	            leaveVO.setEmployeeVO(employeeVO);
+	            employeeLeaveVOs.add(leaveVO);
+
+	            LeaveBalanceVO balanceVO = new LeaveBalanceVO();
+	            balanceVO.setLeaveCode(leaveDTO.getLeaveCode());
+	            balanceVO.setLeaveType(leaveDTO.getLeaveType());
+	            balanceVO.setTotalLeave(leaveDTO.getTotalLeave());
+//	            balanceVO.setEffectiveFrom(leaveDTO.getEffectiveFrom());
+	            balanceVO.setEmployeeName(dto.getEmployeeName());
+	            balanceVO.setEmployeeCode(dto.getEmployeeCode());
+	            balanceVO.setOrgId(dto.getOrgId());
+	            balanceVO.setBranch(dto.getBranch());
+	            balanceVO.setBranchCode(dto.getBranchCode());
+	            balanceVO.setLeaveStatus("Assigned");
+	            leaveBalanceVOs.add(balanceVO);
+	        }
+
+	        employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+
+	        // Save to DB
+	        employeeRepo.save(employeeVO);
+	        employeeLeaveRepo.saveAll(employeeLeaveVOs);
+	        leaveBalanceRepo.saveAll(leaveBalanceVOs);
+
+	        // Aemployee save (if flag is false)
+	        if (!dto.isFlag()) {
+	            AemployeeVO aEmpVO = new AemployeeVO();
+	            BeanUtils.copyProperties(employeeVO, aEmpVO);
+	            aEmpVO.setId(null);
+
+	            List<AemployeeLeaveVO> aLeaves = new ArrayList<>();
+	            for (EmployeeLeaveVO empLeave : employeeLeaveVOs) {
+	                AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
+	                BeanUtils.copyProperties(empLeave, aLeave);
+	                aLeave.setId(null);
+	                aLeave.setAemployeeVO(aEmpVO);
+	                aLeaves.add(aLeave);
+	            }
+
+	            aEmpVO.setAemployeeLeaveVO(aLeaves);
+	            aEmployeeRepo.save(aEmpVO);
+	            aEmployeeLeaveRepo.saveAll(aLeaves);
+	        }
+
+	        savedEmployees.add(employeeVO);
+	    }
+
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("message", "Successfully uploaded employees");
+	    response.put("totalSaved", savedEmployees.size());
+	    response.put("duplicatesSkipped", duplicateErrors);
+	    return response;
+	}
+
+
 }

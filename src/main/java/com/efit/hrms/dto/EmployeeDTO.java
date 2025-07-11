@@ -38,9 +38,10 @@ public class EmployeeDTO {
     private String team;
     private String reportingPerson;
     private String reportingPersonEmail;
-	private String reportningPersonCode;
+	private String reportingPersonCode;
 	private Long uanNo;
-
+	private String flagValue;
+	private boolean flag;
 
 
 //    private String reportingName;

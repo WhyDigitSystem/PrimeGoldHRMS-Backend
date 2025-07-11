@@ -8,4 +8,6 @@ import com.efit.hrms.entity.AemployeeVO;
 @Repository
 public interface AemployeeRepo extends JpaRepository<AemployeeVO, Long>{
 
+	AemployeeVO findByEmployeeCodeAndOrgId(String employeeCode, Long orgId);
+
 }

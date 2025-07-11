@@ -147,6 +147,13 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	EmployeeVO findByEmployeeCode(String employeecode);
 
+	boolean existsByEmployeeCode(String employeeCode);
+
+	boolean existsByEmployeeName(String employeeName);
+
+	boolean existsByEmail(String email);
+
+
 //	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND branchcode = ?3", nativeQuery = true)
 //	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode);
 //

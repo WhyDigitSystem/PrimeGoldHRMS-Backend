@@ -52,7 +52,9 @@ import lombok.NoArgsConstructor;
 		@ManyToOne
 		@JoinColumn(name = "aemployeeid", columnDefinition = "BIGINT DEFAULT 0")
 		@JsonBackReference
-		AemployeeVO aEmployeeVO;
+		private AemployeeVO aemployeeVO;
+
+
 	}
 
 

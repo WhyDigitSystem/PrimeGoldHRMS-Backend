@@ -1,50 +1,43 @@
 package com.efit.hrms.entity;
 
-import java.time.LocalTime;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.efit.hrms.dto.CreatedUpdatedDate;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "shiftmaster")
+@Table(name = "shiftassign")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class ShiftMasterVO {
+@AllArgsConstructor
+public class ShiftAssignVO {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "shiftmastergen")
-	@SequenceGenerator(name = "shiftmastergen", sequenceName = "shiftmasterseq", initialValue = 1000000001, allocationSize = 1)
-	@Column(name = "shiftmasterid")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "shiftassigngen")
+	@SequenceGenerator(name = "shiftassigngen", sequenceName = "shiftassignseq", initialValue = 1000000001, allocationSize = 1)
+	@Column(name = "shiftassignid")
 	private Long id;
-	@Column(name = "shiftcode")
-	private String shiftCode;
-	@Column(name = "shift")
-	private String shift;
-	@Column(name = "intime")
-	private String inTime;
-	@Column(name = "outdate")
-	private String outDate;
-	@Column(name = "breaktime")
-	private String breakTime;
-	@Column(name = "gracetime")
-	private String graceTime;
-	@Column(name = "nightshift")
-	private boolean nightShift;
 
+	@Column(name = "shifttype")
+	private String shiftType;
+	@Column(name = "description")
+	private String description;
 	@Column(name = "orgid")
 	private long orgId;
 	@Column(name = "branchcode")
@@ -63,15 +56,22 @@ public class ShiftMasterVO {
 	@Column(name = "remarks")
 	private String remarks;
 	@Column(name = "screencode", length = 5)
-	private String screenCode = "SM";
+	private String screenCode = "SA";
 	@Column(name = "screenname", length = 25)
-	private String screenName = "SHIFT MASTER";
+	private String screenName = "SHIFT ASSIGN";
 
-	@Embedded
-	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
+	
+	
+    @OneToMany(mappedBy = "shiftAssignVO",cascade = CascadeType.ALL)
+   	@JsonManagedReference
+   	private List<ShiftAssignDetailsVO> shiftAssignDetailsVO;
 
 	@JsonGetter("active")
 	public String getActive() {
 		return active ? "Active" : "In-Active";
 	}
+	
+	@Embedded
+	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
+	
 }

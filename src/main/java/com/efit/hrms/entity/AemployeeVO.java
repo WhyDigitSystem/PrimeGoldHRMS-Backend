@@ -79,11 +79,11 @@ public class AemployeeVO {
 	@Column(name = "uanno",length = 50)
 	private Long uanNo;
 	@Column(name = "reportingperson",length = 150)
-	private String reportnigPerson;
+	private String reportingPerson;
 	@Column(name = "reportingpersonemail",length = 150)
-	private String reportnigPersonEmail;
+	private String reportingPersonEmail;
 	@Column(name = "reportingpersoncode",length = 150)
-	private String reportningPersonCode;
+	private String reportingPersonCode;
 //	@Column(name = "reportingname",length = 150)
 //	private String reportingName;
 	@Column(name = "reportingrole",length = 100)
@@ -120,6 +120,11 @@ public class AemployeeVO {
 	private BigDecimal pfPercentage;
 	@Column(name = "esipercentage")
 	private BigDecimal esiPercentage;
+	@Column(name = "flagvalue")
+	private String flagValue;
+	@Column(name = "flag")
+	private boolean flag;
+	
 	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
@@ -142,9 +147,9 @@ public class AemployeeVO {
 		return cancel ? "T" : "F";
 	}
 
-	@OneToMany(mappedBy = "aEmployeeVO", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "aemployeeVO", cascade = CascadeType.ALL)
 	@JsonManagedReference
-	List<AemployeeLeaveVO> aEmployeeLeaveVO;
+	private List<AemployeeLeaveVO> aemployeeLeaveVO;
 	
 	@Embedded
 	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
