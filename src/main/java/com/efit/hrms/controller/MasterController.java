@@ -1,6 +1,7 @@
 package com.efit.hrms.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import com.efit.hrms.entity.BranchVO;
 import com.efit.hrms.entity.DesignationLeaveVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.ProjectMasterVO;
+import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.service.MasterService;
 
 @CrossOrigin
@@ -482,6 +484,19 @@ public class MasterController extends BaseController {
 				return ResponseEntity.ok().body(responseDTO);
 			}
 
+		 //uploadEmployee
 		 
+		
 
-}
+		     @PostMapping("/upload")
+		     public ResponseEntity<Map<String, Object>> uploadEmployeeExcel(@RequestParam("file") MultipartFile file) {
+		         try {
+		             Map<String, Object> response = masterService.uploadEmployeeExcel(file);
+		             return ResponseEntity.ok(response);
+		         } catch (ApplicationException e) {
+		             return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
+		         }
+		     }
+		 }
+
+

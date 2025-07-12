@@ -24,16 +24,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "employee")
+@Table(name = "aemployee")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeeVO {
+public class AemployeeVO {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "employeegen")
-	@SequenceGenerator(name = "employeegen", sequenceName = "employeeseq", initialValue = 1000000001, allocationSize = 1)
-	@Column(name = "employeeid")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aemployeegen")
+	@SequenceGenerator(name = "aemployeegen", sequenceName = "aemployeeseq", initialValue = 1000000001, allocationSize = 1)
+	@Column(name = "aemployeeid")
 	private Long id;
 
 	@Column(name = "employeecode",length = 30)
@@ -125,6 +125,7 @@ public class EmployeeVO {
 	@Column(name = "flag")
 	private boolean flag;
 	
+	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
 
@@ -146,9 +147,9 @@ public class EmployeeVO {
 		return cancel ? "T" : "F";
 	}
 
-	@OneToMany(mappedBy = "employeeVO", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "aemployeeVO", cascade = CascadeType.ALL)
 	@JsonManagedReference
-	List<EmployeeLeaveVO> employeeLeaveVO;
+	private List<AemployeeLeaveVO> aemployeeLeaveVO;
 	
 	@Embedded
 	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();

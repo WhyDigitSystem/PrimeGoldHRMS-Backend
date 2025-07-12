@@ -20,7 +20,6 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    e.employeeid AS employeeId,\r\n"
 			+ "    e.alternativemobileno AS alternativeMobileNo,\r\n"
 			+ "    e.aadharno AS aadharNo,\r\n"
-			+ "    e.accountholdername AS accountHolderName,\r\n"
 			+ "    e.accountno AS accountNo,\r\n"
 			+ "    e.active AS active,\r\n"
 			+ "    e.bloodgroup AS bloodGroup,\r\n"
@@ -54,7 +53,12 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    e.modifiedby AS modifiedBy,\r\n"
 			+ "    e.reportingpersoncode AS reportingPersonCode,\r\n"
 			+ "    e.uanno AS uanNo,\r\n"
-			+ "    e.bankname AS bankName,\r\n"
+			+ "    e.bankname AS bankName,"
+			+ "    e.employee_type AS employeeType,\r\n"
+			+ "    e.esiflag AS esiFlag,\r\n"
+			+ "    e.esipercentage AS esiPercentage,\r\n"
+			+ "    e.pfflag AS pfFlag,\r\n"
+			+ "    e.pfpercentage AS pfPercentage,\r\n"
 			+ "    c.companyname AS companyName,\r\n"
 			+ "    c.companycode AS companyCode\r\n"
 			+ "FROM employee e\r\n"
@@ -142,6 +146,13 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 	List<EmployeeVO> getAllEmployeeByOrgIdAndEmployeeCode(Long orgId, String employeeCode);
 
 	EmployeeVO findByEmployeeCode(String employeecode);
+
+	boolean existsByEmployeeCode(String employeeCode);
+
+	boolean existsByEmployeeName(String employeeName);
+
+	boolean existsByEmail(String email);
+
 
 //	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND branchcode = ?3", nativeQuery = true)
 //	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode);
