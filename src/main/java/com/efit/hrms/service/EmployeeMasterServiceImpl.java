@@ -181,33 +181,33 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				.orElseThrow(() -> new RuntimeException("salaryStructure not found for ID: " + id));
 	}
 
-//	@Override
-//	public List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode, BigDecimal sumOfEarnings) {
-//	    EmployeeVO employeeVO = Optional.ofNullable(
-//	            employeeRepo.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branchCode))
-//	        .orElseThrow(() -> new RuntimeException("Employee details not found for orgId: " + orgId));
-//
-//	    BigDecimal pfPercentage = employeeVO.getPfPercentage();
-//	    BigDecimal esiPercentage = employeeVO.getEsiPercentage();
-//
-//	    BigDecimal pfAmount = sumOfEarnings.multiply(pfPercentage).divide(BigDecimal.valueOf(100));
-//	    BigDecimal esiAmount = sumOfEarnings.multiply(esiPercentage).divide(BigDecimal.valueOf(100));
-//
-//	    List<PfEsiAmountDTO> list = new ArrayList<>();
-//
-//	    PfEsiAmountDTO pfDto = new PfEsiAmountDTO();
-//	    pfDto.setHeading("Professional Tax");
-//	    pfDto.setAmount(pfAmount);
-//
-//	    PfEsiAmountDTO esiDto = new PfEsiAmountDTO();
-//	    esiDto.setHeading("ESI Tax");
-//	    esiDto.setAmount(esiAmount);
-//
-//	    list.add(pfDto);
-//	    list.add(esiDto);
-//
-//	    return list;
-//	}
+	@Override
+	public List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode, BigDecimal sumOfEarnings) {
+	    EmployeeVO employeeVO = Optional.ofNullable(
+	            employeeRepo.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branchCode))
+	        .orElseThrow(() -> new RuntimeException("Employee details not found for orgId: " + orgId));
+
+	    BigDecimal pfPercentage = employeeVO.getPfPercentage();
+	    BigDecimal esiPercentage = employeeVO.getEsiPercentage();
+
+	    BigDecimal pfAmount = sumOfEarnings.multiply(pfPercentage).divide(BigDecimal.valueOf(100));
+	    BigDecimal esiAmount = sumOfEarnings.multiply(esiPercentage).divide(BigDecimal.valueOf(100));
+
+	    List<PfEsiAmountDTO> list = new ArrayList<>();
+
+	    PfEsiAmountDTO pfDto = new PfEsiAmountDTO();
+	    pfDto.setHeading("Professional Tax");
+	    pfDto.setAmount(pfAmount);
+
+	    PfEsiAmountDTO esiDto = new PfEsiAmountDTO();
+	    esiDto.setHeading("ESI Tax");
+	    esiDto.setAmount(esiAmount);
+
+	    list.add(pfDto);
+	    list.add(esiDto);
+
+	    return list;
+	}
 
 
 	@Override

@@ -91,8 +91,8 @@ public interface EmployeeMasterService {
 	List<Map<String, Object>> getApprovedPermissionRequestforTeam(Long orgId, String branchCode,
 			String reportingPersonCode);
 
-//	List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode,
-//			BigDecimal sumOfEarnings);
+	List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode,
+			BigDecimal sumOfEarnings);
 
 
 

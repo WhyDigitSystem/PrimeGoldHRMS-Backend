@@ -63,7 +63,7 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    c.companycode AS companyCode\r\n"
 			+ "FROM employee e\r\n"
 			+ "JOIN company c ON e.orgid = c.companyid\r\n"
-			+ "WHERE e.orgid = ?1\r\n"
+			+ "WHERE e.orgid = ?1 ORDER BY e.employee ASC \r\n"
 			+ "", nativeQuery = true)
 	List<Map<String, Object>> getEmployeesWithCompanyInfoByOrgId(Long orgId);
 
@@ -154,8 +154,8 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 	boolean existsByEmail(String email);
 
 
-//	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND branchcode = ?3", nativeQuery = true)
-//	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode);
+	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND branchcode = ?3", nativeQuery = true)
+	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode);
 //
 
 

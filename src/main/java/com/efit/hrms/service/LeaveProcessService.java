@@ -92,7 +92,7 @@ public interface LeaveProcessService {
 
 	//upload checkinout
 
-	String uploadExcelData(MultipartFile files,Long orgId);
+	Map<String, Object> uploadExcelData(MultipartFile files,Long orgId);
 
 	//AttandanceReport
 	

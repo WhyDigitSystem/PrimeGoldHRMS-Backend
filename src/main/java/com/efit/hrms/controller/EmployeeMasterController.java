@@ -213,36 +213,36 @@ public class EmployeeMasterController extends BaseController{
 	}
 	
 	
-//	@GetMapping("/getPfAmountAndEsiAmountByEmployee")
-//	public ResponseEntity<ResponseDTO> getPfAmountAndEsiAmountByEmployee(
-//	        @RequestParam Long orgId,
-//	        @RequestParam String employeeCode,
-//	        @RequestParam String branchCode,
-//	        @RequestParam BigDecimal sumOfEarnings) {
-//
-//	    String methodName = "getPfAmountAndEsiAmountByEmployee()";
-//	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-//
-//	    Map<String, Object> responseObjectsMap = new HashMap<>();
-//	    ResponseDTO responseDTO;
-//
-//	    try {
-//	        List<PfEsiAmountDTO> taxList = employeeMasterService.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branchCode, sumOfEarnings);
-//
-//	        responseObjectsMap.put("taxDetails", taxList);
-//	        responseDTO = createServiceResponse(responseObjectsMap);
-//
-//	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
-//	        return ResponseEntity.ok(responseDTO);
-//
-//	    } catch (Exception e) {
-//	        String errorMsg = e.getMessage();
-//	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
-//
-//	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to calculate tax amounts", errorMsg);
-//	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
-//	    }
-//	}
+	@GetMapping("/getPfAmountAndEsiAmountByEmployee")
+	public ResponseEntity<ResponseDTO> getPfAmountAndEsiAmountByEmployee(
+	        @RequestParam Long orgId,
+	        @RequestParam String employeeCode,
+	        @RequestParam String branchCode,
+	        @RequestParam BigDecimal sumOfEarnings) {
+
+	    String methodName = "getPfAmountAndEsiAmountByEmployee()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+
+	    try {
+	        List<PfEsiAmountDTO> taxList = employeeMasterService.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branchCode, sumOfEarnings);
+
+	        responseObjectsMap.put("taxDetails", taxList);
+	        responseDTO = createServiceResponse(responseObjectsMap);
+
+	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	        return ResponseEntity.ok(responseDTO);
+
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to calculate tax amounts", errorMsg);
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+	    }
+	}
 
 	@PutMapping("/createUpdateSalaryStructure")
 	public ResponseEntity<ResponseDTO> createUpdateSalaryStructure(@RequestBody SalaryStructureDTO salaryStructureDTO) {

@@ -78,7 +78,7 @@ public interface MasterService {
 		//Upload EmployeeDetails
 
 
-		Map<String, Object> uploadEmployeeExcel(MultipartFile file) throws ApplicationException;
+		Map<String, Object> uploadEmployeeExcel(MultipartFile file, Long orgId, String createdBy) throws ApplicationException;
 
 
 

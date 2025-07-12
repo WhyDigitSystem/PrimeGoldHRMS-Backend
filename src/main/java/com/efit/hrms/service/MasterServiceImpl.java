@@ -3,6 +3,7 @@ package com.efit.hrms.service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -676,89 +677,13 @@ public class MasterServiceImpl implements MasterService {
 
 	// UploadExcelEmployee
 
-//	@Override
-//	@Transactional
-//	public Map<String, Object> uploadEmployeeExcel(MultipartFile file) throws ApplicationException, IOException {
-//	    List<EmployeeDTO> employeeDTOs = new ArrayList<>();
-//	    try {
-//	        employeeDTOs = excelHelper.parseExcelToEmployeeDTO(file);
-//	    } catch (IOException | java.io.IOException e) {
-//	        throw new ApplicationException("Failed to read Excel file: " + e.getMessage());
-//	    }
-//
-//	    List<EmployeeVO> savedEmployees = new ArrayList<>();
-//
-//	    for (EmployeeDTO dto : employeeDTOs) {
-//	        EmployeeVO employeeVO = new EmployeeVO();
-//	        System.out.println(dto.getReportingPerson() +" testing");
-//	        System.out.println(dto.getReportingPersonEmail() + " testing");
-//
-//	        BeanUtils.copyProperties(dto, employeeVO);
-//	        employeeVO.setCreatedBy(dto.getCreatedBy());
-//	        employeeVO.setUpdatedBy(dto.getCreatedBy());
-//
-//	        // Handle Leave
-//	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
-//	        List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
-//
-//	        for (EmployeeLeaveDTO leaveDTO : dto.getEmployeeLeaveDTO()) {
-//	            EmployeeLeaveVO leaveVO = new EmployeeLeaveVO();
-//	            BeanUtils.copyProperties(leaveDTO, leaveVO);
-//	            leaveVO.setEmployeeVO(employeeVO);
-//	            employeeLeaveVOs.add(leaveVO);
-//
-//	            LeaveBalanceVO balanceVO = new LeaveBalanceVO();
-//	            BeanUtils.copyProperties(leaveDTO, balanceVO);
-//	            balanceVO.setEmployeeName(dto.getEmployeeName());
-//	            balanceVO.setEmployeeCode(dto.getEmployeeCode());
-//	            balanceVO.setOrgId(dto.getOrgId());
-//	            balanceVO.setBranch(dto.getBranch());
-//	            balanceVO.setBranchCode(dto.getBranchCode());
-//	            balanceVO.setLeaveStatus("Assigned");
-//	            leaveBalanceVOs.add(balanceVO);
-//	        }
-//
-//	        employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
-//
-//	        // Save Main
-//	        employeeRepo.save(employeeVO);
-//	        employeeLeaveRepo.saveAll(employeeLeaveVOs);
-//	        leaveBalanceRepo.saveAll(leaveBalanceVOs);
-//
-//	        // Aemployee Logic
-//	        if (!dto.isFlag()) {
-//	            AemployeeVO aEmpVO = new AemployeeVO();
-//	            BeanUtils.copyProperties(employeeVO, aEmpVO);
-//	            aEmpVO.setId(null);
-//
-//	            List<AemployeeLeaveVO> aLeaves = new ArrayList<>();
-//	            for (EmployeeLeaveVO empLeave : employeeLeaveVOs) {
-//	                AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
-//	                BeanUtils.copyProperties(empLeave, aLeave);
-//	                aLeave.setId(null);
-//	                aLeave.setAemployeeVO(aEmpVO);
-//	                aLeaves.add(aLeave);
-//	            }
-//
-//	            aEmpVO.setAemployeeLeaveVO(aLeaves);
-//	            aEmployeeRepo.save(aEmpVO);
-//	            aEmployeeLeaveRepo.saveAll(aLeaves);
-//	        }
-//
-//	        savedEmployees.add(employeeVO);
-//	    }
-//
-//	    Map<String, Object> response = new HashMap<>();
-//	    response.put("message", "Successfully uploaded employees");
-//	    response.put("totalSaved", savedEmployees.size());
-//	    return response;
-//	}
-
 	
 	
 	@Override
 	@Transactional
-	public Map<String, Object> uploadEmployeeExcel(MultipartFile file) throws ApplicationException, IOException {
+	public Map<String, Object> uploadEmployeeExcel(MultipartFile file, Long orgId, String createdBy)
+	        throws ApplicationException, IOException {
+
 	    List<EmployeeDTO> employeeDTOs;
 	    try {
 	        employeeDTOs = excelHelper.parseExcelToEmployeeDTO(file);
@@ -769,38 +694,56 @@ public class MasterServiceImpl implements MasterService {
 	    Set<String> seenCodes = new HashSet<>();
 	    Set<String> seenNames = new HashSet<>();
 	    Set<String> seenEmails = new HashSet<>();
-	    List<String> duplicateErrors = new ArrayList<>();
-	    List<EmployeeVO> savedEmployees = new ArrayList<>();
+	    Set<String> excelDuplicates = new LinkedHashSet<>();
+	    Set<String> dbDuplicates = new LinkedHashSet<>();
 
+	    int rowNum = 1; // Header is row 1, data starts from row 2
 	    for (EmployeeDTO dto : employeeDTOs) {
+	        rowNum++;
 
-	        // Excel-level duplicate check
-	        if (!seenCodes.add(dto.getEmployeeCode())) {
-	            duplicateErrors.add("Duplicate employeeCode in Excel: " + dto.getEmployeeCode());
-	            continue;
-	        }
-	        if (!seenNames.add(dto.getEmployeeName())) {
-	            duplicateErrors.add("Duplicate employeeName in Excel: " + dto.getEmployeeName());
-	            continue;
-	        }
-	        if (!seenEmails.add(dto.getEmail())) {
-	            duplicateErrors.add("Duplicate email in Excel: " + dto.getEmail());
-	            continue;
+	        dto.setOrgId(orgId);
+	        dto.setCreatedBy(createdBy);
+
+	        String info = dto.getEmployeeName() + " - " + dto.getEmployeeCode() + " - " + dto.getEmail();
+	        boolean isExcelDuplicate = false;
+
+	        if (!seenCodes.add(dto.getEmployeeCode())) isExcelDuplicate = true;
+	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
+	        if (!seenEmails.add(dto.getEmail())) isExcelDuplicate = true;
+
+	        if (isExcelDuplicate) {
+	            excelDuplicates.add("Row " + rowNum + " → " + info);
 	        }
 
-	        // DB-level duplicate check
 	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ||
 	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ||
 	                             employeeRepo.existsByEmail(dto.getEmail());
 
 	        if (existsInDb) {
-	            duplicateErrors.add("Already exists in DB - Code: " + dto.getEmployeeCode() +
-	                                ", Name: " + dto.getEmployeeName() +
-	                                ", Email: " + dto.getEmail());
-	            continue;
+	            dbDuplicates.add(info);
 	        }
+	    }
 
-	        // Manual mapping without BeanUtils
+	    // Return if Excel-level duplicates found
+	    if (!excelDuplicates.isEmpty()) {
+	        Map<String, Object> response = new HashMap<>();
+	        response.put("message", "Duplicate data found in Excel");
+	        response.put("duplicates", new ArrayList<>(excelDuplicates));
+	        return response;
+	    }
+
+	    // Return if DB-level duplicates found
+	    if (!dbDuplicates.isEmpty()) {
+	        Map<String, Object> response = new HashMap<>();
+	        response.put("message", "Duplicate data found in database");
+	        response.put("duplicates", new ArrayList<>(dbDuplicates));
+	        return response;
+	    }
+
+	    // No duplicates — proceed to save
+	    List<EmployeeVO> savedEmployees = new ArrayList<>();
+
+	    for (EmployeeDTO dto : employeeDTOs) {
 	        EmployeeVO employeeVO = new EmployeeVO();
 	        employeeVO.setAlternativeMobileNo(dto.getAlternativeMobileNo());
 	        employeeVO.setAadharNo(dto.getAadharNo());
@@ -841,7 +784,6 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setFlag(dto.isFlag());
 	        employeeVO.setFlagValue(dto.getFlagValue());
 
-	        // Leave handling
 	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
 	        List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
 
@@ -858,7 +800,6 @@ public class MasterServiceImpl implements MasterService {
 	            balanceVO.setLeaveCode(leaveDTO.getLeaveCode());
 	            balanceVO.setLeaveType(leaveDTO.getLeaveType());
 	            balanceVO.setTotalLeave(leaveDTO.getTotalLeave());
-//	            balanceVO.setEffectiveFrom(leaveDTO.getEffectiveFrom());
 	            balanceVO.setEmployeeName(dto.getEmployeeName());
 	            balanceVO.setEmployeeCode(dto.getEmployeeCode());
 	            balanceVO.setOrgId(dto.getOrgId());
@@ -870,12 +811,10 @@ public class MasterServiceImpl implements MasterService {
 
 	        employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
 
-	        // Save to DB
 	        employeeRepo.save(employeeVO);
 	        employeeLeaveRepo.saveAll(employeeLeaveVOs);
 	        leaveBalanceRepo.saveAll(leaveBalanceVOs);
 
-	        // Aemployee save (if flag is false)
 	        if (!dto.isFlag()) {
 	            AemployeeVO aEmpVO = new AemployeeVO();
 	            BeanUtils.copyProperties(employeeVO, aEmpVO);
@@ -901,9 +840,174 @@ public class MasterServiceImpl implements MasterService {
 	    Map<String, Object> response = new HashMap<>();
 	    response.put("message", "Successfully uploaded employees");
 	    response.put("totalSaved", savedEmployees.size());
-	    response.put("duplicatesSkipped", duplicateErrors);
 	    return response;
 	}
 
+
+
+	
+//	@Override
+//	@Transactional
+//	public Map<String, Object> uploadEmployeeExcel(MultipartFile file,Long orgId,String createdBy) throws ApplicationException, IOException {
+//	    List<EmployeeDTO> employeeDTOs;
+//	    try {
+//	        employeeDTOs = excelHelper.parseExcelToEmployeeDTO(file);
+//	    } catch (IOException | java.io.IOException e) {
+//	        throw new ApplicationException("Failed to read Excel file: " + e.getMessage());
+//	    }
+//
+//	    // Track for Excel-level duplicates
+//	    Set<String> seenCodes = new HashSet<>();
+//	    Set<String> seenNames = new HashSet<>();
+//	    Set<String> seenEmails = new HashSet<>();
+//	    Set<String> excelDuplicates = new LinkedHashSet<>();
+//	    Set<String> dbDuplicates = new LinkedHashSet<>();
+//
+//	    int rowNum = 1; // Assuming header is row 1, data starts from row 2
+//	    for (EmployeeDTO dto : employeeDTOs) {
+//	        rowNum++;
+//
+//	        String shortInfo = dto.getEmployeeCode() + " - " + dto.getEmployeeName() + " - " + dto.getEmail();
+//	        boolean isExcelDuplicate = false;
+//
+//	        // Excel-level duplicate check
+//	        if (!seenCodes.add(dto.getEmployeeCode())) isExcelDuplicate = true;
+//	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
+//	        if (!seenEmails.add(dto.getEmail())) isExcelDuplicate = true;
+//
+//	        if (isExcelDuplicate) {
+//	            excelDuplicates.add("Row " + rowNum + " → " + shortInfo);
+//	        }
+//
+//	        // DB-level duplicate check
+//	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ||
+//	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ||
+//	                             employeeRepo.existsByEmail(dto.getEmail());
+//
+//	        if (existsInDb) {
+//	            dbDuplicates.add(shortInfo);
+//	        }
+//	    }
+//
+//	    // Return if Excel duplicates found
+//	    if (!excelDuplicates.isEmpty()) {
+//	        Map<String, Object> response = new HashMap<>();
+//	        response.put("message", "Duplicate data found in Excel");
+//	        response.put("duplicates", new ArrayList<>(excelDuplicates));
+//	        return response;
+//	    }
+//
+//	    // Return if DB duplicates found
+//	    if (!dbDuplicates.isEmpty()) {
+//	        Map<String, Object> response = new HashMap<>();
+//	        response.put("message", "Duplicate data found in database");
+//	        response.put("duplicates", new ArrayList<>(dbDuplicates));
+//	        return response;
+//	    }
+//
+//	    // No duplicates found - proceed to save
+//	    List<EmployeeVO> savedEmployees = new ArrayList<>();
+//
+//	    for (EmployeeDTO dto : employeeDTOs) {
+//	        EmployeeVO employeeVO = new EmployeeVO();
+//	        employeeVO.setAlternativeMobileNo(dto.getAlternativeMobileNo());
+//	        employeeVO.setAadharNo(dto.getAadharNo());
+//	        employeeVO.setAccountNo(dto.getAccountNo());
+//	        employeeVO.setActive(dto.isActive());
+//	        employeeVO.setBankName(dto.getBankName());
+//	        employeeVO.setBloodGroup(dto.getBloodGroup());
+//	        employeeVO.setBranch(dto.getBranch());
+//	        employeeVO.setBranchCode(dto.getBranchCode());
+//	        employeeVO.setCreatedBy(createdBy);
+//	        employeeVO.setUpdatedBy(createdBy);
+//	        employeeVO.setDateOfBirth(dto.getDateOfBirth());
+//	        employeeVO.setDepartment(dto.getDepartment());
+//	        employeeVO.setDesignation(dto.getDesignation());
+//	        employeeVO.setEmail(dto.getEmail());
+//	        employeeVO.setEmployeeAddress(dto.getEmployeeAddress());
+//	        employeeVO.setEmployeeCode(dto.getEmployeeCode());
+//	        employeeVO.setEmployeeName(dto.getEmployeeName());
+//	        employeeVO.setEmployeeType(dto.getEmployeeType());
+//	        employeeVO.setGender(dto.getGender());
+//	        employeeVO.setGrade(dto.getGrade());
+//	        employeeVO.setIfscCode(dto.getIfscCode());
+//	        employeeVO.setJoiningDate(dto.getJoiningDate());
+//	        employeeVO.setMobileNo(dto.getMobileNo());
+//	        employeeVO.setOrgId(orgId);
+//	        employeeVO.setPanNo(dto.getPanNo());
+//	        employeeVO.setReportingRole(dto.getReportingRole());
+//	        employeeVO.setReportingPerson(dto.getReportingPerson());
+//	        employeeVO.setReportingPersonEmail(dto.getReportingPersonEmail());
+//	        employeeVO.setReportingPersonCode(dto.getReportingPersonCode());
+//	        employeeVO.setResignDate(dto.getResignDate());
+//	        employeeVO.setTeam(dto.getTeam());
+//	        employeeVO.setUanNo(dto.getUanNo());
+//	        employeeVO.setPfFlag(dto.isPfFlag());
+//	        employeeVO.setPfPercentage(dto.getPfPercentage());
+//	        employeeVO.setEsiFlag(dto.isEsiFlag());
+//	        employeeVO.setEsiPercentage(dto.getEsiPercentage());
+//	        employeeVO.setFlag(dto.isFlag());
+//	        employeeVO.setFlagValue(dto.getFlagValue());
+//
+//	        // Leave mapping
+//	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+//	        List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+//
+//	        for (EmployeeLeaveDTO leaveDTO : dto.getEmployeeLeaveDTO()) {
+//	            EmployeeLeaveVO leaveVO = new EmployeeLeaveVO();
+//	            leaveVO.setLeaveCode(leaveDTO.getLeaveCode());
+//	            leaveVO.setLeaveType(leaveDTO.getLeaveType());
+//	            leaveVO.setTotalLeave(leaveDTO.getTotalLeave());
+//	            leaveVO.setEffectiveFrom(leaveDTO.getEffectiveFrom());
+//	            leaveVO.setEmployeeVO(employeeVO);
+//	            employeeLeaveVOs.add(leaveVO);
+//
+//	            LeaveBalanceVO balanceVO = new LeaveBalanceVO();
+//	            balanceVO.setLeaveCode(leaveDTO.getLeaveCode());
+//	            balanceVO.setLeaveType(leaveDTO.getLeaveType());
+//	            balanceVO.setTotalLeave(leaveDTO.getTotalLeave());
+//	            balanceVO.setEmployeeName(dto.getEmployeeName());
+//	            balanceVO.setEmployeeCode(dto.getEmployeeCode());
+//	            balanceVO.setOrgId(dto.getOrgId());
+//	            balanceVO.setBranch(dto.getBranch());
+//	            balanceVO.setBranchCode(dto.getBranchCode());
+//	            balanceVO.setLeaveStatus("Assigned");
+//	            leaveBalanceVOs.add(balanceVO);
+//	        }
+//
+//	        employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+//
+//	        employeeRepo.save(employeeVO);
+//	        employeeLeaveRepo.saveAll(employeeLeaveVOs);
+//	        leaveBalanceRepo.saveAll(leaveBalanceVOs);
+//
+//	        // Save Aemployee if flag is false
+//	        if (!dto.isFlag()) {
+//	            AemployeeVO aEmpVO = new AemployeeVO();
+//	            BeanUtils.copyProperties(employeeVO, aEmpVO);
+//	            aEmpVO.setId(null);
+//
+//	            List<AemployeeLeaveVO> aLeaves = new ArrayList<>();
+//	            for (EmployeeLeaveVO empLeave : employeeLeaveVOs) {
+//	                AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
+//	                BeanUtils.copyProperties(empLeave, aLeave);
+//	                aLeave.setId(null);
+//	                aLeave.setAemployeeVO(aEmpVO);
+//	                aLeaves.add(aLeave);
+//	            }
+//
+//	            aEmpVO.setAemployeeLeaveVO(aLeaves);
+//	            aEmployeeRepo.save(aEmpVO);
+//	            aEmployeeLeaveRepo.saveAll(aLeaves);
+//	        }
+//
+//	        savedEmployees.add(employeeVO);
+//	    }
+//
+//	    Map<String, Object> successResponse = new HashMap<>();
+//	    successResponse.put("message", "Successfully uploaded employees");
+//	    successResponse.put("totalSaved", savedEmployees.size());
+//	    return successResponse;
+//	}
 
 }

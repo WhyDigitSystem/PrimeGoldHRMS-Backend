@@ -623,26 +623,29 @@ public class LeaveProcessController extends BaseController {
 	// checkin upload
 
 	@PostMapping("/uploadcheckin")
-	public ResponseEntity<Map<String, Object>> uploadExcelCheckIn(@RequestParam("files") MultipartFile files,
-			@RequestParam("orgId") Long orgId) {
-		String result = leaveProcessService.uploadExcelData(files, orgId);
+	public ResponseEntity<Map<String, Object>> uploadExcelCheckIn(
+	        @RequestParam("files") MultipartFile files,
+	        @RequestParam("orgId") Long orgId) {
 
-		Map<String, Object> response = new HashMap<>();
-		Map<String, String> paramObjectsMap = new HashMap<>();
-		paramObjectsMap.put("message", result);
+	    Map<String, Object> serviceResponse = leaveProcessService.uploadExcelData(files, orgId);
 
-		if (result.equals("CheckInOut data uploaded successfully")) {
-			response.put("statusFlag", "Ok");
-			response.put("status", true);
-			response.put("paramObjectsMap", paramObjectsMap);
-		} else {
-			response.put("statusFlag", "Error");
-			response.put("status", false);
-			response.put("paramObjectsMap", paramObjectsMap);
-		}
+	    Map<String, Object> response = new HashMap<>();
+	    Map<String, Object> paramObjectsMap = new HashMap<>();
 
-		return ResponseEntity.ok(response);
+	    paramObjectsMap.put("message", serviceResponse.get("message"));
+	    if (serviceResponse.containsKey("duplicates")) {
+	        paramObjectsMap.put("duplicates", serviceResponse.get("duplicates"));
+	    }
+
+	    boolean isSuccess = "CheckInOut data uploaded successfully".equals(serviceResponse.get("message"));
+
+	    response.put("statusFlag", isSuccess ? "Ok" : "Error");
+	    response.put("status", isSuccess);
+	    response.put("paramObjectsMap", paramObjectsMap);
+
+	    return ResponseEntity.ok(response);
 	}
+
 
 	// Attandance Report
 	@GetMapping("/getAttandanceReport")

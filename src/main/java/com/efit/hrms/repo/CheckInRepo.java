@@ -1,6 +1,7 @@
 package com.efit.hrms.repo;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -265,6 +266,9 @@ public interface CheckInRepo extends JpaRepository<CheckInVO,Long>{
 	Set<Object[]> getCheckInOutReport(Long orgId, String employeeCode, String fromDate, String toDate, String branch);
 
 	List<CheckInVO> findByOrgIdAndNotifyCodeAndStatus(Long orgId, String notifyCode, String string);
+
+	boolean existsByEmpCodeAndCheckInDateAndEntryTimeAndStatus(String empCode, LocalDate checkInDate,
+			LocalTime entryTime, String status);
 
 
 

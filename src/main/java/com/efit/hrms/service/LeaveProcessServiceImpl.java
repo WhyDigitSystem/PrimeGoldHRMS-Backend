@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1485,139 +1484,110 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 		return detailsList;
 	}
 	
-	@Override
-	 public String uploadExcelData(MultipartFile files, Long orgId) {
-	        try (Workbook workbook = WorkbookFactory.create(files.getInputStream())) {
-	            Sheet sheet = workbook.getSheetAt(0);
-	            List<CheckInVO> checkIns = new ArrayList<>();
-
-	            boolean isFirstRow = true;
-	            Set<String> uniqueKeys = new HashSet<>();
-
-	            for (Row row : sheet) {
-	                if (isFirstRow) {
-	                    isFirstRow = false;
-	                    continue;
-	                }
-
-	                String empCode = getCellValueAsString(row.getCell(1));
-	                LocalDate checkInDate = getCellValueAsDate(row.getCell(3));
-	                LocalTime entryTime = getCellValueAsTime(row.getCell(4));
-                    String status =getCellValueAsString(row.getCell(5));
-
-
-	                // Validate required fields
-	                if (empCode == null || checkInDate == null || entryTime == null || status == null) {
-	                    System.err.println("Skipping row: missing empCode, checkInDate, entryTime or status");
-	                    continue;
-	                }
-
-	                // Check for duplicates in Excel sheet itself
-	                String uniqueKey = empCode + "|" + checkInDate + "|" + entryTime + "|" + status;
-	                if (uniqueKeys.contains(uniqueKey)) {
-	                    System.err.println("Skipping duplicate row in Excel: " + uniqueKey);
-	                    continue;
-	                } else {
-	                    uniqueKeys.add(uniqueKey);
-	                }
-
-
-	                Optional<CheckInVO> existingOpt = checkInRepo.findMinOrMaxEntryTimeByEmpCodeAndCheckInDateAndStatus(empCode, checkInDate,status);
-
-	                CheckInVO checkIn;
-	                if (existingOpt.isPresent()) {
-	                    // Update existing record
-	                    checkIn = existingOpt.get();
-
-	                    checkIn.setBranch(getCellValueAsString(row.getCell(0)));
-	                    checkIn.setEmpName(getCellValueAsString(row.getCell(2)));
-	                    checkIn.setEntryTime(getCellValueAsTime(row.getCell(4)));
-	                    checkIn.setOrgId(orgId);
-	                    checkIn.setCreatedOn(LocalDateTime.now()); // update timestamp if you want
-
-	                } else {
-	                    // Create new record
-	                    checkIn = new CheckInVO();
-
-	                    checkIn.setBranch(getCellValueAsString(row.getCell(0)));
-	                    checkIn.setEmpCode(empCode);
-	                    checkIn.setEmpName(getCellValueAsString(row.getCell(2)));
-	                    checkIn.setCheckInDate(checkInDate);
-	                    checkIn.setEntryTime(getCellValueAsTime(row.getCell(4)));
-	                    checkIn.setStatus(status);
-	                    checkIn.setOrgId(orgId);
-	                    checkIn.setCreatedOn(LocalDateTime.now());
-	                }
-
-	                checkIns.add(checkIn);
-	            }
-
-	            checkInRepo.saveAll(checkIns);
-	            return "CheckInOut data uploaded successfully";
-
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	            return "Failed to process Excel file: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
-	        }
-	    }
-
-	    private String getCellValueAsString(Cell cell) {
-	        if (cell == null) return null;
-
-	        if (cell.getCellType() == CellType.STRING) {
-	            return cell.getStringCellValue().trim();
-	        } else if (cell.getCellType() == CellType.NUMERIC) {
-	            return String.valueOf((long) cell.getNumericCellValue());
-	        } else if (cell.getCellType() == CellType.BLANK) {
-	            return null;
-	        }
-	        return null;
-	    }
-
-	    private LocalDate getCellValueAsDate(Cell cell) {
-	        if (cell == null) return null;
-
-	        try {
-	            if (cell.getCellType() == CellType.NUMERIC) {
-	                if (DateUtil.isCellDateFormatted(cell)) {
-	                    return cell.getLocalDateTimeCellValue().toLocalDate();
-	                } else {
-	                    return null;
-	                }
-	            } else if (cell.getCellType() == CellType.STRING) {
-	                String dateStr = cell.getStringCellValue().trim();
-	                if (dateStr.isEmpty()) return null;
-	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yy");
-	                return LocalDate.parse(dateStr, formatter);
-	            }
-	        } catch (Exception e) {
-	            System.err.println("Error parsing date cell: " + e.getMessage());
-	        }
-	        return null;
-	    }
-
-	    private LocalTime getCellValueAsTime(Cell cell) {
-	        if (cell == null) return null;
-
-	        try {
-	            if (cell.getCellType() == CellType.NUMERIC) {
-	                if (DateUtil.isCellDateFormatted(cell)) {
-	                    return cell.getLocalDateTimeCellValue().toLocalTime();
-	                } else {
-	                    return null;
-	                }
-	            } else if (cell.getCellType() == CellType.STRING) {
-	                String timeStr = cell.getStringCellValue().trim();
-	                if (timeStr.isEmpty()) return null;
-	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-	                return LocalTime.parse(timeStr, formatter);
-	            }
-	        } catch (Exception e) {
-	            System.err.println("Error parsing time cell: " + e.getMessage());
-	        }
-	        return null;
-	    }
+	//uploadcheckin
 	
+	@Override
+	public Map<String, Object> uploadExcelData(MultipartFile files, Long orgId) {
+	    Map<String, Object> response = new HashMap<>();
+	    List<CheckInVO> checkIns = new ArrayList<>();
+
+	    try (Workbook workbook = WorkbookFactory.create(files.getInputStream())) {
+	        Sheet sheet = workbook.getSheetAt(0);
+	        boolean isFirstRow = true;
+
+	        for (Row row : sheet) {
+	            if (isFirstRow) {
+	                isFirstRow = false;
+	                continue;
+	            }
+
+	            String branch = getCellValueAsString(row.getCell(0));
+	            String empCode = getCellValueAsString(row.getCell(1));
+	            String empName = getCellValueAsString(row.getCell(2));
+	            LocalDate checkInDate = getCellValueAsDate(row.getCell(3));
+	            LocalTime entryTime = getCellValueAsTime(row.getCell(4));
+	            String status = getCellValueAsString(row.getCell(5));
+
+	            // Skip if required fields are missing
+	            if (empCode == null || checkInDate == null || entryTime == null || status == null) {
+	                continue;
+	            }
+
+	            CheckInVO checkIn = new CheckInVO();
+	            checkIn.setBranch(branch);
+	            checkIn.setEmpCode(empCode);
+	            checkIn.setEmpName(empName);
+	            checkIn.setCheckInDate(checkInDate);
+	            checkIn.setEntryTime(entryTime);
+	            checkIn.setStatus(status);
+	            checkIn.setOrgId(orgId);
+	            checkIn.setCreatedOn(LocalDateTime.now());
+
+	            checkIns.add(checkIn);
+	        }
+
+	        checkInRepo.saveAll(checkIns);
+	        response.put("message", "CheckInOut data uploaded successfully");
+	        return response;
+
+	    } catch (Exception e) {
+	        response.put("message", "Failed to process Excel file: " + e.getMessage());
+	        return response;
+	    }
+	}
+
+	private String getCellValueAsString(Cell cell) {
+	    if (cell == null) return null;
+
+	    switch (cell.getCellType()) {
+	        case STRING:
+	            return cell.getStringCellValue().trim();
+	        case NUMERIC:
+	            return String.valueOf((long) cell.getNumericCellValue());
+	        case BLANK:
+	            return null;
+	        default:
+	            return null;
+	    }
+	}
+
+	private LocalDate getCellValueAsDate(Cell cell) {
+	    if (cell == null) return null;
+
+	    try {
+	        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+	            return cell.getLocalDateTimeCellValue().toLocalDate();
+	        } else if (cell.getCellType() == CellType.STRING) {
+	            String dateStr = cell.getStringCellValue().trim();
+	            if (dateStr.isEmpty()) return null;
+
+	            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy"); // ✅ FIXED
+	            return LocalDate.parse(dateStr, formatter);
+	        }
+	    } catch (Exception e) {
+	        System.err.println("Error parsing date cell: " + e.getMessage());
+	    }
+	    return null;
+	}
+
+	private LocalTime getCellValueAsTime(Cell cell) {
+	    if (cell == null) return null;
+
+	    try {
+	        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+	            return cell.getLocalDateTimeCellValue().toLocalTime();
+	        } else if (cell.getCellType() == CellType.STRING) {
+	            String timeStr = cell.getStringCellValue().trim();
+	            if (timeStr.isEmpty()) return null;
+	            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+	            return LocalTime.parse(timeStr, formatter);
+	        }
+	    } catch (Exception e) {
+	        System.err.println("Error parsing time cell: " + e.getMessage());
+	    }
+	    return null;
+	}
+
 	    //AttandanceReport
 	    
 		@Override

@@ -59,21 +59,23 @@ public class ExcelHelper {
                     dto.setBranchCode(getStringValue(row.getCell(25)));
                     dto.setIfscCode(getStringValue(row.getCell(26)));
                     dto.setActive(parseBoolean(row.getCell(27)));
-                    dto.setCreatedBy(getStringValue(row.getCell(28)));
-                    dto.setOrgId(parseLong(row.getCell(29)));
-                    dto.setResignDate(parseDate(row.getCell(30)));
-                    dto.setEsiFlag(parseBoolean(row.getCell(31)));
-                    dto.setEsiPercentage(parseBigDecimal(row.getCell(32)));
-                    dto.setPfFlag(parseBoolean(row.getCell(33)));
-                    dto.setPfPercentage(parseBigDecimal(row.getCell(34)));
-                    dto.setFlag(parseBoolean(row.getCell(35)));
-                    dto.setFlagValue(getStringValue(row.getCell(36)));
 
-                    // Leave section
+                    // removed createdBy (was index 28)
+                    // removed orgId (was index 29)
+
+                    dto.setResignDate(parseDate(row.getCell(28)));
+                    dto.setEsiFlag(parseBoolean(row.getCell(29)));
+                    dto.setEsiPercentage(parseBigDecimal(row.getCell(30)));
+                    dto.setPfFlag(parseBoolean(row.getCell(31)));
+                    dto.setPfPercentage(parseBigDecimal(row.getCell(32)));
+                    dto.setFlag(parseBoolean(row.getCell(33)));
+                    dto.setFlagValue(getStringValue(row.getCell(34)));
+
+                    // Leave section now starts at cell 35
                     List<EmployeeLeaveDTO> leaveList = new ArrayList<>();
-                    String[] codes = getSafeSplit(row, 37);
-                    String[] types = getSafeSplit(row, 38);
-                    String[] totals = getSafeSplit(row, 39);
+                    String[] codes = getSafeSplit(row, 35);
+                    String[] types = getSafeSplit(row, 36);
+                    String[] totals = getSafeSplit(row, 37);
 
                     for (int j = 0; j < codes.length; j++) {
                         if (codes[j] == null || codes[j].trim().isEmpty()) continue;
@@ -137,7 +139,6 @@ public class ExcelHelper {
         return false;
     }
 
-    // ✅ Use this to read only yyyy-MM-dd format from string or numeric cells
     private LocalDate parseDate(Cell cell) {
         try {
             if (cell == null) return null;

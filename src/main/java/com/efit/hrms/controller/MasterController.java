@@ -488,15 +488,20 @@ public class MasterController extends BaseController {
 		 
 		
 
-		     @PostMapping("/upload")
-		     public ResponseEntity<Map<String, Object>> uploadEmployeeExcel(@RequestParam("file") MultipartFile file) {
-		         try {
-		             Map<String, Object> response = masterService.uploadEmployeeExcel(file);
-		             return ResponseEntity.ok(response);
-		         } catch (ApplicationException e) {
-		             return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
-		         }
+		 @PostMapping("/bulkUploadEmployeeDetails")
+		 public ResponseEntity<Map<String, Object>> uploadEmployeeExcel(
+		         @RequestParam("files") MultipartFile file,
+		         @RequestParam("orgId") Long orgId,
+		         @RequestParam("createdBy") String createdBy) {
+
+		     try {
+		         Map<String, Object> response = masterService.uploadEmployeeExcel(file, orgId, createdBy);
+		         return ResponseEntity.ok(response);
+		     } catch (ApplicationException e) {
+		         return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
 		     }
+		 }
+
 		 }
 
 
