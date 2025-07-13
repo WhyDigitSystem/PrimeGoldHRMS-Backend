@@ -22,16 +22,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "groupmaster")
+@Table(name = "groupsalarystructure")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GroupVO {
-	
+public class GroupSalaryStructureVO {
+
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "groupmastergen")
-	@SequenceGenerator(name = "groupmastergen", sequenceName = "groupmasterseq", initialValue = 1000000001, allocationSize = 1)
-	@Column(name = "groupmasterid")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "groupsalarystructuregen")
+	@SequenceGenerator(name = "groupsalarystructuregen", sequenceName = "groupsalarystructureseq", initialValue = 1000000001, allocationSize = 1)
+	@Column(name = "groupsalarystructureid")
 	private Long id;
 
 	@Column(name = "groupname")
@@ -57,9 +57,13 @@ public class GroupVO {
 	@Column(name="finyear")
 	private String finYear;
 	
-	@OneToMany(mappedBy = "groupVO",cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "groupSalaryStructureVO",cascade = CascadeType.ALL)
 	@JsonManagedReference
-	private List<GroupDetailsVO> groupDetailsVO;
+	private List<GroupSalaryEarningsVO> groupSalaryEarningsVO;
+	
+	@OneToMany(mappedBy = "groupSalaryStructureVO",cascade = CascadeType.ALL)
+	@JsonManagedReference
+	private List<GroupSalaryDeductionsVO> groupSalaryDeductionsVO;
 	
 	@JsonGetter("active")
 	public String getActive() {
@@ -76,3 +80,4 @@ public class GroupVO {
 	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
 
 }
+

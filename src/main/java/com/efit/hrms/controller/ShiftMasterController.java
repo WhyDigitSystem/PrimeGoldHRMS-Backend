@@ -1,11 +1,15 @@
 package com.efit.hrms.controller;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.validation.Valid;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
 import com.efit.hrms.dto.ContractMasterDTO;
+import com.efit.hrms.dto.GroupDTO;
+import com.efit.hrms.dto.GroupSalaryStructureDTO;
 import com.efit.hrms.dto.OtMasterDTO;
 import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.dto.ShiftAssignDTO;
 import com.efit.hrms.dto.ShiftMasterDTO;
 import com.efit.hrms.entity.ContractMasterVO;
+import com.efit.hrms.entity.GroupSalaryStructureVO;
+import com.efit.hrms.entity.GroupVO;
 import com.efit.hrms.entity.OtMasterVO;
 import com.efit.hrms.entity.ShiftAssignVO;
 import com.efit.hrms.entity.ShiftMasterVO;
@@ -386,6 +394,181 @@ public class ShiftMasterController extends BaseController{
 	        
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
 	    }
+	}
+	
+	
+	//groupstructure
+	
+	@PutMapping("/createUpdateGroupMaster")
+	public ResponseEntity<ResponseDTO> createUpdateGroup(@Valid @RequestBody GroupDTO groupDTO) {
+		String methodName = "createUpdateGroup()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+
+		try {
+	        Map<String, Object> groupVO = shiftMasterService.createUpdateGroup(groupDTO);
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, groupVO.get("message"));
+	        responseObjectsMap.put("groupVO", groupVO.get("groupVO")); // Corrected key
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	    } catch (Exception e) {
+	        errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	        responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+	    }
+	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	    return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	@GetMapping("/getGroupMasterByOrgId")
+	public ResponseEntity<ResponseDTO> getGroupByOrgId(@RequestParam Long orgId) {
+		String methodName = "getGroupByOrgId()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<GroupVO> groupVO = new ArrayList<>();
+		try {
+			groupVO = shiftMasterService.getGroupByOrgId(orgId);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Group information get successfully");
+			responseObjectsMap.put("groupVO", groupVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Group information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	@GetMapping("/getGroupMasterById")
+	public ResponseEntity<ResponseDTO> getPreGroupById(@RequestParam Long id) {
+		String methodName = "getPreGroupById()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		Optional<GroupVO> groupVO = null;
+		try {
+			groupVO = shiftMasterService.getPreGroupById(id);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Group information get successfully");
+			responseObjectsMap.put("groupVO", groupVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Group information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	
+	//groupsalarystructure
+	
+	@PutMapping("/createUpdateGroupSalaryStructure")
+	public ResponseEntity<ResponseDTO> createUpdateGroupSalaryStructure(@RequestBody GroupSalaryStructureDTO groupSalaryStructureDTO) {
+		String methodName = "createUpdateGroupSalaryStructure()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		Map<String, Object> responseObjectsMap = new HashMap<String, Object>();
+		String errorMsg = null;
+		ResponseDTO responseDTO = null;
+		try {
+			Map<String, Object> groupSalaryStructureVO = shiftMasterService.createUpdateGroupSalaryStructure(groupSalaryStructureDTO);
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, groupSalaryStructureVO.get("message"));
+			responseObjectsMap.put("groupSalaryStructureVO", groupSalaryStructureVO.get("groupSalaryStructureVO"));
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	@GetMapping("/getGroupSalaryStructureByOrgId")
+	public ResponseEntity<ResponseDTO> getGroupSalaryStructureByOrgId(@RequestParam Long orgId) {
+		String methodName = "getGroupSalaryStructureByOrgId()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<GroupSalaryStructureVO> groupSalaryStructureVO = new ArrayList<>();
+		try {
+			groupSalaryStructureVO = shiftMasterService.getGroupSalaryStructureByOrgId(orgId);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "GroupSalaryStructure information get successfully");
+			responseObjectsMap.put("groupSalaryStructureVO", groupSalaryStructureVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "GroupSalaryStructure information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	@GetMapping("/getGroupSalaryStructureById")
+	public ResponseEntity<ResponseDTO> getGroupSalaryStructureById(@RequestParam Long id) {
+		String methodName = "getGroupSalaryStructureById()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		Optional<GroupSalaryStructureVO> groupSalaryStructureVO = null;
+		try {
+			groupSalaryStructureVO = shiftMasterService.getGroupSalaryStructureById(id);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "GroupSalaryStructure information get successfully");
+			responseObjectsMap.put("groupSalaryStructureVO", groupSalaryStructureVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "GroupSalaryStructure information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	
+	@GetMapping("/getGroupMasterByOrgIdAndGroup")
+	public ResponseEntity<ResponseDTO> getGroupMasterByOrgIdAndGroup(@RequestParam Long orgId,@RequestParam String groupName) {
+		String methodName = "getGroupMasterByOrgIdAndGroup()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<GroupVO> groupVO = new ArrayList<>();
+		try {
+			groupVO = shiftMasterService.getGroupMasterByOrgIdAndGroup(orgId,groupName);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Group information get successfully");
+			responseObjectsMap.put("groupVO", groupVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Group information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
 	}
 	
 }

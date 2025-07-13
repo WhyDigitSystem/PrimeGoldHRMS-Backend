@@ -11,9 +11,13 @@ import com.efit.hrms.entity.GroupVO;
 @Repository
 public interface GroupRepo extends JpaRepository<GroupVO, Long> {
 
-	boolean existsByGroup(String group);
 
-	@Query(nativeQuery = true, value = "select * from group where orgid=?1")
+	@Query(nativeQuery = true, value = "select * from groupmaster where orgid=?1")
 	List<GroupVO> getGroupByOrgId(Long orgId);
+
+	boolean existsByGroupName(String groupName);
+
+	@Query(nativeQuery = true, value = "select * from groupmaster where orgid=?1 and groupname=?2")
+	List<GroupVO> getGroupMasterByOrgIdAndGroup(Long orgId, String groupName);
 
 }

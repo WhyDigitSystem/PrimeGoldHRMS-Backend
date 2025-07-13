@@ -8,7 +8,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +32,7 @@ public class ExcelHelper {
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (row == null) continue;
+                if (isRowEmpty(row)) continue;
 
                 try {
                     EmployeeDTO dto = new EmployeeDTO();
@@ -179,6 +184,19 @@ public class ExcelHelper {
         }
         return "";
     }
+    
+    private boolean isRowEmpty(Row row) {
+        if (row == null) return true;
+
+        for (int cellNum = 0; cellNum <= row.getLastCellNum(); cellNum++) {
+            Cell cell = row.getCell(cellNum);
+            if (cell != null && cell.getCellType() != CellType.BLANK && !getStringValue(cell).trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     private String[] getSafeSplit(Row row, int cellIndex) {
         try {

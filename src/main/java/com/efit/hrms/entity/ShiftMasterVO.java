@@ -36,8 +36,8 @@ public class ShiftMasterVO {
 	private String shift;
 	@Column(name = "intime")
 	private String inTime;
-	@Column(name = "outdate")
-	private String outDate;
+	@Column(name = "outtime")
+	private String outTime;
 	@Column(name = "breaktime")
 	private String breakTime;
 	@Column(name = "gracetime")

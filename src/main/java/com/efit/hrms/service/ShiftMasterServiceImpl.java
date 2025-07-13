@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,19 +17,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.efit.hrms.dto.ContractMasterDTO;
+import com.efit.hrms.dto.GroupDTO;
+import com.efit.hrms.dto.GroupDetailsDTO;
+import com.efit.hrms.dto.GroupSalaryDeductionsDTO;
+import com.efit.hrms.dto.GroupSalaryEarningsDTO;
+import com.efit.hrms.dto.GroupSalaryStructureDTO;
 import com.efit.hrms.dto.OtMasterDTO;
 import com.efit.hrms.dto.OtMasterDetailsDTO;
 import com.efit.hrms.dto.ShiftAssignDTO;
 import com.efit.hrms.dto.ShiftAssignDetailsDTO;
 import com.efit.hrms.dto.ShiftMasterDTO;
 import com.efit.hrms.entity.ContractMasterVO;
+import com.efit.hrms.entity.GroupDetailsVO;
+import com.efit.hrms.entity.GroupSalaryDeductionsVO;
+import com.efit.hrms.entity.GroupSalaryEarningsVO;
+import com.efit.hrms.entity.GroupSalaryStructureVO;
+import com.efit.hrms.entity.GroupVO;
 import com.efit.hrms.entity.OtMasterDetailsVO;
 import com.efit.hrms.entity.OtMasterVO;
 import com.efit.hrms.entity.ShiftAssignDetailsVO;
 import com.efit.hrms.entity.ShiftAssignVO;
 import com.efit.hrms.entity.ShiftMasterVO;
 import com.efit.hrms.exception.ApplicationException;
+import com.efit.hrms.exception.GroupDetailsRepo;
 import com.efit.hrms.repo.ContractMasterRepo;
+import com.efit.hrms.repo.GroupRepo;
+import com.efit.hrms.repo.GroupSalaryDeductionsRepo;
+import com.efit.hrms.repo.GroupSalaryEarningsRepo;
+import com.efit.hrms.repo.GroupSalaryStructureRepo;
+import com.efit.hrms.repo.NotificationRepo;
 import com.efit.hrms.repo.OtMasterDetailsRepo;
 import com.efit.hrms.repo.OtMasterRepo;
 import com.efit.hrms.repo.ShiftAssignDetailsRepo;
@@ -35,6 +54,8 @@ import com.efit.hrms.repo.ShiftMasterRepo;
 
 @Service
 public class ShiftMasterServiceImpl implements ShiftMasterService{
+
+    private final NotificationRepo notificationRepo;
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(ShiftMasterServiceImpl.class);
 
@@ -55,6 +76,26 @@ public class ShiftMasterServiceImpl implements ShiftMasterService{
 	
 	@Autowired
 	ShiftAssignDetailsRepo shiftAssignDetailsRepo;
+	
+
+	@Autowired
+	GroupRepo groupRepo;
+	
+	@Autowired
+	GroupDetailsRepo groupDetailsRepo;
+
+	@Autowired
+	GroupSalaryStructureRepo groupSalaryStructureRepo; 
+	
+	@Autowired
+	GroupSalaryEarningsRepo groupSalaryEarningsRepo;
+	
+	@Autowired
+	GroupSalaryDeductionsRepo groupSalaryDeductionsRepo;
+
+    ShiftMasterServiceImpl(NotificationRepo notificationRepo) {
+        this.notificationRepo = notificationRepo;
+    }
 
 	
 
@@ -104,7 +145,7 @@ public class ShiftMasterServiceImpl implements ShiftMasterService{
 		shiftMasterVO.setShiftCode(shiftMasterDTO.getShiftCode());
 		shiftMasterVO.setShift(shiftMasterDTO.getShift());
 		shiftMasterVO.setInTime(shiftMasterDTO.getInTime());
-		shiftMasterVO.setOutDate(shiftMasterDTO.getOutDate());
+		shiftMasterVO.setOutTime(shiftMasterDTO.getOutTime());
 		shiftMasterVO.setBreakTime(shiftMasterDTO.getBreakTime());
 		shiftMasterVO.setGraceTime(shiftMasterDTO.getGraceTime());
 		shiftMasterVO.setNightShift(shiftMasterDTO.isNightShift());
@@ -361,6 +402,207 @@ public class ShiftMasterServiceImpl implements ShiftMasterService{
 	@Override
 	public List<ShiftAssignVO> getAllShiftAssignByOrgId(Long orgId) {
 		return Optional.ofNullable(shiftAssignRepo.getAllShiftAssignByOrgId(orgId)).orElseGet(Collections::emptyList);
+	}
+	
+	//groupstructure
+	
+	@Transactional
+	@Override
+	public Map<String, Object> createUpdateGroup(@Valid GroupDTO groupDTO) throws ApplicationException {
+		String message;
+
+		GroupVO groupVO = null;
+
+		if (ObjectUtils.isEmpty(groupDTO.getId())) {
+
+			if (groupRepo.existsByGroupName(groupDTO.getGroupName())) {
+
+				String errorMessage = String.format("This Group: %s Already Exists in This Organization",
+						groupDTO.getGroupName());
+				throw new ApplicationException(errorMessage);
+
+			}
+
+			groupVO = new GroupVO();
+
+			groupVO.setCreatedBy(groupDTO.getCreatedBy());
+			groupVO.setUpdatedBy(groupDTO.getCreatedBy());
+
+			message = "Group Creation SuccessFully";
+
+		} else {
+
+			groupVO = groupRepo.findById(groupDTO.getId())
+					.orElseThrow(() -> new ApplicationException("Group  not found with id: " + groupDTO.getId()));
+
+			if (!groupVO.getGroupName().equals(groupDTO.getGroupName())) {
+
+				if (groupRepo.existsByGroupName(groupDTO.getGroupName())) {
+
+					String errorMessage = String.format("This Group: %s Already Exists in This Organization",
+							groupDTO.getGroupName());
+					throw new ApplicationException(errorMessage);
+
+				}
+			}
+			
+			 List<GroupDetailsVO> existingDetails = groupDetailsRepo.findByGroupVO(groupVO);
+			 groupDetailsRepo.deleteAll(existingDetails);
+
+			groupVO.setUpdatedBy(groupDTO.getCreatedBy());
+
+			message = "Group Updation SuccessFully";
+		}
+
+		groupVO = getGroupDTOFormGroupDTO(groupVO, groupDTO);
+		groupRepo.save(groupVO);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("message", message);
+		response.put("groupVO", groupVO);
+		return response;
+	}
+
+	private GroupVO getGroupDTOFormGroupDTO(GroupVO groupVO,  GroupDTO groupDTO) throws ApplicationException {
+
+		groupVO.setGroupName(groupDTO.getGroupName());
+		groupVO.setCancelRemark(groupDTO.getCancelRemark());
+		groupVO.setFinYear(groupDTO.getFinYear());
+		groupVO.setOrgId(groupDTO.getOrgId());
+		groupVO.setActive(groupDTO.isActive());
+		groupVO.setBranchName(groupDTO.getBranchName());
+		groupVO.setBranchCode(groupDTO.getBranchCode());
+
+
+		List<GroupDetailsVO> groupDetailsVOs = new ArrayList<>();
+
+		for (GroupDetailsDTO groupDetailsDTO : groupDTO.getGroupDetailsDTO()) {
+
+			GroupDetailsVO groupDetailsVO = new GroupDetailsVO();
+
+			groupDetailsVO.setCode(groupDetailsDTO.getCode());
+			groupDetailsVO.setDepartment(groupDetailsDTO.getDepartment());
+			groupDetailsVO.setName(groupDetailsDTO.getName());
+
+			groupDetailsVO.setGroupVO(groupVO);
+			groupDetailsVOs.add(groupDetailsVO);
+
+		}
+
+		groupVO.setGroupDetailsVO(groupDetailsVOs);
+
+		return groupVO;
+	}
+
+	@Override
+	public List<GroupVO> getGroupByOrgId(Long orgId) {
+		return groupRepo.getGroupByOrgId(orgId);
+	}
+
+	@Override
+	public Optional<GroupVO> getPreGroupById(Long id) {
+		return groupRepo.findById(id);
+	}
+	
+	//GroupsalaryStructure
+	
+	@Override
+	public Map<String, Object> createUpdateGroupSalaryStructure(GroupSalaryStructureDTO groupSalaryStructureDTO) throws ApplicationException {
+		GroupSalaryStructureVO groupSalaryStructureVO;
+	    String message;
+
+	    if (ObjectUtils.isNotEmpty(groupSalaryStructureDTO.getId())) {
+	        // Fetch existing ShiftAssignVO
+	    	groupSalaryStructureVO = groupSalaryStructureRepo.findById(groupSalaryStructureDTO.getId())
+	            .orElseThrow(() -> new ApplicationException("Invalid groupSalaryStructure Master details"));
+
+	        // Delete existing child records
+	        List<GroupSalaryEarningsVO> existingEarningDetails = groupSalaryEarningsRepo.findByGroupSalaryStructureVO(groupSalaryStructureVO);
+	        groupSalaryEarningsRepo.deleteAll(existingEarningDetails);
+	        
+	        List<GroupSalaryDeductionsVO> existingDeductionsDetails = groupSalaryDeductionsRepo.findByGroupSalaryStructureVO(groupSalaryStructureVO);
+	        groupSalaryDeductionsRepo.deleteAll(existingDeductionsDetails);
+
+	        groupSalaryStructureVO.setUpdatedBy(groupSalaryStructureDTO.getCreatedBy());
+	        message = "GroupSalaryStructure Updated Successfully";
+	    } else {
+	    	groupSalaryStructureVO = new GroupSalaryStructureVO();
+	    	groupSalaryStructureVO.setCreatedBy(groupSalaryStructureDTO.getCreatedBy());
+	    	groupSalaryStructureVO.setUpdatedBy(groupSalaryStructureDTO.getCreatedBy());
+	        message = "GroupSalaryStructure Created Successfully";
+	    }
+
+	    // Map DTO to VO
+	    createUpdateGroupSalaryStructureVOByGroupSalaryStructureDTO(groupSalaryStructureDTO, groupSalaryStructureVO);
+
+	    // Save parent with new child records
+	    groupSalaryStructureRepo.save(groupSalaryStructureVO);
+
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("groupSalaryStructureVO", groupSalaryStructureVO);
+	    response.put("message", message);
+	    return response;
+	}
+
+	private void createUpdateGroupSalaryStructureVOByGroupSalaryStructureDTO(GroupSalaryStructureDTO dto, GroupSalaryStructureVO vo) {
+	    vo.setGroupName(dto.getGroupName());
+	    vo.setOrgId(dto.getOrgId());
+	    vo.setBranchName(dto.getBranchName());
+	    vo.setBranchCode(dto.getBranchCode());
+	    vo.setFinYear(dto.getFinYear());
+	    vo.setActive(dto.isActive());
+
+	    List<GroupSalaryEarningsVO> detailsEarningsList = new ArrayList<>();
+
+	    if (dto.getGroupSalaryEarningsDTO() != null && !dto.getGroupSalaryEarningsDTO().isEmpty()) {
+	        for (GroupSalaryEarningsDTO detailDTO : dto.getGroupSalaryEarningsDTO()) {
+	        	GroupSalaryEarningsVO detailVO = new GroupSalaryEarningsVO();
+
+	            detailVO.setHeading(detailDTO.getHeading());
+	            detailVO.setAmount(detailDTO.getAmount());
+
+	            detailVO.setGroupSalaryStructureVO(vo); // Set parent reference
+	            detailsEarningsList.add(detailVO);
+	        }
+	    }
+
+	    
+	    List<GroupSalaryDeductionsVO> detailsDeductionList = new ArrayList<>();
+
+	    if (dto.getGroupSalaryDeductionsDTO() != null && !dto.getGroupSalaryDeductionsDTO().isEmpty()) {
+	        for (GroupSalaryDeductionsDTO detailDTO : dto.getGroupSalaryDeductionsDTO()) {
+	        	GroupSalaryDeductionsVO detailVO = new GroupSalaryDeductionsVO();
+
+	            detailVO.setHeading(detailDTO.getHeading());
+	            detailVO.setAmount(detailDTO.getAmount());
+
+	            detailVO.setGroupSalaryStructureVO(vo); // Set parent reference
+	            detailsDeductionList.add(detailVO);
+	        }
+	    }
+	    
+	    vo.setGroupSalaryEarningsVO(detailsEarningsList);
+	    vo.setGroupSalaryDeductionsVO(detailsDeductionList);
+
+	}
+	
+	@Override
+	public List<GroupSalaryStructureVO> getGroupSalaryStructureByOrgId(Long orgId) {
+		return Optional.ofNullable(groupSalaryStructureRepo.getGroupSalaryStructureByOrgId(orgId)).orElseGet(Collections::emptyList);
+	}
+
+
+
+	@Override
+	public Optional<GroupSalaryStructureVO> getGroupSalaryStructureById(Long id) {
+		// TODO Auto-generated method stub
+		return Optional.ofNullable(groupSalaryStructureRepo.getGroupSalaryStructureById(id))
+				.orElseThrow(() -> new RuntimeException("GroupSalaryStructure not found for ID: " + id));
+	}
+	
+	@Override
+	public List<GroupVO> getGroupMasterByOrgIdAndGroup(Long orgId,String groupName) {
+		return groupRepo.getGroupMasterByOrgIdAndGroup(orgId,groupName);
 	}
 	
 	

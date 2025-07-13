@@ -20,7 +20,7 @@ public class ShiftMasterDTO {
 	private String shiftCode;
 	private String shift;
 	private String inTime;
-	private String outDate;
+	private String outTime;
 	private String breakTime;
 	private String graceTime;
 	private boolean nightShift;
