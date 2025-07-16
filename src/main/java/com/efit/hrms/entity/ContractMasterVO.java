@@ -50,7 +50,14 @@ public class ContractMasterVO {
 	private String panNo;
 	@Column(name = "gst")
 	private String gst;
-	
+	@Column(name = "email")
+	private String email;
+	@Column(name = "contractvalue")
+	private int contractValue;
+	@Column(name = "contracttype")
+	private String contractType;
+	@Column(name = "renewalrequired")
+	private boolean renewalRequired;
 	
 	@Column(name = "orgid")
 	private long orgId;

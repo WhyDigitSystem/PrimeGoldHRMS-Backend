@@ -195,6 +195,8 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 						autoCheckout.setLocationAddress(userNameDTO.getLocationAddress());
 						autoCheckout.setEntryTime(LocalTime.MIDNIGHT);
 						autoCheckout.setOrgId(userNameDTO.getOrgId());
+						autoCheckout.setAttendanceMode("SYSTEM");
+
 						LocalDateTime lastCheckInCreatedOn = lastCheckIn.getCreatedOn(); // Get the createdOn of last
 																							// check-in
 						if (lastCheckInCreatedOn != null) {
@@ -243,6 +245,8 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			todayCheck.setLongitude(userNameDTO.getLongitude());
 			todayCheck.setWorkFromHome(userNameDTO.getWorkFromHome());
 			todayCheck.setLocationAddress(userNameDTO.getLocationAddress());
+			todayCheck.setAttendanceMode("SYSTEM");
+
 			checkInRepo.save(todayCheck);
 
 			CheckInStatusVO statusUpdate = new CheckInStatusVO();
@@ -712,12 +716,13 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			Map<String, Object> map = new HashMap<>();
 			map.put("checkInStatusId", ch[0] != null ? ch[0].toString() : "");
 			map.put("branch", ch[1] != null ? ch[1].toString() : "");
-			map.put("empCode", ch[2] != null ? ch[2].toString() : "");
-			map.put("orgId", ch[3] != null ? ch[3].toString() : "");
-			map.put("status", ch[4] != null ? ch[4].toString() : "");
-			map.put("empName", ch[5] != null ? ch[5].toString() : "");
+			map.put("empName", ch[2] != null ? ch[2].toString() : "");
+			map.put("empCode", ch[3] != null ? ch[3].toString() : "");
+			map.put("orgId", ch[4] != null ? ch[4].toString() : "");
+			map.put("status", ch[5] != null ? ch[5].toString() : "");
 			map.put("latestIn", ch[6] != null ? ch[6].toString() : "");
 			map.put("latestOut", ch[7] != null ? ch[7].toString() : "");
+
 			mappedList.add(map);
 		}
 		return mappedList;

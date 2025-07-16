@@ -47,7 +47,8 @@ public class CheckInVO {
 	private String status;
 	@Column(name = "orgid")
 	private long orgId;
-
+	@Column(name = "attendancemode")
+	private String attendanceMode;
 	@Column(name = "screencode", length = 5)
 	private String screenCode = "CIO";
 

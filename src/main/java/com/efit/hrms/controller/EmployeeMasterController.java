@@ -217,7 +217,7 @@ public class EmployeeMasterController extends BaseController{
 	public ResponseEntity<ResponseDTO> getPfAmountAndEsiAmountByEmployee(
 	        @RequestParam Long orgId,
 	        @RequestParam String employeeCode,
-	        @RequestParam String branchCode,
+	        @RequestParam String branch,
 	        @RequestParam BigDecimal sumOfEarnings) {
 
 	    String methodName = "getPfAmountAndEsiAmountByEmployee()";
@@ -227,7 +227,7 @@ public class EmployeeMasterController extends BaseController{
 	    ResponseDTO responseDTO;
 
 	    try {
-	        List<PfEsiAmountDTO> taxList = employeeMasterService.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branchCode, sumOfEarnings);
+	        List<PfEsiAmountDTO> taxList = employeeMasterService.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branch, sumOfEarnings);
 
 	        responseObjectsMap.put("taxDetails", taxList);
 	        responseDTO = createServiceResponse(responseObjectsMap);
@@ -572,7 +572,7 @@ public class EmployeeMasterController extends BaseController{
 
 	@GetMapping("/getLeaveDetailsforSalaryProcess")
 	public ResponseEntity<ResponseDTO> getLeaveDetailsforSalaryProcess(@RequestParam Long orgId,
-			@RequestParam Long month, @RequestParam String year) {
+			@RequestParam Long month, @RequestParam String year,@RequestParam String department,@RequestParam String branch) {
 
 		String methodName = "getLeaveDetailsforSalaryProcess()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -582,7 +582,7 @@ public class EmployeeMasterController extends BaseController{
 		List<Map<String, Object>> salaryProcessVO;
 
 		try {
-			salaryProcessVO = employeeMasterService.getLeaveDetailsforSalaryProcess(orgId, month, year);
+			salaryProcessVO = employeeMasterService.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch);
 			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "salaryProcess details retrieved successfully");
 			responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
 			responseDTO = createServiceResponse(responseObjectsMap);

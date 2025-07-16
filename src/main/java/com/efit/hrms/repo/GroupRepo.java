@@ -20,4 +20,6 @@ public interface GroupRepo extends JpaRepository<GroupVO, Long> {
 	@Query(nativeQuery = true, value = "select * from groupmaster where orgid=?1 and groupname=?2")
 	List<GroupVO> getGroupMasterByOrgIdAndGroup(Long orgId, String groupName);
 
+	List<GroupVO> findByGroupNameAndOrgIdAndBranchCode(String groupName, Long orgId, String branchCode);
+
 }

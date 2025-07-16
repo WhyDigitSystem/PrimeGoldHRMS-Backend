@@ -15,7 +15,7 @@ public interface GroupSalaryStructureRepo extends JpaRepository<GroupSalaryStruc
 	@Query(nativeQuery = true, value = "select * from groupsalarystructure where orgid=?1")
 	List<GroupSalaryStructureVO> getGroupSalaryStructureByOrgId(Long orgId);
 
-	@Query(nativeQuery = true, value = "select * from groupsalarystructure where orgid=?1")
+	@Query(nativeQuery = true, value = "select * from groupsalarystructure where groupsalarystructureid=?1")
 	Optional<GroupSalaryStructureVO> getGroupSalaryStructureById(Long id);
 
 }

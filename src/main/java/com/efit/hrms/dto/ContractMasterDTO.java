@@ -2,6 +2,8 @@ package com.efit.hrms.dto;
 
 import java.time.LocalDate;
 
+import javax.persistence.Column;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,7 +25,12 @@ public class ContractMasterDTO {
 	private String panNo;
 	private String gst;
 	
-	
+	private String email;
+	private int contractValue;
+	private String contractType;
+	private boolean renewalRequired;
+	private String remarks;
+
 	private long orgId;
 	private String branchCode;
 	private String branch;

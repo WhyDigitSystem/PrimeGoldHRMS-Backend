@@ -57,7 +57,7 @@ public interface LeaveProcessService {
 	
 //	Map<String, Object> createUpdateLeaveProcess(@Valid LeaveProcessDTO leaveProcessDTO) throws ApplicationException;
 
-	List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId);
+	List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId, String department, String branch);
 
 	List<Map<String, Object>> getCheckInAndOutDaysForLeaveProcess(String fromDate, String toDate, Long orgId,
 			String branchCode, String empCode);

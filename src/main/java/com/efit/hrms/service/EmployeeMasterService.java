@@ -61,7 +61,7 @@ public interface EmployeeMasterService {
 
 	List<Map<String, Object>> getSalaryStructureForSalaryProcess(Long orgId, String employeeCode);
 
-	List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year);
+	List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch);
 
 //	List<Map<String, Object>> getNetPayForSalaryProcess( BigDecimal grossPay,
 //			BigDecimal sumOfDetection);

@@ -350,7 +350,7 @@ public class LeaveProcessController extends BaseController {
 
 	@GetMapping("/getLeaveDetailsForLeaveProcess")
 	public ResponseEntity<ResponseDTO> getLeaveDetailsForLeaveProcess(@RequestParam String fromDate,
-			@RequestParam String toDate, @RequestParam Long orgId) {
+			@RequestParam String toDate, @RequestParam Long orgId,@RequestParam String department,@RequestParam String branch) {
 
 		String methodName = "getLeaveDetailsForLeaveProcess()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -360,7 +360,7 @@ public class LeaveProcessController extends BaseController {
 		List<Map<String, Object>> leaveDetailsList;
 
 		try {
-			leaveDetailsList = leaveProcessService.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId);
+			leaveDetailsList = leaveProcessService.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId,department,branch);
 			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Leave details retrieved successfully");
 			responseObjectsMap.put("leaveProcessVO", leaveDetailsList); // ✅ Correct key name
 			responseDTO = createServiceResponse(responseObjectsMap);

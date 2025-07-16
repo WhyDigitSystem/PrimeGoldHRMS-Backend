@@ -458,6 +458,204 @@ public class MasterServiceImpl implements MasterService {
 
 		return employeeVO;
 	}
+	
+	
+//	@Override
+//	@Transactional
+//	public Map<String, Object> createEmployee(EmployeeDTO employeeDTO) throws ApplicationException {
+//	    EmployeeVO employeeVO;
+//	    String message;
+//
+//	    if (ObjectUtils.isEmpty(employeeDTO.getId())) {
+//	        // Create new employee
+//	        if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+//	            throw new ApplicationException("This EmployeeCode: " + employeeDTO.getEmployeeCode() + " Already Exists in This Organization");
+//	        }
+//	        employeeVO = new EmployeeVO();
+//	        employeeVO.setCreatedBy(employeeDTO.getCreatedBy());
+//	        employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
+//	        message = "Employee Creation Successfully";
+//	    } else {
+//	        // Update existing employee
+//	        employeeVO = employeeRepo.findById(employeeDTO.getId())
+//	                .orElseThrow(() -> new ApplicationException("ID is Not Found Any Information: " + employeeDTO.getId()));
+//
+//	        employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
+//
+//	        if (!employeeVO.getEmployeeCode().equalsIgnoreCase(employeeDTO.getEmployeeCode())) {
+//	            if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+//	                throw new ApplicationException("This EmployeeCode: " + employeeDTO.getEmployeeCode() + " Already Exists in This Organization");
+//	            }
+//	            employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+//	        }
+//	        message = "Employee Update Successfully";
+//	    }
+//
+//	    getEmployeeVOFromEmployeeDTO(employeeVO, employeeDTO);
+//	    employeeRepo.save(employeeVO);
+//
+//	    Map<String, Object> response = new HashMap<>();
+//	    response.put("message", message);
+//	    response.put("createdEmployeeVO", employeeVO);
+//	    return response;
+//	}
+//
+//	private EmployeeVO getEmployeeVOFromEmployeeDTO(EmployeeVO employeeVO, EmployeeDTO employeeDTO)
+//	        throws ApplicationException {
+//
+//	    // Basic employee mapping
+//	    employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+//	    employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
+//	    employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
+//	    employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
+//	    employeeVO.setGender(employeeDTO.getGender());
+//	    employeeVO.setBranch(employeeDTO.getBranch());
+//	    employeeVO.setBranchCode(employeeDTO.getBranchCode());
+//	    employeeVO.setFlagValue(employeeDTO.getFlagValue());
+//	    employeeVO.setFlag(employeeDTO.isFlag());
+//
+//	    // Update UserVO
+//	    UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//	    if (userVO != null) {
+//	        userVO.setDepartment(employeeDTO.getDepartment());
+//	        userVO.setDesignation(employeeDTO.getDesignation());
+//	        userRepo.save(userVO);
+//	    }
+//
+//	    employeeVO.setDepartment(employeeDTO.getDepartment());
+//	    employeeVO.setDesignation(employeeDTO.getDesignation());
+//	    employeeVO.setDateOfBirth(employeeDTO.getDateOfBirth());
+//	    employeeVO.setJoiningDate(employeeDTO.getJoiningDate());
+//	    employeeVO.setEmail(employeeDTO.getEmail());
+//	    employeeVO.setBloodGroup(employeeDTO.getBloodGroup());
+//	    employeeVO.setMobileNo(employeeDTO.getMobileNo());
+//	    employeeVO.setAlternativeMobileNo(employeeDTO.getAlternativeMobileNo());
+//	    employeeVO.setAadharNo(employeeDTO.getAadharNo());
+//	    employeeVO.setPanNo(employeeDTO.getPanNo());
+//	    employeeVO.setAccountNo(employeeDTO.getAccountNo());
+//	    employeeVO.setBankName(employeeDTO.getBankName());
+//	    employeeVO.setIfscCode(employeeDTO.getIfscCode());
+//	    employeeVO.setGrade(employeeDTO.getGrade());
+//	    employeeVO.setTeam(employeeDTO.getTeam());
+//	    employeeVO.setReportingPerson(employeeDTO.getReportingPerson());
+//	    employeeVO.setReportingPersonEmail(employeeDTO.getReportingPersonEmail());
+//	    employeeVO.setReportingPersonCode(employeeDTO.getReportingPersonCode());
+//	    employeeVO.setReportingRole(employeeDTO.getReportingRole());
+//	    employeeVO.setResignDate(employeeDTO.getResignDate());
+//	    employeeVO.setPfFlag(employeeDTO.isPfFlag());
+//	    employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
+//	    employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
+//	    employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
+//	    employeeVO.setOrgId(employeeDTO.getOrgId());
+//	    employeeVO.setActive(employeeDTO.isActive());
+//	    employeeVO.setUanNo(employeeDTO.getUanNo());
+//
+//	    // Update UserLoginRolesVO
+//	    UserLoginRolesVO userLoginRolesVO = userLoginRolesRepo
+//	            .findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//	    if (userLoginRolesVO != null) {
+//	        userLoginRolesVO.setEndDate(employeeDTO.getResignDate());
+//	        userLoginRolesRepo.save(userLoginRolesVO);
+//	    }
+//
+//	    // Fetch and validate leaves
+//	    List<EmployeeLeaveVO> existingLeaves = employeeLeaveRepo
+//	            .findByEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//
+//	    Set<String> existingLeaveCodes = existingLeaves.stream()
+//	            .map(EmployeeLeaveVO::getLeaveCode)
+//	            .collect(Collectors.toSet());
+//
+//	    Set<String> newLeaveCodes = new HashSet<>();
+//	    for (EmployeeLeaveDTO leaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
+//	        String leaveCode = leaveDTO.getLeaveCode();
+//
+//	        if (newLeaveCodes.contains(leaveCode)) {
+//	            throw new ApplicationException("Duplicate Leave Entry Found in Request: " + leaveCode);
+//	        }
+//	        newLeaveCodes.add(leaveCode);
+//
+//	        if (!existingLeaveCodes.contains(leaveCode)
+//	                && employeeLeaveRepo.existsByLeaveCodeAndEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
+//	                        leaveCode, employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+//	            throw new ApplicationException("Duplicate Leave Entry Found in DB: " + leaveCode);
+//	        }
+//	    }
+//
+//	    // If updating, remove old leaves
+//	    if (employeeDTO.getId() != null) {
+//	        employeeLeaveRepo.deleteAll(existingLeaves);
+//	        List<LeaveBalanceVO> oldBalances = leaveBalanceRepo
+//	                .findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//	        leaveBalanceRepo.deleteAll(oldBalances);
+//	    }
+//
+//	    // Create and map leave records
+//	    List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+//	    List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+//
+//	    for (EmployeeLeaveDTO leaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
+//	        // EmployeeLeaveVO
+//	        EmployeeLeaveVO empLeave = new EmployeeLeaveVO();
+//	        empLeave.setLeaveCode(leaveDTO.getLeaveCode());
+//	        empLeave.setLeaveType(leaveDTO.getLeaveType());
+//	        empLeave.setTotalLeave(leaveDTO.getTotalLeave());
+//	        empLeave.setEffectiveFrom(leaveDTO.getEffectiveFrom());
+//	        empLeave.setEmployeeVO(employeeVO);
+//	        employeeLeaveVOs.add(empLeave);
+//
+//	        // LeaveBalanceVO
+//	        LeaveBalanceVO leaveBal = new LeaveBalanceVO();
+//	        leaveBal.setLeaveCode(leaveDTO.getLeaveCode());
+//	        leaveBal.setLeaveType(leaveDTO.getLeaveType());
+//	        leaveBal.setTotalLeave(leaveDTO.getTotalLeave());
+//	        leaveBal.setEmployeeName(employeeDTO.getEmployeeName());
+//	        leaveBal.setEmployeeCode(employeeDTO.getEmployeeCode());
+//	        leaveBal.setOrgId(employeeDTO.getOrgId());
+//	        leaveBal.setBranch(employeeDTO.getBranch());
+//	        leaveBal.setBranchCode(employeeDTO.getBranchCode());
+//	        leaveBal.setLeaveStatus("Assigned");
+//	        leaveBalanceVOs.add(leaveBal);
+//	    }
+//
+//	    leaveBalanceRepo.saveAll(leaveBalanceVOs);
+//	    employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+//
+//	    // Save to Aemployee if flag is false
+//	    if (!employeeDTO.isFlag()) {
+//	        AemployeeVO aemp = aEmployeeRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//
+//	        if (aemp == null) {
+//	            aemp = new AemployeeVO();
+//	            BeanUtils.copyProperties(employeeVO, aemp);
+//	            aemp.setId(null);
+//	        } else {
+//	            BeanUtils.copyProperties(employeeVO, aemp, "id", "aemployeeLeaveVO");
+//	        }
+//
+//	        // Delete existing Aemployee leaves
+//	        List<AemployeeLeaveVO> oldALeaves = aEmployeeLeaveRepo
+//	                .findByAemployeeVO_EmployeeCodeAndAemployeeVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//	        aEmployeeLeaveRepo.deleteAll(oldALeaves);
+//
+//	        // Map and assign new Aemployee leaves
+//	        List<AemployeeLeaveVO> aLeaves = new ArrayList<>();
+//	        for (EmployeeLeaveVO empLeave : employeeVO.getEmployeeLeaveVO()) {
+//	            AemployeeLeaveVO aleave = new AemployeeLeaveVO();
+//	            BeanUtils.copyProperties(empLeave, aleave);
+//	            aleave.setId(null);
+//	            aleave.setAemployeeVO(aemp);
+//	            aLeaves.add(aleave);
+//	        }
+//
+//	        aemp.setAemployeeLeaveVO(aLeaves);
+//	        aEmployeeRepo.save(aemp);
+//	    }
+//
+//	    return employeeVO;
+//	}
+
+	
 
 	@Override
 	public EmployeeVO uploadEmployeeImageInBloob(MultipartFile file, Long id) throws IOException, java.io.IOException {
@@ -805,7 +1003,7 @@ public class MasterServiceImpl implements MasterService {
 	            balanceVO.setOrgId(dto.getOrgId());
 	            balanceVO.setBranch(dto.getBranch());
 	            balanceVO.setBranchCode(dto.getBranchCode());
-	            balanceVO.setLeaveStatus("Assigned");
+	            balanceVO.setLeaveStatus("ASSIGNED");
 	            leaveBalanceVOs.add(balanceVO);
 	        }
 
