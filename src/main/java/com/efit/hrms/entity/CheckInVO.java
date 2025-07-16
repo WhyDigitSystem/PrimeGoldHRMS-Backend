@@ -62,6 +62,7 @@ public class CheckInVO {
 	@Column(name = "approveon")
 	private String approveOn;
 	
+	
 	@Column(name = "notify")
 	private String notify;
 	@Column(name = "notifycode")
