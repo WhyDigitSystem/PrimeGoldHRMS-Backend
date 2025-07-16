@@ -20,5 +20,8 @@ public interface DepartmentRepo extends JpaRepository<DepartmentVO, Long>{
 
 	boolean existsByDepartmentCodeAndOrgId(String departmentCode, Long orgId);
 
+	
+	DepartmentVO findByOrgIdAndDepartmentName(Long orgId, String department);
+
 
 }

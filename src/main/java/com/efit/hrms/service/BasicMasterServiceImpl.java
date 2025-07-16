@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
@@ -36,6 +39,9 @@ import com.efit.hrms.dto.CalendarDTO;
 import com.efit.hrms.dto.CheckInOutAdjustmentDTO;
 import com.efit.hrms.dto.CheckinRequestDTO;
 import com.efit.hrms.dto.CircularDTO;
+import com.efit.hrms.dto.EmployeeCodeConfigDTO;
+import com.efit.hrms.dto.EmployeeDTO;
+import com.efit.hrms.dto.EmployeeDTOnew;
 import com.efit.hrms.dto.HolidayDTO;
 import com.efit.hrms.dto.PollDetailsDTO;
 import com.efit.hrms.dto.PollVoteDTO;
@@ -44,12 +50,15 @@ import com.efit.hrms.dto.PraiseDTO;
 import com.efit.hrms.dto.TaskDTO;
 import com.efit.hrms.dto.UserNameDTO;
 import com.efit.hrms.entity.AnnouncementVO;
+import com.efit.hrms.entity.BranchVO;
 import com.efit.hrms.entity.CalendarVO;
 import com.efit.hrms.entity.CheckInOutAdjustmentVO;
 import com.efit.hrms.entity.CheckInStatusVO;
 import com.efit.hrms.entity.CheckInVO;
 import com.efit.hrms.entity.CircularVO;
 import com.efit.hrms.entity.CompanyVO;
+import com.efit.hrms.entity.DepartmentVO;
+import com.efit.hrms.entity.EmployeeCodeConfigVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.HolidayVO;
 import com.efit.hrms.entity.LocationUtils;
@@ -61,12 +70,15 @@ import com.efit.hrms.entity.SalaryProcessVO;
 import com.efit.hrms.entity.TaskVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AnnouncementRepo;
+import com.efit.hrms.repo.BranchRepo;
 import com.efit.hrms.repo.CalendarRepo;
 import com.efit.hrms.repo.CheckInOutAdjustmentRepo;
 import com.efit.hrms.repo.CheckInRepo;
 import com.efit.hrms.repo.CheckInStatusRepo;
 import com.efit.hrms.repo.CircularRepo;
 import com.efit.hrms.repo.CompanyRepo;
+import com.efit.hrms.repo.DepartmentRepo;
+import com.efit.hrms.repo.EmployeeCodeConfigRepo;
 import com.efit.hrms.repo.EmployeeRepo;
 import com.efit.hrms.repo.HolidayRepo;
 import com.efit.hrms.repo.PollDetailsRepo;
@@ -87,6 +99,13 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 	@Autowired
 	HolidayRepo holidayRepo;
+	
+	@Autowired
+	DepartmentRepo departmentRepo;
+	
+	@Autowired
+	BranchRepo branchRepo;
+	
 
 	@Autowired
 	CircularRepo circularRepo;
@@ -123,6 +142,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 	@Autowired
 	CompanyRepo companyRepo;
+	
+	@Autowired
+	EmployeeCodeConfigRepo employeeCodeConfigRepo;
 
 	@Override
 	@Transactional
@@ -823,7 +845,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 				&& "Day".equalsIgnoreCase(getStringCellValue1(headerRow.getCell(2)))
 				&& "BranchCode".equalsIgnoreCase(getStringCellValue1(headerRow.getCell(3)))
 				&& "BranchName".equalsIgnoreCase(getStringCellValue1(headerRow.getCell(4)))
-				&& "Festival ".equalsIgnoreCase(getStringCellValue1(headerRow.getCell(5)))
+				&& "Festival".equalsIgnoreCase(getStringCellValue1(headerRow.getCell(5)))
 				&& "Active".equalsIgnoreCase(getStringCellValue1(headerRow.getCell(6)))
 				&& "OrgId".equals(getStringCellValue1(headerRow.getCell(7)));
 
@@ -1919,5 +1941,85 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 		return calendarVO;
 	}
+
+	@Override
+	public EmployeeCodeConfigVO createEmployeeCodeConfig(EmployeeCodeConfigDTO employeeCodeConfigDTO) {
+		
+		EmployeeCodeConfigVO employeeCodeConfigVO= new EmployeeCodeConfigVO();
+		employeeCodeConfigVO.setOrgId(employeeCodeConfigDTO.getOrgId());
+		employeeCodeConfigVO.setCompany(employeeCodeConfigDTO.getCompany());
+		employeeCodeConfigVO.setCompanyCode(employeeCodeConfigDTO.getCompanyCode());
+		employeeCodeConfigVO.setBranchCode(employeeCodeConfigDTO.getBranchCode());
+		employeeCodeConfigVO.setDepartmentCode(employeeCodeConfigDTO.getDepartmentCode());
+		employeeCodeConfigVO.setYear(employeeCodeConfigDTO.getYear());
+		employeeCodeConfigVO.setSeq(employeeCodeConfigDTO.getSeq());
+		employeeCodeConfigVO.setSeqDigit(employeeCodeConfigDTO.getSeqDigit());
+		employeeCodeConfigVO.setCodePattern(employeeCodeConfigDTO.getCodePattern());
+		employeeCodeConfigRepo.save(employeeCodeConfigVO);
+		return employeeCodeConfigVO;
+	}
+	
+	
+	
+	@Override
+	@Transactional
+    public String generateEmployeeCodeByOrgId(EmployeeDTOnew employeeDTO) {
+        // Step 1: Fetch config for this org
+        EmployeeCodeConfigVO config = employeeCodeConfigRepo.findByOrgId(employeeDTO.getOrgId())
+                .orElseThrow(() -> new RuntimeException("No code config found for orgId: " + employeeDTO.getOrgId()));
+
+        // Step 2: Increment seq and persist
+        int nextSeq = config.getLastSeq() + 1;
+        config.setLastSeq(nextSeq);
+        employeeCodeConfigRepo.save(config);
+        CompanyVO companyVO= companyRepo.findById(employeeDTO.getOrgId()).get();
+        DepartmentVO departmentVO=departmentRepo.findByOrgIdAndDepartmentName(employeeDTO.getOrgId(),employeeDTO.getDepartment());
+        BranchVO branchVO= branchRepo.findByOrgIdAndBranch(employeeDTO.getOrgId(),employeeDTO.getBranch());
+        int digitCount = config.getSeqDigit();
+
+        // Step 3: Prepare value map
+        Map<String, Object> values = new HashMap<>();
+        values.put("companyCode", companyVO.getCompanyCode());
+        values.put("departmentCode", departmentVO.getDepartmentCode());
+        values.put("branchCode", branchVO.getBranchCode());
+        values.put("year", Year.now().getValue());
+        String paddedSeq = String.format("%0" + digitCount + "d", nextSeq);
+        values.put("seq", paddedSeq);
+        
+        // Step 4: Replace pattern dynamically
+        String code= resolvePatternWithSmartSkipping(config.getCodePattern(), values);
+        System.out.println("EmployeeCode: "+code);
+        return code;
+    }
+
+    private String resolvePatternWithSmartSkipping(String pattern, Map<String, Object> values) {
+        Pattern regex = Pattern.compile("\\$\\{(.*?)}");
+        Matcher matcher = regex.matcher(pattern);
+
+        StringBuilder result = new StringBuilder();
+        int lastIndex = 0;
+        while (matcher.find()) {
+            String placeholder = matcher.group(1); // e.g., companyCode
+            Object value = values.get(placeholder);
+
+            // Extract separator text before placeholder
+            String separator = pattern.substring(lastIndex, matcher.start());
+
+            // Include only if value is not zero
+            if (value != null && !(value instanceof Integer && (Integer) value == 0)) {
+                result.append(separator).append(value);
+            }
+
+            lastIndex = matcher.end();
+        }
+
+        // Append trailing part after last placeholder
+        result.append(pattern.substring(lastIndex));
+
+        // Optional cleanup
+        return result.toString()
+                     .replaceAll("[-_/\\.]{2,}", "-")        // prevent multiple symbols
+                     .replaceAll("^[-_/\\.]+|[-_/\\.]+$", ""); // trim ends
+    }
 
 }
