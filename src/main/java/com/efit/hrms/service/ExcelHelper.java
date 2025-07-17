@@ -75,12 +75,17 @@ public class ExcelHelper {
                     dto.setPfPercentage(parseBigDecimal(row.getCell(32)));
                     dto.setFlag(parseBoolean(row.getCell(33)));
                     dto.setFlagValue(getStringValue(row.getCell(34)));
+                    dto.setContractor(getStringValue(row.getCell(35)));
+                    dto.setContactPerson(getStringValue(row.getCell(36)));
+                    dto.setContactNumber(getStringValue(row.getCell(37)));
+                    dto.setContactEmail(getStringValue(row.getCell(38)));
+
 
                     // Leave section now starts at cell 35
                     List<EmployeeLeaveDTO> leaveList = new ArrayList<>();
-                    String[] codes = getSafeSplit(row, 35);
-                    String[] types = getSafeSplit(row, 36);
-                    String[] totals = getSafeSplit(row, 37);
+                    String[] codes = getSafeSplit(row, 39);
+                    String[] types = getSafeSplit(row, 40);
+                    String[] totals = getSafeSplit(row, 41);
 
                     for (int j = 0; j < codes.length; j++) {
                         if (codes[j] == null || codes[j].trim().isEmpty()) continue;

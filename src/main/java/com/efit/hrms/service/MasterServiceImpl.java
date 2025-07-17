@@ -28,7 +28,9 @@ import com.efit.hrms.dto.ProjectMasterDTO;
 import com.efit.hrms.entity.AemployeeLeaveVO;
 import com.efit.hrms.entity.AemployeeVO;
 import com.efit.hrms.entity.BranchVO;
+import com.efit.hrms.entity.DepartmentVO;
 import com.efit.hrms.entity.DesignationLeaveVO;
+import com.efit.hrms.entity.DesignationVO;
 import com.efit.hrms.entity.EmployeeLeaveVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.LeaveBalanceVO;
@@ -39,7 +41,9 @@ import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AemployeeLeaveRepo;
 import com.efit.hrms.repo.AemployeeRepo;
 import com.efit.hrms.repo.BranchRepo;
+import com.efit.hrms.repo.DepartmentRepo;
 import com.efit.hrms.repo.DesignationLeaveRepo;
+import com.efit.hrms.repo.DesignationRepo;
 import com.efit.hrms.repo.EmployeeLeaveRepo;
 import com.efit.hrms.repo.EmployeeRepo;
 import com.efit.hrms.repo.LeaveBalanceRepo;
@@ -84,6 +88,12 @@ public class MasterServiceImpl implements MasterService {
 	AemployeeRepo aEmployeeRepo;
 	@Autowired
 	AemployeeLeaveRepo aEmployeeLeaveRepo;
+	
+	@Autowired
+	DepartmentRepo departmentRepo;
+	
+	@Autowired
+	DesignationRepo designationRepo;
 
 	// Branch
 
@@ -336,6 +346,12 @@ public class MasterServiceImpl implements MasterService {
 		employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
 		employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
 		employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
+		employeeVO.setContractor(employeeDTO.getContractor());
+		employeeVO.setContactPerson(employeeDTO.getContactPerson());
+		employeeVO.setContactNumber(employeeDTO.getContactNumber());
+		employeeVO.setContactEmail(employeeDTO.getContactEmail());
+		
+
 
 		UserLoginRolesVO userLoginRolesVO = userLoginRolesRepo
 				.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
@@ -954,8 +970,23 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setCreatedBy(dto.getCreatedBy());
 	        employeeVO.setUpdatedBy(dto.getCreatedBy());
 	        employeeVO.setDateOfBirth(dto.getDateOfBirth());
-	        employeeVO.setDepartment(dto.getDepartment());
-	        employeeVO.setDesignation(dto.getDesignation());
+	        
+	        DepartmentVO departmentVO =departmentRepo.findByOrgIdAndDepartmentName(orgId, dto.getDepartment());
+	        
+	        if(departmentVO!=null) {
+		        employeeVO.setDepartment(dto.getDepartment());
+	        }else {
+		        throw new ApplicationException("Please Enter Available DepartmentName");
+	        }
+	        
+	        DesignationVO designationVO =designationRepo.findByOrgIdAndDesignationName(orgId, dto.getDesignation());
+
+	        if(designationVO!=null) {
+		        employeeVO.setDesignation(dto.getDesignation());	
+	        }else {
+		        throw new ApplicationException("Please Enter Available DesignationName");
+	        }
+	        
 	        employeeVO.setEmail(dto.getEmail());
 	        employeeVO.setEmployeeAddress(dto.getEmployeeAddress());
 	        employeeVO.setEmployeeCode(dto.getEmployeeCode());
@@ -981,6 +1012,11 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setEsiPercentage(dto.getEsiPercentage());
 	        employeeVO.setFlag(dto.isFlag());
 	        employeeVO.setFlagValue(dto.getFlagValue());
+	        employeeVO.setContractor(dto.getContractor());
+	        employeeVO.setContactPerson(dto.getContactPerson());
+	        employeeVO.setContactNumber(dto.getContactNumber());
+	        employeeVO.setContactEmail(dto.getContactEmail());
+
 
 	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
 	        List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();

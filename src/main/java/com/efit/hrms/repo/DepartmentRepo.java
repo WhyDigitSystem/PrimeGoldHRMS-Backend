@@ -24,4 +24,5 @@ public interface DepartmentRepo extends JpaRepository<DepartmentVO, Long>{
 	DepartmentVO findByOrgIdAndDepartmentName(Long orgId, String department);
 
 
+
 }

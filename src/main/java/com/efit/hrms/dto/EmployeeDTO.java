@@ -43,6 +43,11 @@ public class EmployeeDTO {
 	private String flagValue;
 	private boolean flag;
 
+	
+	private String contractor;
+	private String contactPerson;
+	private String contactNumber;
+	private String contactEmail;
 
 //    private String reportingName;
     private String reportingRole;

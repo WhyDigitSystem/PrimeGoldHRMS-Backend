@@ -38,10 +38,10 @@ public class ShiftAssignDetailsVO {
 	private String employeeName;
 	@Column(name = "shifttype")
 	private String shiftType;
-	@Column(name = "starttime")
-	private String startTime;
-	@Column(name = "endtime")
-	private String endTime;
+	@Column(name = "intime")
+	private String inTime;
+	@Column(name = "outtime")
+	private String outTime;
 	
 	@Column(name = "hours")
 	private String hours;

@@ -15,6 +15,7 @@ import com.efit.hrms.dto.OtMasterDTO;
 import com.efit.hrms.dto.ShiftAssignDTO;
 import com.efit.hrms.dto.ShiftMasterDTO;
 import com.efit.hrms.entity.ContractMasterVO;
+import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.GroupSalaryStructureVO;
 import com.efit.hrms.entity.GroupVO;
 import com.efit.hrms.entity.OtMasterVO;
@@ -70,5 +71,13 @@ public interface ShiftMasterService {
 	Optional<GroupSalaryStructureVO> getGroupSalaryStructureById(Long id);
 
 	List<GroupVO> getGroupMasterByOrgIdAndGroup(Long orgId, String groupName);
+
+	//SHIFTASSIGNFILTER
+	List<EmployeeVO> getShiftAssignByOrgIdAndType(Long orgId, String type, String contractor, String department);
+
+	List<ShiftMasterVO> getAllShiftMasterByOrgIdAndShiftAndBranchCode(Long orgId, String shift, String shiftCode, String branchCode);
+
+	List<Map<String, Object>> getAllEmployeeAndShiftMasterDetails(Long orgId, String type, String contractor,
+			String department, String shift, String shiftCode, String branchCode);
 
 }

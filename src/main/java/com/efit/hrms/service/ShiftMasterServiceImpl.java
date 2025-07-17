@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
@@ -381,6 +382,9 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		vo.setBranchCode(dto.getBranchCode());
 		vo.setFinYear(dto.getFinYear());
 		vo.setActive(dto.isActive());
+		vo.setType(dto.getType());
+		vo.setContractor(dto.getContractor());
+
 
 		List<ShiftAssignDetailsVO> detailsList = new ArrayList<>();
 
@@ -391,8 +395,8 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 				detailVO.setEmployeeCode(detailDTO.getEmployeeCode());
 				detailVO.setEmployeeName(detailDTO.getEmployeeName());
 				detailVO.setShiftType(detailDTO.getShiftType());
-				detailVO.setStartTime(detailDTO.getStartTime());
-				detailVO.setEndTime(detailDTO.getEndTime());
+				detailVO.setInTime(detailDTO.getInTime());
+				detailVO.setOutTime(detailDTO.getOutTime());
 				detailVO.setHours(detailDTO.getHours());
 				detailVO.setEffectiveFrom(detailDTO.getEffectiveFrom());
 				detailVO.setEffectiveTo(detailDTO.getEffectiveTo());
@@ -414,6 +418,12 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 	@Override
 	public List<ShiftAssignVO> getAllShiftAssignByOrgId(Long orgId) {
 		return Optional.ofNullable(shiftAssignRepo.getAllShiftAssignByOrgId(orgId)).orElseGet(Collections::emptyList);
+	}
+	
+
+	@Override
+	public List<ShiftMasterVO> getAllShiftMasterByOrgIdAndShiftAndBranchCode(Long orgId, String shift,String shiftCode, String branchCode) {
+		return Optional.ofNullable(shiftMasterRepo.getAllShiftMasterByOrgIdAndShiftAndBranchCode(orgId,  shift,shiftCode,  branchCode)).orElseGet(Collections::emptyList);
 	}
 
 	// groupstructure
@@ -662,4 +672,44 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		return groupRepo.getGroupMasterByOrgIdAndGroup(orgId, groupName);
 	}
 
+	
+	//SHIFTASSIGNFILTER
+	
+
+	@Override
+	public List<EmployeeVO> getShiftAssignByOrgIdAndType(Long orgId,String type, String contractor,String department) {
+		return Optional.ofNullable(shiftAssignRepo.getShiftAssignByOrgIdAndType(orgId,type,contractor,department))
+				.orElseGet(Collections::emptyList);
+}
+	
+	
+	
+	
+	@Override
+	public List<Map<String, Object>> getAllEmployeeAndShiftMasterDetails(Long orgId, String type, String contractor,
+	                                                                     String department, String shift, String shiftCode, String branchCode) {
+	    Set<Object[]> result = shiftAssignRepo.getAllEmployeeAndShiftMasterDetails(orgId, type, contractor, department, shift, shiftCode, branchCode);
+	    return mapEmployeeShiftData(result);
+	}
+
+	private List<Map<String, Object>> mapEmployeeShiftData(Set<Object[]> result) {
+	    List<Map<String, Object>> list = new ArrayList<>();
+	    for (Object[] record : result) {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("employeeName", record[0]);
+	        map.put("employeeCode", record[1]);
+	        map.put("department", record[2]);
+	        map.put("branch", record[3]);
+	        map.put("shiftCode", record[4]);
+	        map.put("branchCode", record[5]);
+	        map.put("shift", record[6]);
+	        map.put("inTime", record[7]);
+	        map.put("outTime", record[8]);
+	        map.put("nightShift", record[9]);
+	        list.add(map);
+	    }
+	    return list;
+	}
+
+	
 }

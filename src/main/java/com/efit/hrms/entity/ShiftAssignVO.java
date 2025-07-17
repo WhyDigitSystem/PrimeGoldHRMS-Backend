@@ -46,6 +46,12 @@ public class ShiftAssignVO {
 	private String branch;
 	@Column(name = "finyear")
 	private String finYear;
+	
+	@Column(name = "type")
+	private String type;
+	@Column(name = "contractor")
+	private String contractor;
+	
 
 	@Column(name = "createdby")
 	private String createdBy;

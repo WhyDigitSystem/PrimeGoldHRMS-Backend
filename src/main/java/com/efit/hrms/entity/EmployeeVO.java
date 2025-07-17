@@ -40,7 +40,7 @@ public class EmployeeVO {
 	private String employeeCode;
 	@Column(name = "employee",length = 150)
 	private String employeeName;
-	@Column(name = "employeeType",length = 150)
+	@Column(name = "type",length = 150)
 	private String employeeType;
 	@Column(name = "employeeaddress",length = 150)
 	private String employeeAddress;
@@ -111,6 +111,15 @@ public class EmployeeVO {
 	@Column(name = "active")
 	private boolean active;
 	
+	
+	@Column(name = "contractor",length = 30)
+	private String contractor;
+	@Column(name = "contactperson",length = 150)
+	private String contactPerson;
+	@Column(name = "contactnumber",length = 150)
+	private String contactNumber;
+	@Column(name = "contactgmail",length = 150)
+	private String contactEmail;
 	
 	@Column(name = "pfflag")
 	private boolean pfFlag;

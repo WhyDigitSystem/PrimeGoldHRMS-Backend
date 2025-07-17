@@ -2,6 +2,8 @@ package com.efit.hrms.dto;
 
 import java.util.List;
 
+import javax.persistence.Column;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +20,9 @@ public class ShiftAssignDTO {
 	private String branchCode;
 	private String branch;
 	private String finYear;
+	
+	private String type;
+	private String contractor;
 
 	private String createdBy;
 	private boolean active;

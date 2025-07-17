@@ -17,8 +17,8 @@ public class ShiftAssignDetailsDTO {
 	private String employeeCode;
 	private String employeeName;
 	private String shiftType;
-	private String startTime;
-	private String endTime;
+	private String inTime;
+	private String outTime;
 	
 	private String hours;
 	private LocalDate effectiveFrom;

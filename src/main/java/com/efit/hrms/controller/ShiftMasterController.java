@@ -33,6 +33,7 @@ import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.dto.ShiftAssignDTO;
 import com.efit.hrms.dto.ShiftMasterDTO;
 import com.efit.hrms.entity.ContractMasterVO;
+import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.GroupSalaryStructureVO;
 import com.efit.hrms.entity.GroupVO;
 import com.efit.hrms.entity.OtMasterVO;
@@ -397,6 +398,38 @@ public class ShiftMasterController extends BaseController{
 	}
 	
 	
+	@GetMapping("/getAllShiftMasterByOrgIdAndShiftAndBranchCode")
+	public ResponseEntity<ResponseDTO> getAllShiftMasterByOrgIdAndShiftAndBranchCode(@RequestParam Long orgId,@RequestParam String shift ,@RequestParam String shiftCode,@RequestParam String branchCode) {
+	    String methodName = "getAllShiftMasterByOrgIdAndShiftAndBranchCode()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+	    
+	    try {
+	        // Fetch Salary Heads and handle nulls safely
+	    	List<ShiftMasterVO> shiftMasterVO = Optional.ofNullable(shiftMasterService.getAllShiftMasterByOrgIdAndShiftAndBranchCode(orgId,shift,shiftCode,branchCode))
+	                                                    .orElseGet(Collections::emptyList);
+	        
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "ShiftMaster information retrieved successfully By OrgId And Type");
+	        responseObjectsMap.put("shiftMasterVO", shiftMasterVO);
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	        
+	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	        return ResponseEntity.ok(responseDTO);
+
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+	        responseDTO = createServiceResponseError(responseObjectsMap, 
+	                     "Failed to retrieve ShiftMaster information By OrgId And Type", errorMsg);
+	        
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+	    }
+	}
+	
+	
 	//groupstructure
 	
 	@PutMapping("/createUpdateGroupMaster")
@@ -571,4 +604,59 @@ public class ShiftMasterController extends BaseController{
 		return ResponseEntity.ok().body(responseDTO);
 	}
 	
+	
+	//shiftassignfilter
+	
+	@GetMapping("/getShiftAssignByOrgIdAndType")
+	public ResponseEntity<ResponseDTO> getShiftAssignByOrgIdAndType(@RequestParam Long orgId,@RequestParam String type,@RequestParam(required = false) String contractor,@RequestParam String department) {
+		String methodName = "getShiftAssignByOrgIdAndType()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<EmployeeVO> employeeVO = new ArrayList<>();
+		try {
+			employeeVO = shiftMasterService.getShiftAssignByOrgIdAndType(orgId,type,contractor,department);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Employee information get successfully");
+			responseObjectsMap.put("employeeVO", employeeVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Employee information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	
+	
+	@GetMapping("/getAllEmployeeAndShiftMasterDetails")
+	public ResponseEntity<ResponseDTO> getAllEmployeeAndShiftMasterDetails(@RequestParam Long orgId,@RequestParam String type,@RequestParam(required = false) String contractor,@RequestParam String department,@RequestParam String shift ,@RequestParam String shiftCode,@RequestParam String branchCode) {
+
+		String methodName = "getAllEmployeeAndShiftMasterDetails()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+		List<Map<String, Object>> shiftAssignVO;
+
+		try {
+			shiftAssignVO = shiftMasterService.getAllEmployeeAndShiftMasterDetails( orgId,type,contractor,department,shift,shiftCode,branchCode);
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "ShiftAssign details retrieved successfully");
+			responseObjectsMap.put("shiftAssignVO", shiftAssignVO); // ✅ Correct key name
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve ShiftAssign details", errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+
 }
