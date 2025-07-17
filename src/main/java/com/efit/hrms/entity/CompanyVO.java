@@ -92,6 +92,8 @@ public class CompanyVO {
 	private String employeeName;
 	@Column(name = "employeecode")
 	private String employeeCode;
+	@Column(name = "attendancemode")
+	private String attendanceMode;
 	
 	@Column(name = "shiftin")
 	private String shiftIn; 

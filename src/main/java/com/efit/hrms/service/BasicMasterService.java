@@ -14,6 +14,8 @@ import com.efit.hrms.dto.CalendarDTO;
 import com.efit.hrms.dto.CheckInOutAdjustmentDTO;
 import com.efit.hrms.dto.CheckinRequestDTO;
 import com.efit.hrms.dto.CircularDTO;
+import com.efit.hrms.dto.EmployeeCodeConfigDTO;
+import com.efit.hrms.dto.EmployeeDTOnew;
 import com.efit.hrms.dto.HolidayDTO;
 import com.efit.hrms.dto.PollVoteDTO;
 import com.efit.hrms.dto.PollsDTO;
@@ -25,6 +27,7 @@ import com.efit.hrms.entity.CalendarVO;
 import com.efit.hrms.entity.CheckInOutAdjustmentVO;
 import com.efit.hrms.entity.CheckInVO;
 import com.efit.hrms.entity.CircularVO;
+import com.efit.hrms.entity.EmployeeCodeConfigVO;
 import com.efit.hrms.entity.HolidayVO;
 import com.efit.hrms.entity.PollsVO;
 import com.efit.hrms.exception.ApplicationException;
@@ -179,9 +182,13 @@ List<Map<String, Object>> GetCountofNewAssignedTask(Long Orgid,String Assignedby
 
 
 
+	EmployeeCodeConfigVO createEmployeeCodeConfig(EmployeeCodeConfigDTO employeeCodeConfigDTO);
+
+
+	String generateEmployeeCodeByOrgId(EmployeeDTOnew employeeDTOnew);
+
+
 	
-
-
 
 
 

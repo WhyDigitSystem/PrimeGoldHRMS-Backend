@@ -40,6 +40,8 @@ public class EmployeeVO {
 	private String employeeCode;
 	@Column(name = "employee",length = 150)
 	private String employeeName;
+	@Column(name = "type",length = 150)
+	private String employeeType;
 	@Column(name = "employeeaddress",length = 150)
 	private String employeeAddress;
 	@Column(name = "gender",length = 30)
@@ -77,11 +79,11 @@ public class EmployeeVO {
 	@Column(name = "uanno",length = 50)
 	private Long uanNo;
 	@Column(name = "reportingperson",length = 150)
-	private String reportnigPerson;
+	private String reportingPerson;
 	@Column(name = "reportingpersonemail",length = 150)
-	private String reportnigPersonEmail;
+	private String reportingPersonEmail;
 	@Column(name = "reportingpersoncode",length = 150)
-	private String reportningPersonCode;
+	private String reportingPersonCode;
 //	@Column(name = "reportingname",length = 150)
 //	private String reportingName;
 	@Column(name = "reportingrole",length = 100)
@@ -110,14 +112,27 @@ public class EmployeeVO {
 	private boolean active;
 	
 	
-//	@Column(name = "pfflag")
-//	private boolean pfFlag;
-//	@Column(name = "esiflag")
-//	private boolean esiFlag;
-//	@Column(name = "pfpercentage")
-//	private BigDecimal pfPercentage;
-//	@Column(name = "esipercentage")
-//	private BigDecimal esiPercentage;
+	@Column(name = "contractor",length = 30)
+	private String contractor;
+	@Column(name = "contactperson",length = 150)
+	private String contactPerson;
+	@Column(name = "contactnumber",length = 150)
+	private String contactNumber;
+	@Column(name = "contactgmail",length = 150)
+	private String contactEmail;
+	
+	@Column(name = "pfflag")
+	private boolean pfFlag;
+	@Column(name = "esiflag")
+	private boolean esiFlag;
+	@Column(name = "pfpercentage")
+	private BigDecimal pfPercentage;
+	@Column(name = "esipercentage")
+	private BigDecimal esiPercentage;
+	@Column(name = "flagvalue")
+	private String flagValue;
+	@Column(name = "flag")
+	private boolean flag;
 	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;

@@ -20,7 +20,6 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    e.employeeid AS employeeId,\r\n"
 			+ "    e.alternativemobileno AS alternativeMobileNo,\r\n"
 			+ "    e.aadharno AS aadharNo,\r\n"
-			+ "    e.accountholdername AS accountHolderName,\r\n"
 			+ "    e.accountno AS accountNo,\r\n"
 			+ "    e.active AS active,\r\n"
 			+ "    e.bloodgroup AS bloodGroup,\r\n"
@@ -54,12 +53,21 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    e.modifiedby AS modifiedBy,\r\n"
 			+ "    e.reportingpersoncode AS reportingPersonCode,\r\n"
 			+ "    e.uanno AS uanNo,\r\n"
-			+ "    e.bankname AS bankName,\r\n"
+			+ "    e.bankname AS bankName,"
+			+ "    e.type AS type,\r\n"
+			+ "    e.esiflag AS esiFlag,\r\n"
+			+ "    e.esipercentage AS esiPercentage,\r\n"
+			+ "    e.pfflag AS pfFlag,\r\n"
+			+ "    e.pfpercentage AS pfPercentage,\r\n"
 			+ "    c.companyname AS companyName,\r\n"
-			+ "    c.companycode AS companyCode\r\n"
+			+ "    c.companycode AS companyCode,\r\n"
+			+ "e.contractor As contractor,\r\n"
+			+ "e.contactperson As contactPerson,\r\n"
+			+ "e.contactnumber As contactNumber,\r\n"
+			+ "e.email As contactEmail \r\n"
 			+ "FROM employee e\r\n"
 			+ "JOIN company c ON e.orgid = c.companyid\r\n"
-			+ "WHERE e.orgid = ?1\r\n"
+			+ "WHERE e.orgid = ?1 ORDER BY e.employee ASC \r\n"
 			+ "", nativeQuery = true)
 	List<Map<String, Object>> getEmployeesWithCompanyInfoByOrgId(Long orgId);
 
@@ -143,8 +151,15 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	EmployeeVO findByEmployeeCode(String employeecode);
 
-//	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND branchcode = ?3", nativeQuery = true)
-//	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode);
+	boolean existsByEmployeeCode(String employeeCode);
+
+	boolean existsByEmployeeName(String employeeName);
+
+	boolean existsByEmail(String email);
+
+
+	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND  (?3 = 'ALL' OR branch = ?3)", nativeQuery = true)
+	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branch);
 //
 
 

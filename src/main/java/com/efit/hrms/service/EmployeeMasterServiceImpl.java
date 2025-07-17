@@ -181,33 +181,33 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				.orElseThrow(() -> new RuntimeException("salaryStructure not found for ID: " + id));
 	}
 
-//	@Override
-//	public List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode, BigDecimal sumOfEarnings) {
-//	    EmployeeVO employeeVO = Optional.ofNullable(
-//	            employeeRepo.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branchCode))
-//	        .orElseThrow(() -> new RuntimeException("Employee details not found for orgId: " + orgId));
-//
-//	    BigDecimal pfPercentage = employeeVO.getPfPercentage();
-//	    BigDecimal esiPercentage = employeeVO.getEsiPercentage();
-//
-//	    BigDecimal pfAmount = sumOfEarnings.multiply(pfPercentage).divide(BigDecimal.valueOf(100));
-//	    BigDecimal esiAmount = sumOfEarnings.multiply(esiPercentage).divide(BigDecimal.valueOf(100));
-//
-//	    List<PfEsiAmountDTO> list = new ArrayList<>();
-//
-//	    PfEsiAmountDTO pfDto = new PfEsiAmountDTO();
-//	    pfDto.setHeading("Professional Tax");
-//	    pfDto.setAmount(pfAmount);
-//
-//	    PfEsiAmountDTO esiDto = new PfEsiAmountDTO();
-//	    esiDto.setHeading("ESI Tax");
-//	    esiDto.setAmount(esiAmount);
-//
-//	    list.add(pfDto);
-//	    list.add(esiDto);
-//
-//	    return list;
-//	}
+	@Override
+	public List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branch, BigDecimal sumOfEarnings) {
+	    EmployeeVO employeeVO = Optional.ofNullable(
+	            employeeRepo.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branch))
+	        .orElseThrow(() -> new RuntimeException("Employee details not found for orgId: " + orgId));
+
+	    BigDecimal pfPercentage = employeeVO.getPfPercentage();
+	    BigDecimal esiPercentage = employeeVO.getEsiPercentage();
+
+	    BigDecimal pfAmount = sumOfEarnings.multiply(pfPercentage).divide(BigDecimal.valueOf(100));
+	    BigDecimal esiAmount = sumOfEarnings.multiply(esiPercentage).divide(BigDecimal.valueOf(100));
+
+	    List<PfEsiAmountDTO> list = new ArrayList<>();
+
+	    PfEsiAmountDTO pfDto = new PfEsiAmountDTO();
+	    pfDto.setHeading("Professional Tax");
+	    pfDto.setAmount(pfAmount);
+
+	    PfEsiAmountDTO esiDto = new PfEsiAmountDTO();
+	    esiDto.setHeading("ESI Tax");
+	    esiDto.setAmount(esiAmount);
+
+	    list.add(pfDto);
+	    list.add(esiDto);
+
+	    return list;
+	}
 
 
 	@Override
@@ -588,8 +588,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year) {
-		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsforSalaryProcess(orgId, month, year);
+	public List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year,String department,String branch) {
+		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch);
 		return getLeaveDetailsforSalaryProcess(result);
 	}
 
@@ -600,11 +600,14 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			Map<String, Object> map = new HashMap<>();
 			map.put("employeeName", record[0] != null ? record[0].toString() : "");
 			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
-			map.put("totalCompanyWorkingDays", record[2] != null ? record[2].toString() : "0");
-			map.put("totalLeave", record[3] != null ? record[3].toString() : "0");
-			map.put("lopLeave", record[4] != null ? record[4].toString() : "0");
-			map.put("empTotalWorkingDays", record[5] != null ? record[5].toString() : "0");
-			map.put("empSalaryDays", record[6] != null ? record[6].toString() : "0");
+			map.put("branch", record[2] != null ? record[2].toString() : "");
+			map.put("department", record[3] != null ? record[3].toString() : "");
+
+			map.put("totalCompanyWorkingDays", record[4] != null ? record[4].toString() : "0");
+			map.put("totalLeave", record[5] != null ? record[5].toString() : "0");
+			map.put("lopLeave", record[6] != null ? record[6].toString() : "0");
+			map.put("empTotalWorkingDays", record[7] != null ? record[7].toString() : "0");
+			map.put("empSalaryDays", record[8] != null ? record[8].toString() : "0");
 
 			detailsList.add(map);
 		}

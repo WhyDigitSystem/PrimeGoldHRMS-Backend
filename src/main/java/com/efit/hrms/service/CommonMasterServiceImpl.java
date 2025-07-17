@@ -239,6 +239,12 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		companyVO.setLongitude(companyDTO.getLongitude());
 		companyVO.setHybrid(companyDTO.isHybrid());
 		companyVO.setLocationAddress(companyDTO.getLocationAddress());
+		if (companyDTO.getAttendanceMode() != null && !companyDTO.getAttendanceMode().isEmpty()) {
+		    String modeString = String.join(",", companyDTO.getAttendanceMode());
+		    companyVO.setAttendanceMode(modeString);
+		} else {
+		    companyVO.setAttendanceMode(null); // or "" as default
+		}
 
 
 		if (companyDTO.getCompanyWeekOffDTO() != null) {
@@ -308,7 +314,12 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		companyVO.setLongitude(companyDTO.getLongitude());
 		companyVO.setHybrid(companyDTO.isHybrid());
 		companyVO.setLocationAddress(companyDTO.getLocationAddress());
-
+		 if (companyDTO.getAttendanceMode() != null && !companyDTO.getAttendanceMode().isEmpty()) {
+		        String modeString = String.join(",", companyDTO.getAttendanceMode());
+		        companyVO.setAttendanceMode(modeString);
+		    } else {
+		        companyVO.setAttendanceMode(null); // or ""
+		    }
 		if (companyDTO.getCompanyWeekOffDTO() != null) {
 			List<CompanyWeekOffVO> companyWeekOffVOList = new ArrayList<>();
 			for (CompanyWeekOffDTO companyWeekOffDTO : companyDTO.getCompanyWeekOffDTO()) {

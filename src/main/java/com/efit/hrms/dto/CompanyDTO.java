@@ -47,6 +47,9 @@ public class CompanyDTO {
 	private byte[] companyLogo;
 	private String shiftIn; 
 	private String shiftOut;
+	// In CompanyDTO.java
+	private List<String> attendanceMode;
+
 	
 	private Double latitude;
 	private Double longitude;

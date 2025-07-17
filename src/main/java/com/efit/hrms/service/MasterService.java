@@ -75,6 +75,11 @@ public interface MasterService {
 
 		ProjectMasterVO getProjectMasterById(Long id);
 
+		//Upload EmployeeDetails
+
+
+		Map<String, Object> uploadEmployeeExcel(MultipartFile file, Long orgId, String createdBy) throws ApplicationException;
+
 
 
 

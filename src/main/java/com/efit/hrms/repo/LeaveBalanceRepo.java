@@ -50,6 +50,8 @@ public interface LeaveBalanceRepo extends JpaRepository<LeaveBalanceVO, Long>{
     nativeQuery = true)
 	List<Object[]> findBalanceLeaveRawByOrgId(Long companyId);
 
+//	LeaveBalanceVO findByEmployeeCodeAndOrgIdAndLeaveCode(String employeeCode, Long orgId, String leaveCode);
+
 
 
 
