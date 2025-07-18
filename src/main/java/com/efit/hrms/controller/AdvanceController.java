@@ -1,5 +1,6 @@
 package com.efit.hrms.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import com.efit.hrms.common.UserConstants;
 import com.efit.hrms.dto.AdvanceDTO;
 import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.entity.AdvanceVO;
+import com.efit.hrms.entity.ShiftAssignVO;
 import com.efit.hrms.service.AdvanceService;
 
 @CrossOrigin
@@ -167,5 +169,40 @@ public class AdvanceController extends BaseController {
 		}
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
+	}
+
+	@GetMapping("/getAllShiftDetails")
+	public ResponseEntity<ResponseDTO> getAllShiftDetails(
+	    @RequestParam Long orgId,
+	    @RequestParam String shifttype,
+	    @RequestParam String department,
+	    @RequestParam String effectiveFrom,
+	    @RequestParam String effectiveTo,
+	    @RequestParam String type,
+	    @RequestParam(required = false) String contractorName) {
+		String methodName = "getAllShiftDetails()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<ShiftAssignVO> shiftAssignVO = new ArrayList<>();
+		try {
+			shiftAssignVO = advanceService.getAllShiftDetails(orgId, shifttype, department, effectiveFrom, effectiveTo,
+					type, contractorName);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "ShiftAssign information get successfully ByOrgId");
+			responseObjectsMap.put("shiftAssignVO", shiftAssignVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap,
+					"ShiftAssign information receive failedByOrgId", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
 	}
 }

@@ -74,6 +74,20 @@ public interface ShiftAssignRepo extends JpaRepository<ShiftAssignVO, Long>{
 	        LocalDate effectiveFrom
 	);
 
+	@Query(value = "SELECT *\r\n"
+			+ "FROM shiftassign a\r\n"
+			+ "JOIN shiftassigndetails a1 ON a.shiftassignid = a1.shiftassignid\r\n"
+			+ "WHERE a.orgid = ?1\r\n"
+			+ "  AND a.shifttype = ?2\r\n"
+			+ "  AND (a.department = ?3 OR ?3 = 'ALL')  \r\n"
+			+ "  AND (?4 IS NULL OR a1.effectivefrom >= ?4)\r\n"
+			+ "  AND (?5 IS NULL OR a1.effectiveto <= ?5)\r\n"
+			+ "  AND (\r\n"
+			+ "    (?6 = 'Contractor' AND a.type =?6 AND a.contractor = ?7)\r\n"
+			+ "    OR (?6 != 'Contractor' AND (?6 = 'ALL' OR a.type = ?6))\r\n"
+			+ "  )", nativeQuery = true)
+	List<ShiftAssignVO> getAllShiftDetails(Long orgId, String shifttype, String department, String effectiveFrom,
+			String effectiveTo, String type, String contractorName);
 	
 
 }
