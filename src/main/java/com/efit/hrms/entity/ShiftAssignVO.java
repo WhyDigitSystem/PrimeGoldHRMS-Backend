@@ -36,6 +36,8 @@ public class ShiftAssignVO {
 
 	@Column(name = "shifttype")
 	private String shiftType;
+	@Column(name = "shiftcode")
+	private String shiftCode;
 	@Column(name = "description")
 	private String description;
 	@Column(name = "orgid")
@@ -51,6 +53,12 @@ public class ShiftAssignVO {
 	private String type;
 	@Column(name = "contractor")
 	private String contractor;
+	@Column(name = "contactperson")
+	private String contactPerson;
+	@Column(name = "contactnumber")
+	private String contactNumber;
+	@Column(name = "contactemail")
+	private String contactEmail;
 	@Column(name = "department")
 	private String department;
 

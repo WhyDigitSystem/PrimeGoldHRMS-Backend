@@ -1,6 +1,7 @@
 package com.efit.hrms.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -376,6 +377,8 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 
 	private void createUpdateShiftAssignVOByShiftAssignDTO(ShiftAssignDTO dto, ShiftAssignVO vo) {
 		vo.setShiftType(dto.getShiftType());
+		vo.setShiftCode(dto.getShiftCode());
+
 		vo.setDescription(dto.getDescription());
 		vo.setOrgId(dto.getOrgId());
 		vo.setBranch(dto.getBranch());
@@ -384,9 +387,17 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		vo.setActive(dto.isActive());
 		vo.setType(dto.getType());
 		vo.setContractor(dto.getContractor());
+		vo.setContactPerson(dto.getContactPerson());
+		vo.setContactNumber(dto.getContactNumber());
+		vo.setContactEmail(dto.getContactEmail());
+
 		vo.setDepartment(dto.getDepartment());
 
-
+       String contractor=dto.getContractor();
+       String contactPerson=dto.getContactPerson();
+       String contactNumber=dto.getContactNumber();
+       String contactEmail=dto.getContactEmail();
+       
 		List<ShiftAssignDetailsVO> detailsList = new ArrayList<>();
 
 		if (dto.getShiftAssignDetailsDTO() != null && !dto.getShiftAssignDetailsDTO().isEmpty()) {
@@ -396,6 +407,8 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 				detailVO.setEmployeeCode(detailDTO.getEmployeeCode());
 				detailVO.setEmployeeName(detailDTO.getEmployeeName());
 				detailVO.setShiftType(detailDTO.getShiftType());
+				detailVO.setShiftCode(detailDTO.getShiftCode());
+
 				detailVO.setInTime(detailDTO.getInTime());
 				detailVO.setOutTime(detailDTO.getOutTime());
 				detailVO.setHours(detailDTO.getHours());
@@ -403,6 +416,13 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 				detailVO.setEffectiveTo(detailDTO.getEffectiveTo());
 				detailVO.setDepartment(detailDTO.getDepartment());
 
+				detailVO.setContractor(contractor);
+				detailVO.setContactPerson(contactPerson);
+				detailVO.setContactNumber(contactNumber);
+				detailVO.setContactEmail(contactEmail);
+
+				
+				
 				detailVO.setShiftAssignVO(vo); // Set parent reference
 				detailsList.add(detailVO);
 			}
@@ -689,8 +709,8 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 	
 	@Override
 	public List<Map<String, Object>> getAllEmployeeAndShiftMasterDetails(Long orgId, String type, String contractor,
-	                                                                     String department, String shift, String shiftCode, String branchCode) {
-	    Set<Object[]> result = shiftAssignRepo.getAllEmployeeAndShiftMasterDetails(orgId, type, contractor, department, shift, shiftCode, branchCode);
+	                                                                     String department, String shift, String shiftCode, String branchCode,LocalDate effectiveFrom) {
+	    Set<Object[]> result = shiftAssignRepo.getAllEmployeeAndShiftMasterDetails(orgId, type, contractor, department, shift, shiftCode, branchCode,effectiveFrom);
 	    return mapEmployeeShiftData(result);
 	}
 

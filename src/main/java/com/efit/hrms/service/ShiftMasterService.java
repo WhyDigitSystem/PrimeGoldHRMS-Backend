@@ -1,5 +1,6 @@
 package com.efit.hrms.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,8 +77,10 @@ public interface ShiftMasterService {
 	List<EmployeeVO> getShiftAssignByOrgIdAndType(Long orgId, String type, String contractor, String department);
 
 	List<ShiftMasterVO> getAllShiftMasterByOrgIdAndShiftAndBranchCode(Long orgId, String shift, String shiftCode, String branchCode);
+//
+
 
 	List<Map<String, Object>> getAllEmployeeAndShiftMasterDetails(Long orgId, String type, String contractor,
-			String department, String shift, String shiftCode, String branchCode);
+			String department, String shift, String shiftCode, String branchCode, LocalDate effectiveFrom);
 
 }
