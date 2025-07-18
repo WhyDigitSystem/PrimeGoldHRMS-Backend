@@ -1,5 +1,7 @@
 package com.efit.hrms.entity;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -14,6 +16,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.efit.hrms.dto.CreatedUpdatedDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -22,22 +25,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "shiftassign")
+@Table(name = "checkinoutupload")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShiftAssignVO {
+public class CheckInOutUploadVO {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "shiftassigngen")
-	@SequenceGenerator(name = "shiftassigngen", sequenceName = "shiftassignseq", initialValue = 1000000001, allocationSize = 1)
-	@Column(name = "shiftassignid")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "checkinoutuploadgen")
+	@SequenceGenerator(name = "checkinoutuploadgen", sequenceName = "checkinoutuploadseq", initialValue = 1000000001, allocationSize = 1)
+	@Column(name = "checkinoutuploadid")
 	private Long id;
 
-	@Column(name = "shifttype")
-	private String shiftType;
-	@Column(name = "description")
-	private String description;
+	@Column(name = "empname")
+	private String empname;
+	@Column(name = "empcode")
+	private String empcode;
 	@Column(name = "orgid")
 	private long orgId;
 	@Column(name = "branchcode")
@@ -46,39 +49,28 @@ public class ShiftAssignVO {
 	private String branch;
 	@Column(name = "finyear")
 	private String finYear;
-	
-	@Column(name = "type")
-	private String type;
-	@Column(name = "contractor")
-	private String contractor;
-	@Column(name = "department")
-	private String department;
-
 	@Column(name = "createdby")
 	private String createdBy;
-	@Column(name = "modifiedby")
-	private String updatedBy;
-	@Column(name = "active")
-	private boolean active;
-	@Column(name = "remarks")
-	private String remarks;
+	
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	@Column(name = "checkindate")
+	private LocalDate checkInDate = LocalDate.now();
+	@Column(name = "entrytime")
+	private LocalTime entryTime = LocalTime.now();
+	@Column(name = "status")
+	private String status;
+	@Column(name = "attendancemode")
+	private String attendanceMode="FILES";
+
+	
 	@Column(name = "screencode", length = 5)
-	private String screenCode = "SA";
+	private String screenCode = "CIOU";
 	@Column(name = "screenname", length = 25)
-	private String screenName = "SHIFT ASSIGN";
+	private String screenName = "CHECKINOUTUPLOAD";
 
 	
-	
-    @OneToMany(mappedBy = "shiftAssignVO",cascade = CascadeType.ALL)
-   	@JsonManagedReference
-   	private List<ShiftAssignDetailsVO> shiftAssignDetailsVO;
 
-	@JsonGetter("active")
-	public String getActive() {
-		return active ? "Active" : "In-Active";
-	}
 	
 	@Embedded
 	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
-	
 }

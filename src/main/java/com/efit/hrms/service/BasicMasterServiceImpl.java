@@ -40,7 +40,6 @@ import com.efit.hrms.dto.CheckInOutAdjustmentDTO;
 import com.efit.hrms.dto.CheckinRequestDTO;
 import com.efit.hrms.dto.CircularDTO;
 import com.efit.hrms.dto.EmployeeCodeConfigDTO;
-import com.efit.hrms.dto.EmployeeDTO;
 import com.efit.hrms.dto.EmployeeDTOnew;
 import com.efit.hrms.dto.HolidayDTO;
 import com.efit.hrms.dto.PollDetailsDTO;
@@ -50,6 +49,7 @@ import com.efit.hrms.dto.PraiseDTO;
 import com.efit.hrms.dto.TaskDTO;
 import com.efit.hrms.dto.UserNameDTO;
 import com.efit.hrms.entity.AnnouncementVO;
+import com.efit.hrms.entity.AttendanceProcessVO;
 import com.efit.hrms.entity.BranchVO;
 import com.efit.hrms.entity.CalendarVO;
 import com.efit.hrms.entity.CheckInOutAdjustmentVO;
@@ -70,6 +70,7 @@ import com.efit.hrms.entity.SalaryProcessVO;
 import com.efit.hrms.entity.TaskVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AnnouncementRepo;
+import com.efit.hrms.repo.AttendanceProcessRepo;
 import com.efit.hrms.repo.BranchRepo;
 import com.efit.hrms.repo.CalendarRepo;
 import com.efit.hrms.repo.CheckInOutAdjustmentRepo;
@@ -145,6 +146,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 	
 	@Autowired
 	EmployeeCodeConfigRepo employeeCodeConfigRepo;
+	
+	@Autowired
+	AttendanceProcessRepo attendanceProcessRepo;
 
 	@Override
 	@Transactional
@@ -243,6 +247,32 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 						allowedTodayCheckin = false;
 
 						checkInStatusRepo.save(autoCheckoutStatus);
+						
+						
+						AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
+						attendanceProcessVO.setEmpName(userNameDTO.getEmpName());
+						attendanceProcessVO.setEmpCode(userNameDTO.getEmpcode());
+						attendanceProcessVO.setBranch(userNameDTO.getBranch());
+						attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
+						attendanceProcessVO.setFinyear(userNameDTO.getFinyear());
+						attendanceProcessVO.setCheckInDate(lastCheckIn.getCheckInDate());
+						attendanceProcessVO.setEntryTime(LocalTime.MIDNIGHT);
+						
+						if (lastCheckInCreatedOn != null) {
+							// Use the same date but with the same time as last check-in's createdOn
+							LocalDateTime correctedCheckout = LocalDateTime.of(lastCheckIn.getCheckInDate(),
+									lastCheckInCreatedOn.toLocalTime());
+							autoCheckout.setCreatedOn(correctedCheckout);
+						} else {
+							// If lastCheckInCreatedOn is null, use the current time as fallback
+							autoCheckout.setCreatedOn(LocalDateTime.now());
+						}
+						autoCheckout.setStatus("Out");
+						attendanceProcessVO.setAttendanceMode("SYSTEM");
+						attendanceProcessVO.setOrgId(userNameDTO.getOrgId());
+
+						attendanceProcessRepo.save(attendanceProcessVO);
+
 					}
 				}
 			}
@@ -277,6 +307,23 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			statusUpdate.setStatus(todayCheck.getStatus());
 			statusUpdate.setOrgId(userNameDTO.getOrgId());
 			statusUpdate.setBranch(userNameDTO.getBranch());
+			
+
+			AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
+			attendanceProcessVO.setEmpName(userNameDTO.getEmpName());
+			attendanceProcessVO.setEmpCode(userNameDTO.getEmpcode());
+			attendanceProcessVO.setBranch(userNameDTO.getBranch());
+			attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
+			attendanceProcessVO.setFinyear(userNameDTO.getFinyear());
+			attendanceProcessVO.setCheckInDate(today);
+			attendanceProcessVO.setEntryTime(now);
+			attendanceProcessVO.setStatus(userNameDTO.isStatus() ? "In" : "Out");
+
+			attendanceProcessVO.setAttendanceMode("SYSTEM");
+			attendanceProcessVO.setOrgId(userNameDTO.getOrgId());
+
+			attendanceProcessRepo.save(attendanceProcessVO);
+			
 
 			checkInStatusRepo.save(statusUpdate);
 		}

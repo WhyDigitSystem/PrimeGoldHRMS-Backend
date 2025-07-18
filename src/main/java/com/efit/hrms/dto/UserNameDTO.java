@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class UserNameDTO {
 
 	private String branch;
+	private String branchCode;
 	private String empcode;
 	private String empName;
 	private long orgId;
@@ -19,6 +20,7 @@ public class UserNameDTO {
 	private String notifyCode;
 	private String notifyEmail;
 	private String email;
+	private String finyear;
 
 	
 	private Double latitude;
