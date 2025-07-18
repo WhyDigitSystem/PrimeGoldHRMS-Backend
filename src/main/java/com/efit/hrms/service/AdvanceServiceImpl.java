@@ -120,8 +120,23 @@ public class AdvanceServiceImpl implements AdvanceService {
 	
 	@Override
 	public AdvanceVO uploadAttachmentLogoInBloob(MultipartFile file, Long id) throws IOException {
-		AdvanceVO advanceVO = advanceRepo.findById(id).get();
-		advanceVO.setAttachment(file.getBytes());
-		return advanceRepo.save(advanceVO);
+	    String contentType = file.getContentType();
+	    if (!isSupportedFileType(contentType)) {
+	        throw new IllegalArgumentException("Only PDF or image files are allowed.");
+	    }
+
+	    AdvanceVO advanceVO = advanceRepo.findById(id)
+	        .orElseThrow(() -> new RuntimeException("AdvanceVO not found with ID: " + id));
+	    advanceVO.setAttachment(file.getBytes());
+
+	    return advanceRepo.save(advanceVO);
 	}
+
+	private boolean isSupportedFileType(String contentType) {
+	    return contentType != null && (
+	        contentType.equals("application/pdf") ||
+	        contentType.startsWith("image/") 
+	    );
+	}
+
 }

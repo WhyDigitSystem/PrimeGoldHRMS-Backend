@@ -77,8 +77,9 @@ public class AdvanceVO {
 	private String finYear;
 	
 	@Lob
-	@Column(name = "attachment", columnDefinition = "LONGBLOB") // Ensure the column is LONGBLOB
+	@Column(name = "attachment", columnDefinition = "LONGBLOB")
 	private byte[] attachment;
+
 
 //	
 //
