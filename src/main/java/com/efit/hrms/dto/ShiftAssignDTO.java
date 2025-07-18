@@ -15,6 +15,7 @@ public class ShiftAssignDTO {
 
 	private Long id;
 	private String shiftType;
+	private String shiftCode;
 	private String description;
 	private long orgId;
 	private String branchCode;
@@ -24,6 +25,10 @@ public class ShiftAssignDTO {
 
 	private String type;
 	private String contractor;
+	private String contactPerson;
+	private String contactNumber;
+	private String contactEmail;
+
 
 	private String createdBy;
 	private boolean active;

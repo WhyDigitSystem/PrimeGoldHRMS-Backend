@@ -38,6 +38,8 @@ public class ShiftAssignDetailsVO {
 	private String employeeName;
 	@Column(name = "shifttype")
 	private String shiftType;
+	@Column(name = "shiftcode")
+	private String shiftCode;
 	@Column(name = "intime")
 	private String inTime;
 	@Column(name = "outtime")
@@ -45,6 +47,14 @@ public class ShiftAssignDetailsVO {
 	@Column(name = "department")
 	private String department;
 
+	@Column(name = "contractor")
+	private String contractor;
+	@Column(name = "contactperson")
+	private String contactPerson;
+	@Column(name = "contactnumber")
+	private String contactNumber;
+	@Column(name = "contactemail")
+	private String contactEmail;
 	
 	@Column(name = "hours")
 	private String hours;

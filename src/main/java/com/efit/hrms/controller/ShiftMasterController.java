@@ -1,5 +1,6 @@
 package com.efit.hrms.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -635,8 +637,16 @@ public class ShiftMasterController extends BaseController{
 	
 	
 	@GetMapping("/getAllEmployeeAndShiftMasterDetails")
-	public ResponseEntity<ResponseDTO> getAllEmployeeAndShiftMasterDetails(@RequestParam Long orgId,@RequestParam String type,@RequestParam(required = false) String contractor,@RequestParam String department,@RequestParam String shift ,@RequestParam String shiftCode,@RequestParam String branchCode) {
-
+	public ResponseEntity<ResponseDTO> getAllEmployeeAndShiftMasterDetails(
+	    @RequestParam Long orgId,
+	    @RequestParam String type,
+	    @RequestParam(required = false) String contractor,
+	    @RequestParam String department,
+	    @RequestParam String shift,
+	    @RequestParam String shiftCode,
+	    @RequestParam String branchCode,
+	    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveFrom // ✅ Fix
+	) {
 		String methodName = "getAllEmployeeAndShiftMasterDetails()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 
@@ -645,7 +655,7 @@ public class ShiftMasterController extends BaseController{
 		List<Map<String, Object>> shiftAssignVO;
 
 		try {
-			shiftAssignVO = shiftMasterService.getAllEmployeeAndShiftMasterDetails( orgId,type,contractor,department,shift,shiftCode,branchCode);
+			shiftAssignVO = shiftMasterService.getAllEmployeeAndShiftMasterDetails( orgId,type,contractor,department,shift,shiftCode,branchCode,effectiveFrom);
 			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "ShiftAssign details retrieved successfully");
 			responseObjectsMap.put("shiftAssignVO", shiftAssignVO); // ✅ Correct key name
 			responseDTO = createServiceResponse(responseObjectsMap);
