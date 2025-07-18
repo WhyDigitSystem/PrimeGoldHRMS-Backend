@@ -1,6 +1,7 @@
 package com.efit.hrms.service;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,8 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.AdvanceDTO;
 import com.efit.hrms.entity.AdvanceVO;
+import com.efit.hrms.entity.GroupVO;
+import com.efit.hrms.entity.ShiftAssignVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AdvanceRepo;
+import com.efit.hrms.repo.ShiftAssignRepo;
 
 @Service
 public class AdvanceServiceImpl implements AdvanceService {
@@ -29,6 +33,9 @@ public class AdvanceServiceImpl implements AdvanceService {
 	@Autowired
 	AdvanceRepo advanceRepo;
 
+	@Autowired
+	ShiftAssignRepo shiftAssignRepo;
+	
 	@Override
 	public List<AdvanceVO> getAllAdvanceByOrgId(Long orgId, String branchCode) {
 
@@ -139,4 +146,10 @@ public class AdvanceServiceImpl implements AdvanceService {
 	    );
 	}
 
+	@Override
+	public List<ShiftAssignVO> getAllShiftDetails(Long orgId, String shifttype, String department, String effectiveFrom,
+			String effectiveTo, String type, String contractorName) {
+		return shiftAssignRepo.getAllShiftDetails( orgId,shifttype, department,  effectiveFrom,
+				 effectiveTo, type, contractorName);
+	}
 }
