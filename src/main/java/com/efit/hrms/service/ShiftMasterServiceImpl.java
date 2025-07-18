@@ -415,6 +415,7 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 				detailVO.setEffectiveFrom(detailDTO.getEffectiveFrom());
 				detailVO.setEffectiveTo(detailDTO.getEffectiveTo());
 				detailVO.setDepartment(detailDTO.getDepartment());
+				detailVO.setActive(detailDTO.isActive());
 
 				detailVO.setType(type);
 				detailVO.setContractor(contractor);

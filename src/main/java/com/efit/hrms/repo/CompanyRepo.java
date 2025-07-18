@@ -45,6 +45,10 @@ public interface CompanyRepo extends JpaRepository<CompanyVO, Long> {
 
 	boolean existsByEmail(String email);
 
+//	CompanyVO findByCompanyId(Long orgId);
+
+
+
 
 
 	

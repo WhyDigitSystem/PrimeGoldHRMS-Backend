@@ -939,9 +939,21 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 
 	@Override
 	public List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId, String department, String branch) {
-		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId,department,branch);
-		return mapLeaveDetails(result,fromDate,toDate);
+
+//	    CompanyVO companyVO = companyRepo.findByCompanyId(orgId);
+//
+//	    String attendanceMode = companyVO.getAttendanceMode();  // e.g., "SYSTEM,MANUAL"
+//	    String selectedMode = null;
+//
+//	    if (attendanceMode != null && !attendanceMode.trim().isEmpty()) {
+//	        String[] modes = attendanceMode.split(",");
+//	        selectedMode = modes[0].trim();  // Take only the first mode
+//	    }
+
+	    Set<Object[]> result = leaveProcessRepo.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId, department, branch);
+	    return mapLeaveDetails(result, fromDate, toDate);
 	}
+
 
 	private List<Map<String, Object>> mapLeaveDetails(Set<Object[]> result, String fromDate, String toDate) {
 		List<Map<String, Object>> detailsList = new ArrayList<>();
