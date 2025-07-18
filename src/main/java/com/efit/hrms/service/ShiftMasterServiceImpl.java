@@ -392,7 +392,7 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		vo.setContactEmail(dto.getContactEmail());
 
 		vo.setDepartment(dto.getDepartment());
-
+       String type=dto.getType();
        String contractor=dto.getContractor();
        String contactPerson=dto.getContactPerson();
        String contactNumber=dto.getContactNumber();
@@ -416,6 +416,8 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 				detailVO.setEffectiveTo(detailDTO.getEffectiveTo());
 				detailVO.setDepartment(detailDTO.getDepartment());
 
+				detailVO.setType(type);
+				detailVO.setContractor(contractor);
 				detailVO.setContractor(contractor);
 				detailVO.setContactPerson(contactPerson);
 				detailVO.setContactNumber(contactNumber);

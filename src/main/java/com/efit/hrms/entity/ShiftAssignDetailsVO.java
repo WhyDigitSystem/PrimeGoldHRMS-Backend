@@ -47,6 +47,8 @@ public class ShiftAssignDetailsVO {
 	@Column(name = "department")
 	private String department;
 
+	@Column(name = "type")
+	private String type;
 	@Column(name = "contractor")
 	private String contractor;
 	@Column(name = "contactperson")
