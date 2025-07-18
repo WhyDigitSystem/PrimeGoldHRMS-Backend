@@ -38,6 +38,10 @@ public class CheckInVO {
 //	private String companyCode;
 	@Column(name = "branch")
 	private String branch;
+	@Column(name = "branchcode")
+	private String branchCode;	
+	@Column(name = "finyear")
+	private String finyear;
 	@JsonFormat(pattern = "yyyy-MM-dd")
 	@Column(name = "checkindate")
 	private LocalDate checkInDate = LocalDate.now();
@@ -81,4 +85,6 @@ public class CheckInVO {
 	private String locationAddress;
 	@Column(name = "createdon")
 	private LocalDateTime createdOn;
+	
+	
 }

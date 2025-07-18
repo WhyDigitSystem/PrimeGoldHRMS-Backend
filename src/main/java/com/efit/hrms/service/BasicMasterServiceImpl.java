@@ -208,6 +208,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 						autoCheckout.setEmpCode(userNameDTO.getEmpcode());
 						autoCheckout.setEmpName(userNameDTO.getEmpName());
 						autoCheckout.setBranch(userNameDTO.getBranch());
+						autoCheckout.setBranchCode(userNameDTO.getBranchCode());
 						autoCheckout.setCheckInDate(lastCheckIn.getCheckInDate());
 						autoCheckout.setNotify(userNameDTO.getNotify());
 						autoCheckout.setNotifyCode(userNameDTO.getNotifyCode());
@@ -284,6 +285,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			todayCheck.setEmpCode(userNameDTO.getEmpcode());
 			todayCheck.setEmpName(userNameDTO.getEmpName());
 			todayCheck.setBranch(userNameDTO.getBranch());
+			todayCheck.setBranchCode(userNameDTO.getBranchCode());
 			todayCheck.setCheckInDate(today);
 			todayCheck.setEntryTime(now);
 			todayCheck.setOrgId(userNameDTO.getOrgId());
