@@ -42,6 +42,9 @@ public class ShiftAssignDetailsVO {
 	private String inTime;
 	@Column(name = "outtime")
 	private String outTime;
+	@Column(name = "department")
+	private String department;
+
 	
 	@Column(name = "hours")
 	private String hours;

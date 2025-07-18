@@ -20,7 +20,8 @@ public class ShiftAssignDTO {
 	private String branchCode;
 	private String branch;
 	private String finYear;
-	
+	private String department;
+
 	private String type;
 	private String contractor;
 

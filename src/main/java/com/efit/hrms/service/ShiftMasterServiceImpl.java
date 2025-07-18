@@ -384,6 +384,7 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		vo.setActive(dto.isActive());
 		vo.setType(dto.getType());
 		vo.setContractor(dto.getContractor());
+		vo.setDepartment(dto.getDepartment());
 
 
 		List<ShiftAssignDetailsVO> detailsList = new ArrayList<>();
@@ -400,6 +401,7 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 				detailVO.setHours(detailDTO.getHours());
 				detailVO.setEffectiveFrom(detailDTO.getEffectiveFrom());
 				detailVO.setEffectiveTo(detailDTO.getEffectiveTo());
+				detailVO.setDepartment(detailDTO.getDepartment());
 
 				detailVO.setShiftAssignVO(vo); // Set parent reference
 				detailsList.add(detailVO);
