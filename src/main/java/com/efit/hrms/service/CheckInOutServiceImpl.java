@@ -1,10 +1,12 @@
 package com.efit.hrms.service;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
@@ -29,19 +31,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.efit.hrms.dto.UserNameDTO;
 import com.efit.hrms.entity.AttendanceProcessVO;
 import com.efit.hrms.entity.CheckInOutUploadVO;
-import com.efit.hrms.entity.CheckInOutVO;
-import com.efit.hrms.entity.CheckInStatusVO;
-import com.efit.hrms.entity.CompanyVO;
-import com.efit.hrms.entity.LocationUtils;
-import com.efit.hrms.exception.ApplicationException;
+import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.repo.AttendanceProcessRepo;
 import com.efit.hrms.repo.CheckInOutRepo;
 import com.efit.hrms.repo.CheckInOutUploadRepo;
 import com.efit.hrms.repo.CheckInStatusRepo;
 import com.efit.hrms.repo.CompanyRepo;
+import com.efit.hrms.repo.OtCalculationRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -66,6 +64,10 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	@Autowired
 	CheckInOutUploadRepo checkInOutUploadRepo;
   
+	
+	@Autowired
+	OtCalculationRepo otCalculationRepo;
+	
 //	@Override
 //	@Transactional
 //	public Map<String, Object> createCheckInOut(UserNameDTO userNameDTO) throws ApplicationException {
@@ -458,6 +460,52 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	        return "Unknown";
 	    }
 	}
+	
+	
+	@Override
+	public List<OtCalculationVO> generateOtAndSave(Long orgId) {
+	    List<Object[]> rows = otCalculationRepo.getFinalOtRecords(orgId);
+
+	    List<OtCalculationVO> resultList = new ArrayList<>();
+	    
+	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+	    DateTimeFormatter hourMinFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+	    for (Object[] row : rows) {
+	        String empcode = (String) row[0];
+	        LocalDate checkindate = ((java.sql.Date) row[2]).toLocalDate();
+
+	        // Check if a record already exists
+	        Optional<OtCalculationVO> existingOpt = otCalculationRepo.findByEmpcodeAndCheckindate(empcode, checkindate);
+
+	        OtCalculationVO vo = existingOpt.orElse(new OtCalculationVO());
+
+	        vo.setEmpcode(empcode);
+	        vo.setEmpname((String) row[1]);
+	        vo.setCheckindate(checkindate);
+
+	        // Convert string to LocalTime
+	        String intimeStr = (String) row[3];
+	        String outtimeStr = (String) row[4];
+	        String othoursStr = (String) row[5];
+
+	        vo.setIntime(LocalTime.parse(intimeStr, timeFormatter));
+	        vo.setOuttime(LocalTime.parse(outtimeStr, timeFormatter));
+	        vo.setOthours(LocalTime.parse(othoursStr, hourMinFormatter));
+
+	        vo.setOtamount(new BigDecimal(String.valueOf(row[6])));
+	        vo.setRate((String) row[7]);
+	        vo.setOttype((String) row[8]);
+	        vo.setOtcategory((String) row[9]);
+
+	        vo.setCreatedon(LocalDateTime.now());
+
+	        resultList.add(vo);
+	    }
+
+	    return otCalculationRepo.saveAll(resultList);
+	}
+
 
 
 }

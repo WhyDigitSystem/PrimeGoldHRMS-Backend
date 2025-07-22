@@ -31,13 +31,13 @@ public class OtMasterDetailsVO {
 	@Column(name = "otmasterdetailsid")
 	private Long id;
 	@Column(name = "slab")
-	private int slab;
+	private String slab;
 	@Column(name = "minhours")
 	private int minHours;
 	@Column(name = "maxhours")
 	private int maxHours;
 	@Column(name = "otrate")
-	private int otrate;
+	private String otrate;
 	@Column(name = "effectivefrom")
 	private LocalDate effectiveFrom;
 	@Column(name = "effectiveto")

@@ -1615,7 +1615,7 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 				map.put("checkOutTime", record[4] != null ? record[4].toString() : "0");
 				map.put("grossHours", record[5] != null ? record[5].toString() : " ");
 				map.put("effectiveHours", record[6] != null ? record[6].toString() : " ");
-				map.put("otHours", 0);
+				map.put("otHours",  record[7] != null ? record[7].toString() : " ");
 
 
 				detailsList.add(map);
