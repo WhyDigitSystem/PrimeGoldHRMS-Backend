@@ -214,7 +214,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 						autoCheckout.setNotifyCode(userNameDTO.getNotifyCode());
 						autoCheckout.setNotifyEmail(userNameDTO.getNotifyEmail());
 						autoCheckout.setEmail(userNameDTO.getEmail());
-
+						LocalDate checkInDate = lastCheckIn.getCheckInDate();
+						int year = checkInDate.getYear(); // Extracts year like 2025
+						autoCheckout.setFinyear(String.valueOf(year));
 
 						autoCheckout.setLatitude(userNameDTO.getLatitude());
 						autoCheckout.setLongitude(userNameDTO.getLongitude());
@@ -255,7 +257,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 						attendanceProcessVO.setEmpCode(userNameDTO.getEmpcode());
 						attendanceProcessVO.setBranch(userNameDTO.getBranch());
 						attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
-						attendanceProcessVO.setFinyear(userNameDTO.getFinyear());
+						attendanceProcessVO.setFinyear(String.valueOf(year));
 						attendanceProcessVO.setCheckInDate(lastCheckIn.getCheckInDate());
 						attendanceProcessVO.setEntryTime(LocalTime.MIDNIGHT);
 						
@@ -299,6 +301,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			todayCheck.setLongitude(userNameDTO.getLongitude());
 			todayCheck.setWorkFromHome(userNameDTO.getWorkFromHome());
 			todayCheck.setLocationAddress(userNameDTO.getLocationAddress());
+			LocalDate checkInDate = today;
+			int year = checkInDate.getYear(); // Extracts year like 2025
+			todayCheck.setFinyear(String.valueOf(year));
 			todayCheck.setAttendanceMode("SYSTEM");
 
 			checkInRepo.save(todayCheck);
@@ -316,7 +321,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			attendanceProcessVO.setEmpCode(userNameDTO.getEmpcode());
 			attendanceProcessVO.setBranch(userNameDTO.getBranch());
 			attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
-			attendanceProcessVO.setFinyear(userNameDTO.getFinyear());
+			attendanceProcessVO.setFinyear(String.valueOf(year));
 			attendanceProcessVO.setCheckInDate(today);
 			attendanceProcessVO.setEntryTime(now);
 			attendanceProcessVO.setStatus(userNameDTO.isStatus() ? "In" : "Out");

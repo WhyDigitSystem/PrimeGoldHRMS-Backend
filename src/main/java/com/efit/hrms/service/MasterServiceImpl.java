@@ -313,6 +313,7 @@ public class MasterServiceImpl implements MasterService {
 		employeeVO.setBranchCode(employeeDTO.getBranchCode());
 		employeeVO.setFlagValue(employeeDTO.getFlagValue());
 		employeeVO.setFlag(employeeDTO.isFlag());
+		employeeVO.setOtFlag(employeeDTO.getOtFlag());	
 
 		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 

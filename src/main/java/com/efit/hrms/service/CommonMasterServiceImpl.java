@@ -238,6 +238,9 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		companyVO.setLatitude(companyDTO.getLatitude());
 		companyVO.setLongitude(companyDTO.getLongitude());
 		companyVO.setHybrid(companyDTO.isHybrid());
+		companyVO.setOtFlag(companyDTO.getOtFlag());
+		companyVO.setOtType(companyDTO.getOtType());
+
 		companyVO.setLocationAddress(companyDTO.getLocationAddress());
 		if (companyDTO.getAttendanceMode() != null && !companyDTO.getAttendanceMode().isEmpty()) {
 		    String modeString = String.join(",", companyDTO.getAttendanceMode());
@@ -313,6 +316,8 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		companyVO.setLatitude(companyDTO.getLatitude());
 		companyVO.setLongitude(companyDTO.getLongitude());
 		companyVO.setHybrid(companyDTO.isHybrid());
+		companyVO.setOtFlag(companyDTO.getOtFlag());
+		companyVO.setOtType(companyDTO.getOtType());
 		companyVO.setLocationAddress(companyDTO.getLocationAddress());
 		 if (companyDTO.getAttendanceMode() != null && !companyDTO.getAttendanceMode().isEmpty()) {
 		        String modeString = String.join(",", companyDTO.getAttendanceMode());

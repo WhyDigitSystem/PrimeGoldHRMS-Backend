@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 
+import com.efit.hrms.entity.OverTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -59,6 +61,8 @@ public class EmployeeDTO {
     private String createdBy;
     private Long orgId;
     private boolean active;
+
+	private OverTime otFlag;
 
     private boolean pfFlag;
 	private boolean esiFlag;

@@ -4,12 +4,17 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -390,6 +395,67 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	        return cell.getStringCellValue().trim();
 	    } catch (Exception e) {
 	        return "";
+	    }
+	}
+
+	
+
+	@Override
+	public List<Map<String, Object>> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId, String department, String branch) {
+
+	    Set<Object[]> result = attendanceProcessRepo.getLeaveDetailsForAttendanceProcess(fromDate, toDate, orgId, department, branch);
+	    return mapLeaveDetails(result, fromDate, toDate);
+	}
+
+
+	private List<Map<String, Object>> mapLeaveDetails(Set<Object[]> result, String fromDate, String toDate) {
+		List<Map<String, Object>> detailsList = new ArrayList<>();
+		 if (result == null || result.isEmpty()) {
+		        // Compare fromDate and toDate
+		        String monthName = getMonthWithMoreDays(fromDate, toDate);
+		        throw new RuntimeException("Attendance process already done in " + monthName + " month.");
+		    }
+		for (Object[] record : result) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("employeeName", record[0] != null ? record[0].toString() : "");
+			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
+			map.put("branch", record[2] != null ? record[2].toString() : "");
+			map.put("department", record[3] != null ? record[3].toString() : "");
+			map.put("month", record[4] != null ? record[4].toString() : "0");
+			map.put("year", record[5] != null ? record[5].toString() : "0");
+			map.put("totalDays", record[6] != null ? record[6].toString() : "0");
+			map.put("holidays", record[7] != null ? record[7].toString() : "0");
+			map.put("weekOffs", record[8] != null ? record[8].toString() : "0");
+			map.put("leaves", record[9] != null ? record[9].toString() : "0");
+			map.put("absent", record[10] != null ? record[10].toString() : "0");
+			map.put("lop", record[11] != null ? record[11].toString() : "0");
+			map.put("presentDays", record[12] != null ? record[12].toString() : "0");
+			map.put("salaryDays", record[13] != null ? record[13].toString() : "0");
+//			map.put("otHours", record[14] != null ? record[14].toString() : "00:00");
+
+
+			detailsList.add(map);
+		}
+		return detailsList;
+	}
+
+	
+	private String getMonthWithMoreDays(String fromDate, String toDate) {
+	    try {
+	        LocalDate from = LocalDate.parse(fromDate);
+	        LocalDate to = LocalDate.parse(toDate);
+
+	        YearMonth fromMonth = YearMonth.from(from);
+	        YearMonth toMonth = YearMonth.from(to);
+
+	        int fromDays = fromMonth.lengthOfMonth();
+	        int toDays = toMonth.lengthOfMonth();
+
+	        YearMonth selectedMonth = (fromDays >= toDays) ? fromMonth : toMonth;
+
+	        return selectedMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+	    } catch (DateTimeParseException e) {
+	        return "Unknown";
 	    }
 	}
 
