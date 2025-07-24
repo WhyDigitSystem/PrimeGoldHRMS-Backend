@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -20,16 +21,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "checkinout")
+@Table(name = "checkinoutbiometric")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CheckInOutVO {
+public class CheckInOutBiometricVO {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "checkinoutgen")
-	@SequenceGenerator(name = "checkinoutgen", sequenceName = "checkinoutseq", initialValue = 1000000001, allocationSize = 1)
-	@Column(name = "checkinoutid")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "checkinoutbiometricgen")
+	@SequenceGenerator(name = "checkinoutbiometricgen", sequenceName = "checkinoutbiometricseq", initialValue = 1000000001, allocationSize = 1)
+	@Column(name = "checkinoutbiometricid")
 	private Long id;
 	@Column(name = "empcode")
 	private String empCode;
@@ -53,39 +54,20 @@ public class CheckInOutVO {
 	@Column(name = "orgid")
 	private long orgId;
 	@Column(name = "attendancemode")
-	private String attendanceMode;
+	private String attendanceMode="BIOMETRIC";
 	@Column(name = "screencode", length = 5)
-	private String screenCode = "CIO";
+	private String screenCode = "CIOB";
 
 	@Column(name = "screenname", length = 25)
-	private String screenName = "CHECKINOUT";
+	private String screenName = "CHECKINOUTBIOMETRIC";
 
-	@Column(name = "approvalstatus")
-	private String approvalStatus;
-	@Column(name = "approveby")
-	private String approveBy;
-	@Column(name = "approveon")
-	private String approveOn;
 	
-	@Column(name = "notify")
-	private String notify;
-	@Column(name = "notifycode")
-	private String notifyCode;
-	@Column(name = "notifyemail")
-	private String notifyEmail;
 	@Column(name = "email")
 	private String email;
 
-	@Column(name = "latitude")
-	private Double latitude;
-	@Column(name = "longitude")
-	private Double longitude;
-	@Column(name = "wfh")
-	private String workFromHome;
-	@Column(name = "locationaddress")
-	private String locationAddress;
-	@Column(name = "createdon")
-	private LocalDateTime createdOn;
+	
+	@Embedded
+	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
 	
 	
 	

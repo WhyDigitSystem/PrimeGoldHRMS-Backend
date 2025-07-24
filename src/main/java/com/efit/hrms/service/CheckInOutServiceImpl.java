@@ -31,11 +31,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.entity.AttendanceProcessVO;
+import com.efit.hrms.entity.CheckInOutBiometricVO;
 import com.efit.hrms.entity.CheckInOutUploadVO;
+import com.efit.hrms.entity.CheckInStatusVO;
+import com.efit.hrms.entity.CompanyVO;
+import com.efit.hrms.entity.LocationUtils;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AttendanceProcessRepo;
-import com.efit.hrms.repo.CheckInOutRepo;
+import com.efit.hrms.repo.CheckInOutBiometricRepo;
 import com.efit.hrms.repo.CheckInOutUploadRepo;
 import com.efit.hrms.repo.CheckInStatusRepo;
 import com.efit.hrms.repo.CompanyRepo;
@@ -48,7 +54,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	
 	@Autowired
-	CheckInOutRepo checkInOutRepo;
+	CheckInOutBiometricRepo checkInOutRepo;
 	
 
 	@Autowired
@@ -68,218 +74,53 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	@Autowired
 	OtCalculationRepo otCalculationRepo;
 	
-//	@Override
-//	@Transactional
-//	public Map<String, Object> createCheckInOut(UserNameDTO userNameDTO) throws ApplicationException {
-//		Map<String, Object> response = new HashMap<>();
-//		LocalDate today = LocalDate.now();
-//		LocalTime now = LocalTime.now();
-//		boolean allowedTodayCheckin = true;
-//		CheckInOutVO todayCheck = null;
-//
-//		List<CompanyVO> companyList = companyRepo.findByCompany(userNameDTO.getOrgId());
-//		boolean hybridStatus;
-//
-//		if (!companyList.isEmpty()) {
-//		    CompanyVO company = companyList.get(0); // get the first record (assuming only one per orgId)
-//		    hybridStatus = company.isHybrid();
-//		    // Use hybridStatus as needed
-//		} else {
-//		    throw new ApplicationException("Company not found for id: " + userNameDTO.getOrgId());
-//		}
-//
-//		
-//		if (userNameDTO.getLatitude() == null || userNameDTO.getLongitude() == null) {
-//		    throw new ApplicationException("Latitude or Longitude cannot be null");
-//		}
-//		
-//		String workFromHome = hybridStatus ? userNameDTO.getWorkFromHome() : "NO";
-//		
-//		if ("NO".equals(workFromHome)) {
-//		  if (!isWithinCompanyLocation(userNameDTO.getLatitude(), userNameDTO.getLongitude(),userNameDTO.getOrgId())) {
-//		        throw new ApplicationException("You are not within the allowed office location. Check-in/out denied");
-//
-//		    }
-//		}
-//
-//		// 1. Check last known status
-//		Optional<CheckInStatusVO> latestStatusOpt = checkInStatusRepo.findTopByEmpcodeAndOrgIdAndBranchOrderByIdDesc(
-//				userNameDTO.getEmpcode(), userNameDTO.getOrgId(), userNameDTO.getBranch());
-//
-//		if (latestStatusOpt.isPresent()) {
-//			CheckInStatusVO latestStatus = latestStatusOpt.get();
-//
-//			if ("In".equalsIgnoreCase(latestStatus.getStatus())) {
-//				Optional<CheckInOutVO> lastCheckInOpt = checkInOutRepo.findTopByEmpCodeAndOrgIdAndBranchOrderByIdDesc(
-//						userNameDTO.getEmpcode(), userNameDTO.getOrgId(), userNameDTO.getBranch());
-//
-//				if (lastCheckInOpt.isPresent()) {
-//					CheckInOutVO lastCheckIn = lastCheckInOpt.get();
-//
-//					if (!lastCheckIn.getCheckInDate().isEqual(today)) {
-////	                    boolean alreadyCheckedOut = checkInRepo.existsByEmpCodeAndBranchAndOrgIdAndCheckInDateAndStatusAndL(
-////	                            userNameDTO.getEmpcode(), userNameDTO.getBranch(), userNameDTO.getOrgId(),
-////	                            lastCheckIn.getCheckInDate(), "Out");
-////	                    if (!alreadyCheckedOut) {
-//						// ✅ Auto-checkout for yesterday
-//						CheckInOutVO autoCheckout = new CheckInOutVO();
-//						autoCheckout.setEmpCode(userNameDTO.getEmpcode());
-//						autoCheckout.setEmpName(userNameDTO.getEmpName());
-//						autoCheckout.setBranch(userNameDTO.getBranch());
-//						autoCheckout.setBranchCode(userNameDTO.getBranchCode());
-//						autoCheckout.setCheckInDate(lastCheckIn.getCheckInDate());
-//						autoCheckout.setNotify(userNameDTO.getNotify());
-//						autoCheckout.setNotifyCode(userNameDTO.getNotifyCode());
-//						autoCheckout.setNotifyEmail(userNameDTO.getNotifyEmail());
-//						autoCheckout.setEmail(userNameDTO.getEmail());
-//
-//
-//						autoCheckout.setLatitude(userNameDTO.getLatitude());
-//						autoCheckout.setLongitude(userNameDTO.getLongitude());
-//						autoCheckout.setWorkFromHome(userNameDTO.getWorkFromHome());
-//						autoCheckout.setLocationAddress(userNameDTO.getLocationAddress());
-//						autoCheckout.setEntryTime(LocalTime.MIDNIGHT);
-//						autoCheckout.setOrgId(userNameDTO.getOrgId());
-//						autoCheckout.setFinyear(userNameDTO.getFinyear());
-//						autoCheckout.setAttendanceMode("SYSTEM");
-//
-//						LocalDateTime lastCheckInCreatedOn = lastCheckIn.getCreatedOn(); // Get the createdOn of last
-//																							// check-in
-//						if (lastCheckInCreatedOn != null) {
-//							// Use the same date but with the same time as last check-in's createdOn
-//							LocalDateTime correctedCheckout = LocalDateTime.of(lastCheckIn.getCheckInDate(),
-//									lastCheckInCreatedOn.toLocalTime());
-//							autoCheckout.setCreatedOn(correctedCheckout);
-//						} else {
-//							// If lastCheckInCreatedOn is null, use the current time as fallback
-//							autoCheckout.setCreatedOn(LocalDateTime.now());
-//						}
-//						autoCheckout.setStatus("Out");
-//
-//						checkInOutRepo.save(autoCheckout);
-//
-//						CheckInStatusVO autoCheckoutStatus = new CheckInStatusVO();
-//						autoCheckoutStatus.setEmpcode(userNameDTO.getEmpcode());
-//						autoCheckoutStatus.setEmpName(userNameDTO.getEmpName());
-//						autoCheckoutStatus.setStatus("Out");
-//						autoCheckoutStatus.setOrgId(userNameDTO.getOrgId());
-//						autoCheckoutStatus.setBranch(userNameDTO.getBranch());
-//						allowedTodayCheckin = false;
-//
-//						checkInStatusRepo.save(autoCheckoutStatus);
-//						
-//						AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
-//						attendanceProcessVO.setEmpName(userNameDTO.getEmpName());
-//						attendanceProcessVO.setEmpCode(userNameDTO.getEmpcode());
-//						attendanceProcessVO.setBranch(userNameDTO.getBranch());
-//						attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
-//						attendanceProcessVO.setFinyear(userNameDTO.getFinyear());
-//						attendanceProcessVO.setCheckInDate(lastCheckIn.getCheckInDate());
-//						attendanceProcessVO.setEntryTime(LocalTime.MIDNIGHT);
-//						
-//						if (lastCheckInCreatedOn != null) {
-//							// Use the same date but with the same time as last check-in's createdOn
-//							LocalDateTime correctedCheckout = LocalDateTime.of(lastCheckIn.getCheckInDate(),
-//									lastCheckInCreatedOn.toLocalTime());
-//							autoCheckout.setCreatedOn(correctedCheckout);
-//						} else {
-//							// If lastCheckInCreatedOn is null, use the current time as fallback
-//							autoCheckout.setCreatedOn(LocalDateTime.now());
-//						}
-//						autoCheckout.setStatus("Out");
-//						attendanceProcessVO.setAttendanceMode("SYSTEM");
-//						attendanceProcessVO.setOrgId(userNameDTO.getOrgId());
-//
-//						attendanceProcessRepo.save(attendanceProcessVO);
-//
-//					}
-//				}
-//			}
-//		}
-//
-//		if (Boolean.TRUE.equals(allowedTodayCheckin)) {
-//			// 2. Proceed with today's check-in or check-out
-//			todayCheck = new CheckInOutVO();
-//			todayCheck.setEmpCode(userNameDTO.getEmpcode());
-//			todayCheck.setEmpName(userNameDTO.getEmpName());
-//			todayCheck.setBranch(userNameDTO.getBranch());
-//			todayCheck.setBranchCode(userNameDTO.getBranchCode());
-//			todayCheck.setCheckInDate(today);
-//			todayCheck.setEntryTime(now);
-//			todayCheck.setOrgId(userNameDTO.getOrgId());
-//			todayCheck.setStatus(userNameDTO.isStatus() ? "In" : "Out");
-//			todayCheck.setCreatedOn(LocalDateTime.now());
-//			todayCheck.setNotify(userNameDTO.getNotify());
-//			todayCheck.setNotifyCode(userNameDTO.getNotifyCode());
-//			todayCheck.setNotifyEmail(userNameDTO.getNotifyEmail());
-//			todayCheck.setEmail(userNameDTO.getEmail());
-//			todayCheck.setLatitude(userNameDTO.getLatitude());
-//			todayCheck.setLongitude(userNameDTO.getLongitude());
-//			todayCheck.setWorkFromHome(userNameDTO.getWorkFromHome());
-//			todayCheck.setLocationAddress(userNameDTO.getLocationAddress());
-//			todayCheck.setFinyear(userNameDTO.getFinyear());
-//
-//			todayCheck.setAttendanceMode("SYSTEM");
-//
-//			checkInOutRepo.save(todayCheck);
-//
-//			CheckInStatusVO statusUpdate = new CheckInStatusVO();
-//			statusUpdate.setEmpcode(userNameDTO.getEmpcode());
-//			statusUpdate.setEmpName(userNameDTO.getEmpName());
-//			statusUpdate.setStatus(todayCheck.getStatus());
-//			statusUpdate.setOrgId(userNameDTO.getOrgId());
-//			statusUpdate.setBranch(userNameDTO.getBranch());
-//			
-//			
-//			AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
-//			attendanceProcessVO.setEmpName(userNameDTO.getEmpName());
-//			attendanceProcessVO.setEmpCode(userNameDTO.getEmpcode());
-//			attendanceProcessVO.setBranch(userNameDTO.getBranch());
-//			attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
-//			attendanceProcessVO.setFinyear(userNameDTO.getFinyear());
-//			attendanceProcessVO.setCheckInDate(today);
-//			attendanceProcessVO.setEntryTime(now);
-//			attendanceProcessVO.setStatus(userNameDTO.isStatus() ? "In" : "Out");
-//
-//			attendanceProcessVO.setAttendanceMode("SYSTEM");
-//			attendanceProcessVO.setOrgId(userNameDTO.getOrgId());
-//
-//			attendanceProcessRepo.save(attendanceProcessVO);
-//			
-//
-//			checkInStatusRepo.save(statusUpdate);
-//		}
-//		response.put("message",
-//				userNameDTO.isStatus() ? "Check-in created successfully" : "Check-out created successfully");
-//		response.put("checkInVO", todayCheck);
-//
-//		return response;
-//	}
-//
-//	public boolean isWithinCompanyLocation(double empLat, double empLng, long orgId) throws ApplicationException {
-//	    double companyLat;
-//	    double companyLng;
-//
-//	    List<CompanyVO> companyVOList = companyRepo.findByCompany(orgId);
-//
-//	    if (!companyVOList.isEmpty()) {
-//	        CompanyVO companyVO = companyVOList.get(0); // assuming only one company per ID
-//	         companyLat = companyVO.getLatitude();
-//	         companyLng = companyVO.getLongitude();
-//	        // use companyLat, companyLng
-//	    } else {
-//	        throw new ApplicationException("Company not found for id: " + orgId);
-//	    }
-//
-//
-//	    double allowedRadius = 500;   // Allow 500 meters
-//
-//	    double distance = LocationUtils.distanceInMeters(empLat, empLng, companyLat, companyLng);
-////	    System.out.println("Distance from company location: " + distance + " meters");
-//
-//	    return distance <= allowedRadius;
-//	}
-//	
+	@Override
+	@Transactional
+	public Map<String, Object> createCheckInOutBiometric(CheckInOutBiometricDTO checkInOutBiometricDTO) throws ApplicationException {
+	    Map<String, Object> response = new HashMap<>();
+
+	    LocalDate today = LocalDate.now();
+	    LocalTime now = LocalTime.now();
+
+	    // Save to CheckInOutBiometricVO
+	    CheckInOutBiometricVO todayCheck = new CheckInOutBiometricVO();
+	    todayCheck.setEmpCode(checkInOutBiometricDTO.getEmpCode());
+	    todayCheck.setEmpName(checkInOutBiometricDTO.getEmpName());
+	    todayCheck.setBranch(checkInOutBiometricDTO.getBranch());
+	    todayCheck.setBranchCode(checkInOutBiometricDTO.getBranchCode());
+	    todayCheck.setCheckInDate(today);
+	    todayCheck.setEntryTime(now);
+	    todayCheck.setOrgId(checkInOutBiometricDTO.getOrgId());
+	    todayCheck.setStatus(checkInOutBiometricDTO.isStatus() ? "In" : "Out");
+	    todayCheck.setEmail(checkInOutBiometricDTO.getEmail());
+	    todayCheck.setFinyear(checkInOutBiometricDTO.getFinyear());
+	    todayCheck.setAttendanceMode("BIOMETRIC");
+
+	    checkInOutRepo.save(todayCheck);
+
+	    // Save to AttendanceProcessVO
+	    AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
+	    attendanceProcessVO.setEmpCode(checkInOutBiometricDTO.getEmpCode());
+	    attendanceProcessVO.setEmpName(checkInOutBiometricDTO.getEmpName());
+	    attendanceProcessVO.setBranch(checkInOutBiometricDTO.getBranch());
+	    attendanceProcessVO.setBranchCode(checkInOutBiometricDTO.getBranchCode());
+	    attendanceProcessVO.setFinyear(checkInOutBiometricDTO.getFinyear());
+	    attendanceProcessVO.setCheckInDate(today);
+	    attendanceProcessVO.setEntryTime(now);
+	    attendanceProcessVO.setStatus(checkInOutBiometricDTO.isStatus() ? "In" : "Out");
+	    attendanceProcessVO.setAttendanceMode("BIOMETRIC");
+	    attendanceProcessVO.setOrgId(checkInOutBiometricDTO.getOrgId());
+
+	    attendanceProcessRepo.save(attendanceProcessVO);
+
+	    // Build response
+	    response.put("message", checkInOutBiometricDTO.isStatus() ? "Check-in created successfully" : "Check-out created successfully");
+	    response.put("checkInBiometricVO", todayCheck);
+
+	    return response;
+	}
+
+	
 	
 	//checkinoutupload
 
@@ -491,8 +332,8 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	        vo.setIntime(LocalTime.parse(intimeStr, timeFormatter));
 	        vo.setOuttime(LocalTime.parse(outtimeStr, timeFormatter));
-	        vo.setOthours(LocalTime.parse(othoursStr, hourMinFormatter));
-
+	        Integer otHours = row[5] != null ? Integer.parseInt(row[5].toString()) : 0;
+	        vo.setOthours(otHours); 
 	        vo.setOtamount(new BigDecimal(String.valueOf(row[6])));
 	        vo.setRate((String) row[7]);
 	        vo.setOttype((String) row[8]);

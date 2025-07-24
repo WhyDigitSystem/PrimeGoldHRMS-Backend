@@ -14,159 +14,109 @@ import com.efit.hrms.entity.OtCalculationVO;
 public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 
 	@Query(
-		    value = "WITH company_cte AS (\r\n"
-		    		+ "    SELECT * FROM company WHERE companyid = ?1\r\n"
-		    		+ "),\r\n"
-		    		+ "shift_cte AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        sd.employeecode,\r\n"
-		    		+ "        TIME_TO_SEC(TIMEDIFF(STR_TO_DATE(sd.outtime, '%H:%i'), STR_TO_DATE(sd.intime, '%H:%i'))) AS working_sec,\r\n"
-		    		+ "        sd.effectivefrom,\r\n"
-		    		+ "        sd.effectiveto\r\n"
-		    		+ "    FROM shiftassigndetails sd\r\n"
-		    		+ "    JOIN shiftassign sa ON sd.shiftassignid = sa.shiftassignid\r\n"
-		    		+ "    WHERE sa.orgid = ?1 AND sd.active = 1\r\n"
-		    		+ "),\r\n"
-		    		+ "salary_cte AS (\r\n"
-		    		+ "    SELECT s1.employeecode, s1.amount\r\n"
-		    		+ "    FROM salarystructure s1\r\n"
-		    		+ "    JOIN (\r\n"
-		    		+ "        SELECT employeecode, MAX(createdon) AS latest_created\r\n"
-		    		+ "        FROM salarystructure\r\n"
-		    		+ "        WHERE orgid = ?1 AND active = 1\r\n"
-		    		+ "        GROUP BY employeecode\r\n"
-		    		+ "    ) s2 ON s1.employeecode = s2.employeecode AND s1.createdon = s2.latest_created\r\n"
-		    		+ "    WHERE s1.orgid = ?1 AND s1.active = 1\r\n"
-		    		+ "),\r\n"
-		    		+ "attendance_cte AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        ap.empcode,\r\n"
-		    		+ "        ap.empname,\r\n"
-		    		+ "        ap.branch,\r\n"
-		    		+ "        ap.branchcode,\r\n"
-		    		+ "        ap.checkindate,\r\n"
-		    		+ "        MIN(CASE WHEN LOWER(ap.status) = 'in' THEN ap.entrytime END) AS intime,\r\n"
-		    		+ "        MAX(CASE WHEN LOWER(ap.status) = 'out' THEN ap.entrytime END) AS outtime\r\n"
-		    		+ "    FROM attendanceprocess ap\r\n"
-		    		+ "    JOIN company_cte c ON ap.orgid = c.companyid\r\n"
-		    		+ "    JOIN employee e ON ap.empcode = e.employeecode\r\n"
-		    		+ "    WHERE ap.orgid = ?1\r\n"
-		    		+ "      AND FIND_IN_SET(ap.attendancemode, c.attendancemode)\r\n"
-		    		+ "      AND c.otflag = 1\r\n"
-		    		+ "      AND e.otflag = 1\r\n"
-		    		+ "      AND (\r\n"
-		    		+ "          c.ottype = 'ALL' OR\r\n"
-		    		+ "          (c.ottype = 'EMPLOYEE' AND LOWER(e.type) = 'employee') OR\r\n"
-		    		+ "          (c.ottype = 'CONTRACTOR' AND LOWER(e.type) = 'contractor')\r\n"
-		    		+ "      )\r\n"
-		    		+ "      AND ap.checkindate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE())\r\n"
-		    		+ "    GROUP BY ap.empcode, ap.empname, ap.branch, ap.branchcode, ap.checkindate\r\n"
-		    		+ "),\r\n"
-		    		+ "daytype_cte AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        ds.empcode,\r\n"
-		    		+ "        ds.checkindate,\r\n"
-		    		+ "        CASE\r\n"
-		    		+ "            WHEN h.holidaydate IS NOT NULL THEN 'Holiday'\r\n"
-		    		+ "            WHEN EXISTS (\r\n"
-		    		+ "                SELECT 1 FROM companyweekoff cw\r\n"
-		    		+ "                WHERE cw.companyid = ?1\r\n"
-		    		+ "                  AND UPPER(cw.weekoffdays) = UPPER(DAYNAME(ds.checkindate))\r\n"
-		    		+ "            ) THEN 'Weekly-Off'\r\n"
-		    		+ "            ELSE 'Regular'\r\n"
-		    		+ "        END AS daytype\r\n"
-		    		+ "    FROM attendance_cte ds\r\n"
-		    		+ "    LEFT JOIN holidays h ON h.orgid = ?1 AND h.holidaydate = ds.checkindate\r\n"
-		    		+ "),\r\n"
-		    		+ "ot_policy_cte AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        om.otmasterid,\r\n"
-		    		+ "        om.otcategory,\r\n"
-		    		+ "        om.ottype,\r\n"
-		    		+ "        omd.minhours * 3600 AS min_sec,\r\n"
-		    		+ "        omd.maxhours * 3600 AS max_sec,\r\n"
-		    		+ "        omd.otrate,\r\n"
-		    		+ "        omd.slab,\r\n"
-		    		+ "        omd.effectivefrom,\r\n"
-		    		+ "        omd.effectiveto\r\n"
-		    		+ "    FROM otmaster om\r\n"
-		    		+ "    JOIN otmasterdetails omd ON omd.otmasterid = om.otmasterid\r\n"
-		    		+ "    WHERE om.orgid = ?1 AND om.active = 1 AND omd.applicable = 1\r\n"
-		    		+ "),\r\n"
-		    		+ "combined_cte AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        a.empcode,\r\n"
-		    		+ "        a.empname,\r\n"
-		    		+ "        a.branch,\r\n"
-		    		+ "        a.branchcode,\r\n"
-		    		+ "        a.checkindate,\r\n"
-		    		+ "        STR_TO_DATE(a.intime, '%H:%i:%s') AS intime,\r\n"
-		    		+ "        STR_TO_DATE(a.outtime, '%H:%i:%s') AS outtime,\r\n"
-		    		+ "        TIME_TO_SEC(TIMEDIFF(STR_TO_DATE(a.outtime, '%H:%i:%s'), STR_TO_DATE(a.intime, '%H:%i:%s'))) AS work_sec,\r\n"
-		    		+ "        sft.working_sec,\r\n"
-		    		+ "        d.daytype\r\n"
-		    		+ "    FROM attendance_cte a\r\n"
-		    		+ "    LEFT JOIN shift_cte sft ON sft.employeecode = a.empcode AND a.checkindate BETWEEN sft.effectivefrom AND sft.effectiveto\r\n"
-		    		+ "    JOIN daytype_cte d ON d.empcode = a.empcode AND d.checkindate = a.checkindate\r\n"
-		    		+ "),\r\n"
-		    		+ "ot_calc_cte AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        c.*,\r\n"
-		    		+ "        COALESCE(c.work_sec - COALESCE(c.working_sec, 0), 0) AS raw_ot_sec\r\n"
-		    		+ "    FROM combined_cte c\r\n"
-		    		+ "),\r\n"
-		    		+ "ot_final_ranked AS (\r\n"
-		    		+ "    SELECT\r\n"
-		    		+ "        o.*,\r\n"
-		    		+ "        p.otcategory,\r\n"
-		    		+ "        p.ottype,\r\n"
-		    		+ "        p.min_sec,\r\n"
-		    		+ "        p.max_sec,\r\n"
-		    		+ "        p.otrate,\r\n"
-		    		+ "        p.slab,\r\n"
-		    		+ "        s.amount AS salary_amount,\r\n"
-		    		+ "        ROW_NUMBER() OVER (PARTITION BY o.empcode, o.checkindate ORDER BY p.min_sec DESC) AS rn\r\n"
-		    		+ "    FROM ot_calc_cte o\r\n"
-		    		+ "    JOIN ot_policy_cte p ON p.otcategory = o.daytype AND o.checkindate BETWEEN p.effectivefrom AND p.effectiveto\r\n"
-		    		+ "    LEFT JOIN salary_cte s ON s.employeecode = o.empcode\r\n"
-		    		+ ")\r\n"
-		    		+ "SELECT\r\n"
-		    		+ "    empcode,\r\n"
-		    		+ "    empname,\r\n"
-		    		+ "    checkindate,\r\n"
-		    		+ "    TIME_FORMAT(intime, '%H:%i:%s') AS intime,\r\n"
-		    		+ "    TIME_FORMAT(outtime, '%H:%i:%s') AS outtime,\r\n"
-		    		+ "\r\n"
-		    		+ "    TIME_FORMAT(SEC_TO_TIME(\r\n"
-		    		+ "        CASE\r\n"
-		    		+ "            WHEN raw_ot_sec < min_sec THEN 0\r\n"
-		    		+ "            WHEN ottype = 'Hourly' THEN FLOOR(raw_ot_sec / 3600) * 3600\r\n"
-		    		+ "            WHEN ottype = 'Slab' THEN FLOOR(raw_ot_sec / 3600) * 3600\r\n"
-		    		+ "            ELSE 0\r\n"
-		    		+ "        END\r\n"
-		    		+ "    ), '%H:%i') AS othours,\r\n"
-		    		+ "\r\n"
-		    		+ "    ROUND(\r\n"
-		    		+ "        CASE\r\n"
-		    		+ "            WHEN raw_ot_sec < min_sec THEN 0\r\n"
-		    		+ "            WHEN ottype = 'Hourly' THEN FLOOR(raw_ot_sec / 3600) * (CAST(REPLACE(otrate, '%', '') AS DECIMAL))\r\n"
-		    		+ "            WHEN ottype = 'Slab' AND salary_amount IS NOT NULL THEN\r\n"
-		    		+ "                FLOOR(raw_ot_sec / 3600) * (salary_amount / 31) * (CAST(REPLACE(otrate, '%', '') AS DECIMAL) / 100)\r\n"
-		    		+ "            ELSE 0\r\n"
-		    		+ "        END, 2\r\n"
-		    		+ "    ) AS otamount,\r\n"
-		    		+ "\r\n"
-		    		+ "    otrate AS rate,\r\n"
-		    		+ "    ottype,\r\n"
-		    		+ "    otcategory\r\n"
-		    		+ "\r\n"
-		    		+ "FROM ot_final_ranked\r\n"
-		    		+ "WHERE rn = 1 AND raw_ot_sec > 0\r\n"
-		    		+ "ORDER BY checkindate, empcode;\r\n"
-		    		+ "",
+		    value = "WITH company_cte AS ( " +
+		            "    SELECT * FROM company WHERE companyid = ?1 " +
+		            "), " +
+		            "shift_cte AS ( " +
+		            "    SELECT sd.employeecode, " +
+		            "           TIME_TO_SEC(TIMEDIFF(STR_TO_DATE(sd.outtime, '%H:%i'), STR_TO_DATE(sd.intime, '%H:%i'))) AS working_sec, " +
+		            "           sd.effectivefrom, sd.effectiveto " +
+		            "    FROM shiftassigndetails sd " +
+		            "    JOIN shiftassign sa ON sd.shiftassignid = sa.shiftassignid " +
+		            "    WHERE sa.orgid = ?1 AND sd.active = 1 " +
+		            "), " +
+		            "attendance_cte AS ( " +
+		            "    SELECT ap.empcode, ap.empname, ap.branch, ap.branchcode, ap.checkindate, " +
+		            "           MIN(CASE WHEN LOWER(ap.status) = 'in' THEN ap.entrytime END) AS intime, " +
+		            "           MAX(CASE WHEN LOWER(ap.status) = 'out' THEN ap.entrytime END) AS outtime " +
+		            "    FROM attendanceprocess ap " +
+		            "    JOIN company_cte c ON ap.orgid = c.companyid " +
+		            "    JOIN employee e ON ap.empcode = e.employeecode " +
+		            "    WHERE ap.orgid = ?1 " +
+		            "      AND FIND_IN_SET(ap.attendancemode, c.attendancemode) " +
+		            "      AND c.otflag = 1 " +
+		            "      AND e.otflag = 1 " +
+		            "      AND ( " +
+		            "          c.ottype = 'ALL' OR " +
+		            "          (c.ottype = 'EMPLOYEE' AND LOWER(e.type) = 'employee') OR " +
+		            "          (c.ottype = 'CONTRACTOR' AND LOWER(e.type) = 'contractor') " +
+		            "      ) " +
+		            "      AND ap.checkindate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE() " +
+		            "    GROUP BY ap.empcode, ap.empname, ap.branch, ap.branchcode, ap.checkindate " +
+		            "), " +
+		            "daytype_cte AS ( " +
+		            "    SELECT ds.empcode, ds.checkindate, " +
+		            "           CASE " +
+		            "               WHEN h.holidaydate IS NOT NULL THEN 'Holiday' " +
+		            "               WHEN EXISTS ( " +
+		            "                   SELECT 1 FROM companyweekoff cw " +
+		            "                   WHERE cw.companyid = ?1 AND UPPER(cw.weekoffdays) = UPPER(DAYNAME(ds.checkindate)) " +
+		            "               ) THEN 'Weekly-Off' " +
+		            "               ELSE 'Regular' " +
+		            "           END AS daytype " +
+		            "    FROM attendance_cte ds " +
+		            "    LEFT JOIN holidays h ON h.orgid = ?1 AND h.holidaydate = ds.checkindate " +
+		            "), " +
+		            "ot_policy_cte AS ( " +
+		            "    SELECT om.otmasterid, om.otcategory, om.ottype, " +
+		            "           omd.minhours * 3600 AS min_sec, " +
+		            "           omd.maxhours * 3600 AS max_sec, " +
+		            "           omd.otrate, omd.slab, omd.effectivefrom, omd.effectiveto " +
+		            "    FROM otmaster om " +
+		            "    JOIN otmasterdetails omd ON omd.otmasterid = om.otmasterid " +
+		            "    WHERE om.orgid = ?1 AND om.active = 1 AND omd.applicable = 1 " +
+		            "), " +
+		            "combined_cte AS ( " +
+		            "    SELECT a.empcode, a.empname, a.branch, a.branchcode, a.checkindate, " +
+		            "           STR_TO_DATE(a.intime, '%H:%i:%s') AS intime, " +
+		            "           STR_TO_DATE(a.outtime, '%H:%i:%s') AS outtime, " +
+		            "           TIME_TO_SEC(TIMEDIFF( " +
+		            "               COALESCE(STR_TO_DATE(a.outtime, '%H:%i:%s'), '00:00:00'), " +
+		            "               COALESCE(STR_TO_DATE(a.intime, '%H:%i:%s'), '00:00:00') " +
+		            "           )) AS work_sec, " +
+		            "           sft.working_sec, d.daytype " +
+		            "    FROM attendance_cte a " +
+		            "    LEFT JOIN shift_cte sft ON sft.employeecode = a.empcode " +
+		            "        AND a.checkindate BETWEEN sft.effectivefrom AND sft.effectiveto " +
+		            "    JOIN daytype_cte d ON d.empcode = a.empcode AND d.checkindate = a.checkindate " +
+		            "), " +
+		            "ot_calc_cte AS ( " +
+		            "    SELECT c.*, COALESCE(c.work_sec - COALESCE(c.working_sec, 0), 0) AS raw_ot_sec " +
+		            "    FROM combined_cte c " +
+		            "), " +
+		            "ot_final_ranked AS ( " +
+		            "    SELECT o.*, p.otcategory, p.ottype, p.min_sec, p.max_sec, p.otrate, p.slab, " +
+		            "           ROW_NUMBER() OVER (PARTITION BY o.empcode, o.checkindate ORDER BY p.min_sec DESC) AS rn " +
+		            "    FROM ot_calc_cte o " +
+		            "    JOIN ot_policy_cte p ON p.otcategory = o.daytype " +
+		            "        AND o.checkindate BETWEEN p.effectivefrom AND p.effectiveto " +
+		            ") " +
+		            "SELECT empcode, empname, checkindate, " +
+		            "       TIME_FORMAT(intime, '%H:%i:%s') AS intime, " +
+		            "       TIME_FORMAT(outtime, '%H:%i:%s') AS outtime, " +
+		            "       FLOOR( " +
+		            "           CASE " +
+		            "               WHEN raw_ot_sec < min_sec THEN 0 " +
+		            "               WHEN ottype = 'Hourly' OR ottype = 'Slab' THEN raw_ot_sec / 3600 " +
+		            "               ELSE 0 " +
+		            "           END " +
+		            "       ) AS othours, " +
+		            "       FLOOR( " +
+		            "           CASE " +
+		            "               WHEN raw_ot_sec < min_sec THEN 0 " +
+		            "               WHEN ottype = 'Hourly' OR ottype = 'Slab' THEN FLOOR(raw_ot_sec / 3600) * CAST(otrate AS DECIMAL) " +
+		            "               ELSE 0 " +
+		            "           END " +
+		            "       ) AS otamount, " +
+		            "       otrate AS rate, ottype, otcategory " +
+		            "FROM ot_final_ranked " +
+		            "WHERE rn = 1 AND raw_ot_sec >= min_sec " +
+		            "ORDER BY checkindate, empcode",
 		    nativeQuery = true
 		)
-	List<Object[]> getFinalOtRecords(Long orgId);
+		List<Object[]> getFinalOtRecords(Long orgId);
+
+
 
 	Optional<OtCalculationVO> findByEmpcodeAndCheckindate(String empcode, LocalDate checkindate);
 

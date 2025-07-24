@@ -46,7 +46,7 @@ public class OtCalculationVO {
     private LocalTime outtime;
 
     @Column(name = "othours")
-    private LocalTime othours;
+    private int othours;
 
     @Column(name = "otamount", precision = 10, scale = 2)
     private BigDecimal otamount;

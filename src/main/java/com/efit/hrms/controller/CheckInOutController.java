@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,9 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
+import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.service.CheckInOutService;
+
 
 @CrossOrigin
 @RestController
@@ -36,28 +39,28 @@ public class CheckInOutController extends BaseController{
 	public static final Logger LOGGER = LoggerFactory.getLogger(CheckInOutController.class);
 	
 	
-//	@PutMapping("/createCheckInOut")
-//	public ResponseEntity<ResponseDTO> createCheckInOut(@RequestBody UserNameDTO userNameDTO) {
-//		String methodName = "createCheckInOut()";
-//		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-//		Map<String, Object> responseObjectsMap = new HashMap<String, Object>();
-//		String errorMsg = null;
-//		ResponseDTO responseDTO = null;
-//		try {
-//			Map<String, Object> checkInVO = checkInOutService.createCheckInOut(userNameDTO);
-//			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, checkInVO.get("message"));
-//			responseObjectsMap.put("checkInVO", checkInVO.get("checkInVO"));
-//			responseDTO = createServiceResponse(responseObjectsMap);
-//		} catch (Exception e) {
-//			errorMsg = e.getMessage();
-//			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
-//			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
-//		}
-//		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
-//		return ResponseEntity.ok().body(responseDTO);
-//	}
-//	
-//	
+	@PutMapping("/createCheckInOutBiometric")
+	public ResponseEntity<ResponseDTO> createCheckInOutBiometric(@RequestBody CheckInOutBiometricDTO checkInOutBiometricDTO) {
+		String methodName = "createCheckInOutBiometric()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		Map<String, Object> responseObjectsMap = new HashMap<String, Object>();
+		String errorMsg = null;
+		ResponseDTO responseDTO = null;
+		try {
+			Map<String, Object> checkInBiometricVO = checkInOutService.createCheckInOutBiometric(checkInOutBiometricDTO);
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, checkInBiometricVO.get("message"));
+			responseObjectsMap.put("checkInBiometricVO", checkInBiometricVO.get("checkInBiometricVO"));
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	
 
 	    @PutMapping("/checkInOutUploadExcel")
 	    public ResponseEntity<String> checkInOutUploadExcel(@RequestParam("files") MultipartFile file,@RequestParam Long orgId,@RequestParam String createdBy) {
