@@ -110,6 +110,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    attendanceProcessVO.setStatus(checkInOutBiometricDTO.isStatus() ? "In" : "Out");
 	    attendanceProcessVO.setAttendanceMode("BIOMETRIC");
 	    attendanceProcessVO.setOrgId(checkInOutBiometricDTO.getOrgId());
+	    attendanceProcessVO.setSourceId(todayCheck.getId());
 
 	    attendanceProcessRepo.save(attendanceProcessVO);
 
@@ -214,6 +215,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	                vo.setCheckInDate(dto.getCheckInDate());
 	                vo.setEntryTime(dto.getEntryTime());
 	                vo.setStatus(dto.getStatus());
+	                vo.setSourceId(vo.getId());
 	                vo.setAttendanceMode("FILES");
 	                
 

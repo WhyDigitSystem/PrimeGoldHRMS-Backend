@@ -13,4 +13,6 @@ public interface ShiftAssignDetailsRepo extends JpaRepository<ShiftAssignDetails
 
 	List<ShiftAssignDetailsVO> findByShiftAssignVO(ShiftAssignVO shiftAssignVO);
 
+	ShiftAssignDetailsVO findByEmployeeCodeAndShiftAssignVO_OrgId(String empcode, long orgId);
+
 }

@@ -67,6 +67,7 @@ import com.efit.hrms.entity.PollVoteVO;
 import com.efit.hrms.entity.PollsVO;
 import com.efit.hrms.entity.PraiseVO;
 import com.efit.hrms.entity.SalaryProcessVO;
+import com.efit.hrms.entity.ShiftAssignDetailsVO;
 import com.efit.hrms.entity.TaskVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AnnouncementRepo;
@@ -87,6 +88,7 @@ import com.efit.hrms.repo.PollVoteRepo;
 import com.efit.hrms.repo.PollsRepo;
 import com.efit.hrms.repo.PraiseRepo;
 import com.efit.hrms.repo.SalaryProcessRepo;
+import com.efit.hrms.repo.ShiftAssignDetailsRepo;
 import com.efit.hrms.repo.TaskRepo;
 
 @Service
@@ -149,6 +151,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 	
 	@Autowired
 	AttendanceProcessRepo attendanceProcessRepo;
+	
+	@Autowired
+	ShiftAssignDetailsRepo shiftAssignDetailsRepo;
 
 	@Override
 	@Transactional
@@ -187,7 +192,11 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 		// 1. Check last known status
 		Optional<CheckInStatusVO> latestStatusOpt = checkInStatusRepo.findTopByEmpcodeAndOrgIdAndBranchOrderByIdDesc(
 				userNameDTO.getEmpcode(), userNameDTO.getOrgId(), userNameDTO.getBranch());
-
+		
+		ShiftAssignDetailsVO shiftassignDetailsVO = shiftAssignDetailsRepo.findByEmployeeCodeAndShiftAssignVO_OrgId(userNameDTO.getEmpcode(), userNameDTO.getOrgId());
+		if(!shiftassignDetailsVO.getShiftType().equalsIgnoreCase("NIGHT")) {
+			System.out.println("testing   ....");
+			//			
 		if (latestStatusOpt.isPresent()) {
 			CheckInStatusVO latestStatus = latestStatusOpt.get();
 
@@ -197,7 +206,6 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 				if (lastCheckInOpt.isPresent()) {
 					CheckInVO lastCheckIn = lastCheckInOpt.get();
-
 					if (!lastCheckIn.getCheckInDate().isEqual(today)) {
 //	                    boolean alreadyCheckedOut = checkInRepo.existsByEmpCodeAndBranchAndOrgIdAndCheckInDateAndStatusAndL(
 //	                            userNameDTO.getEmpcode(), userNameDTO.getBranch(), userNameDTO.getOrgId(),
@@ -260,7 +268,8 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 						attendanceProcessVO.setFinyear(String.valueOf(year));
 						attendanceProcessVO.setCheckInDate(lastCheckIn.getCheckInDate());
 						attendanceProcessVO.setEntryTime(LocalTime.MIDNIGHT);
-						
+						attendanceProcessVO.setSourceId(autoCheckout.getId());
+
 						if (lastCheckInCreatedOn != null) {
 							// Use the same date but with the same time as last check-in's createdOn
 							LocalDateTime correctedCheckout = LocalDateTime.of(lastCheckIn.getCheckInDate(),
@@ -276,12 +285,15 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 						attendanceProcessRepo.save(attendanceProcessVO);
 
-					}
+					}}
 				}
 			}
 		}
+		System.out.println("testing3   ....");
 
-		if (Boolean.TRUE.equals(allowedTodayCheckin)) {
+
+		if (Boolean.TRUE.equals(allowedTodayCheckin) || shiftassignDetailsVO.getShiftType().equalsIgnoreCase("NIGHT")) {
+			System.out.println("testing1   ....");
 			// 2. Proceed with today's check-in or check-out
 			todayCheck = new CheckInVO();
 			todayCheck.setEmpCode(userNameDTO.getEmpcode());
@@ -325,6 +337,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			attendanceProcessVO.setCheckInDate(today);
 			attendanceProcessVO.setEntryTime(now);
 			attendanceProcessVO.setStatus(userNameDTO.isStatus() ? "In" : "Out");
+			attendanceProcessVO.setSourceId(todayCheck.getId());
 
 			attendanceProcessVO.setAttendanceMode("SYSTEM");
 			attendanceProcessVO.setOrgId(userNameDTO.getOrgId());

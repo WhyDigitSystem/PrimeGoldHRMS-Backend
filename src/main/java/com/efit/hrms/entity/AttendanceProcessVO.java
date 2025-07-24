@@ -50,6 +50,9 @@ public class AttendanceProcessVO {
 	private String status;
 	@Column(name = "orgid")
 	private long orgId;
+	@Column(name = "sourceid")
+	private Long sourceId;
+
 	@Column(name = "attendancemode")
 	private String attendanceMode;
 	@Column(name = "screencode", length = 5)
