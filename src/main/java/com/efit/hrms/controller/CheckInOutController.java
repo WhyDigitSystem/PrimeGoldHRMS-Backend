@@ -1,9 +1,11 @@
 package com.efit.hrms.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,5 +114,41 @@ public class CheckInOutController extends BaseController{
 	        return ResponseEntity.ok(result);
 	    }
 	   
+	    
+	    //monthlyprocess
+	    
+	    @GetMapping("/getMonthlyProcess")
+		public ResponseEntity<ResponseDTO> getMonthlyProcess( @RequestParam int month,
+		        @RequestParam int year,
+		        @RequestParam Long orgId,
+		        @RequestParam String branch,
+		        @RequestParam String department,
+		        @RequestParam String type,@RequestParam (required = false)String contractor) {
+			String methodName = "getMonthlyProcess()";
+			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+			String errorMsg = null;
+			Map<String, Object> responseObjectsMap = new HashMap<>();
+			ResponseDTO responseDTO = null;
+			List<Map<String, Object>> mapp = new ArrayList<>();
+
+			try {
+				mapp = checkInOutService.getMonthlyProcess(month, year, orgId, branch, department,type,contractor);
+			} catch (Exception e) {
+				errorMsg = e.getMessage();
+				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			}
+
+			if (StringUtils.isBlank(errorMsg)) {
+				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "MonthlyProcess retrieved successfully");
+				responseObjectsMap.put("monthlyProcess", mapp);
+				responseDTO = createServiceResponse(responseObjectsMap);
+			} else {
+				responseDTO = createServiceResponseError(responseObjectsMap, "MonthlyProcess to retrieve Charge Type", errorMsg);
+			}
+
+			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			return ResponseEntity.ok().body(responseDTO);
+		}
+
 	
 }

@@ -349,6 +349,29 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	}
 
 
+//monthlyprocess
+
+	@Override
+	public List<Map<String, Object>> getMonthlyProcess(int month, int year, Long orgId, String branch, String department,String type, String contractor) {
+	    List<Map<String, Object>> rawList = attendanceProcessRepo.findMonthlyProcess(month, year, orgId, branch, department, type,  contractor);
+
+	    List<Map<String, Object>> orderedList = new ArrayList<>();
+
+	    for (Map<String, Object> row : rawList) {
+	        Map<String, Object> orderedMap = new LinkedHashMap<>();
+	        orderedMap.put("code", row.get("code"));
+	        orderedMap.put("name", row.get("name"));
+	        orderedMap.put("branch", row.get("branch"));
+	        orderedMap.put("department", row.get("department"));
+	        orderedMap.put("shifttype", row.get("shifttype"));
+	        for (int i = 1; i <= 31; i++) {
+	            orderedMap.put("day_" + i, row.get("day_" + i));
+	        }
+	        orderedList.add(orderedMap);
+	    }
+
+	    return orderedList;
+	}
 
 
 }

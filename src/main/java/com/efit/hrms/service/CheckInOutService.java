@@ -25,6 +25,9 @@ public interface CheckInOutService {
 
 	Map<String, Object> createCheckInOutBiometric(CheckInOutBiometricDTO checkInOutBiometricDTO) throws ApplicationException;
 
+	//monthlyprocess
+	List<Map<String, Object>> getMonthlyProcess(int month, int year, Long orgId, String branch, String department, String type, String contractor);
+
 
 
 }

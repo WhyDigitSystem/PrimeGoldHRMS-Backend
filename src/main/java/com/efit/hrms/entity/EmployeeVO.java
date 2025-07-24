@@ -137,6 +137,9 @@ public class EmployeeVO {
 	@Column(name = "otflag")
 	private OverTime otFlag;
 	
+	@Column(name = "bioid")
+	private Long bioId;
+	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
 
