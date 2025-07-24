@@ -256,7 +256,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		 if (result == null || result.isEmpty()) {
 		        // Compare fromDate and toDate
 		        String monthName = getMonthWithMoreDays(fromDate, toDate);
-		        throw new RuntimeException("Attendance process already done in " + monthName + " month.");
+		        throw new RuntimeException("NO DATA FOUND IN " + monthName.toUpperCase() + " MONTH.");
 		    }
 		for (Object[] record : result) {
 			Map<String, Object> map = new HashMap<>();
