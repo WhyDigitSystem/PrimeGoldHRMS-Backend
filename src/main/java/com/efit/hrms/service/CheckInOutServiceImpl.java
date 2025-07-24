@@ -302,51 +302,52 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    }
 	}
 	
-	
 	@Override
 	public List<OtCalculationVO> generateOtAndSave(Long orgId) {
 	    List<Object[]> rows = otCalculationRepo.getFinalOtRecords(orgId);
 
 	    List<OtCalculationVO> resultList = new ArrayList<>();
-	    
 	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-	    DateTimeFormatter hourMinFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
 	    for (Object[] row : rows) {
 	        String empcode = (String) row[0];
 	        LocalDate checkindate = ((java.sql.Date) row[2]).toLocalDate();
 
-	        // Check if a record already exists
+	        // Check if record already exists
 	        Optional<OtCalculationVO> existingOpt = otCalculationRepo.findByEmpcodeAndCheckindate(empcode, checkindate);
-
 	        OtCalculationVO vo = existingOpt.orElse(new OtCalculationVO());
 
 	        vo.setEmpcode(empcode);
 	        vo.setEmpname((String) row[1]);
 	        vo.setCheckindate(checkindate);
 
-	        // Convert string to LocalTime
+	        // Set IN/OUT time
 	        String intimeStr = (String) row[3];
 	        String outtimeStr = (String) row[4];
-	        String othoursStr = (String) row[5];
-
 	        vo.setIntime(LocalTime.parse(intimeStr, timeFormatter));
 	        vo.setOuttime(LocalTime.parse(outtimeStr, timeFormatter));
+
+	        // Set OT hours as integer
 	        Integer otHours = row[5] != null ? Integer.parseInt(row[5].toString()) : 0;
 	        vo.setOthours(otHours); 
+
 	        vo.setOtamount(new BigDecimal(String.valueOf(row[6])));
-	        vo.setRate((String) row[7]);
-	        vo.setOttype((String) row[8]);
-	        vo.setOtcategory((String) row[9]);
+
+	        // ✅ Fix: rate as BigDecimal from String
+	        vo.setRate(row[7] != null ? new BigDecimal(row[7].toString()) : BigDecimal.ZERO);
+
+	        vo.setOttype(row[8] != null ? row[8].toString() : null);
+	        vo.setOtcategory(row[9] != null ? row[9].toString() : null);
+
 
 	        vo.setCreatedon(LocalDateTime.now());
 
-	        
 	        resultList.add(vo);
 	    }
 
 	    return otCalculationRepo.saveAll(resultList);
 	}
+
 
 
 

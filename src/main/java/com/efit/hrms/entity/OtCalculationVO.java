@@ -52,7 +52,7 @@ public class OtCalculationVO {
     private BigDecimal otamount;
 
     @Column(name = "rate")
-    private String rate;
+    private BigDecimal rate;
 
     @Column(name = "ottype")
     private String ottype;
