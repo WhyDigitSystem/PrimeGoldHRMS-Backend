@@ -539,6 +539,24 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 			checkInOutAdjustmentRepo.save(checkIn);
 			savedEntries.add(checkIn);
+			
+//			
+//			AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
+//			attendanceProcessVO.setEmpName(dto.getEmpName());
+//			attendanceProcessVO.setEmpCode(dto.getEmpCode());
+//			attendanceProcessVO.setBranch(dto.getBranch());
+////			attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
+//			attendanceProcessVO.setFinyear(String.valueOf(year));
+//			attendanceProcessVO.setCheckInDate(today);
+//			attendanceProcessVO.setEntryTime(now);
+//			attendanceProcessVO.setStatus(userNameDTO.isStatus() ? "In" : "Out");
+//			attendanceProcessVO.setSourceId(checkIn.getId());
+//
+//			attendanceProcessVO.setAttendanceMode("SYSTEM");
+//			attendanceProcessVO.setOrgId(dto.getOrgId());
+//
+//			attendanceProcessRepo.save(attendanceProcessVO);
+//			
 
 		}
 

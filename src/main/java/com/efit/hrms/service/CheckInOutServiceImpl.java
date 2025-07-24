@@ -340,7 +340,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	        vo.setOttype(row[8] != null ? row[8].toString() : null);
 	        vo.setOtcategory(row[9] != null ? row[9].toString() : null);
-
+	        vo.setStatus("PENDING");
 
 	        vo.setCreatedon(LocalDateTime.now());
 

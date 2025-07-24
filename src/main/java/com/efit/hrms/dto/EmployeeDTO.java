@@ -61,7 +61,7 @@ public class EmployeeDTO {
     private String createdBy;
     private Long orgId;
     private boolean active;
-	private Long bioId;
+	private String bioId;
 
 	private OverTime otFlag;
 

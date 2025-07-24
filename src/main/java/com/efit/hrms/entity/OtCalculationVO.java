@@ -59,6 +59,9 @@ public class OtCalculationVO {
 
     @Column(name = "otcategory")
     private String otcategory;
+    
+    @Column(name = "status")
+    private String status;
 
     @Column(name = "createdon")
     private LocalDateTime createdon;
