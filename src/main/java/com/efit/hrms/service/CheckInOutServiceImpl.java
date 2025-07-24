@@ -341,6 +341,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	        vo.setCreatedon(LocalDateTime.now());
 
+	        
 	        resultList.add(vo);
 	    }
 
