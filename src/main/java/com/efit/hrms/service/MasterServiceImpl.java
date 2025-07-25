@@ -314,7 +314,8 @@ public class MasterServiceImpl implements MasterService {
 		employeeVO.setFlagValue(employeeDTO.getFlagValue());
 		employeeVO.setFlag(employeeDTO.isFlag());
 		employeeVO.setOtFlag(employeeDTO.getOtFlag());	
-		employeeVO.setBioId(employeeDTO.getBioId());	
+		employeeVO.setBioId(employeeDTO.getBioId());
+
 		
 		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 

@@ -70,7 +70,7 @@ public class AemployeeVO {
 	private String bankName;
 	@Column(name = "ifsccode",length = 12)
 	private String ifscCode;
-	@Column(name = "department",length = 30)
+	@Column(name = "department")
 	private String department;
 	@Column(name = "grade",length = 12)
 	private String grade;
@@ -92,7 +92,7 @@ public class AemployeeVO {
 //	private String role;
 	@Column(name = "resigndate")
 	private LocalDate resignDate;
-	@Column(name = "designation",length = 30)
+	@Column(name = "designation")
 	private String designation;
 	@Column(name = "dateofbirth")
 	private LocalDate dateOfBirth;
