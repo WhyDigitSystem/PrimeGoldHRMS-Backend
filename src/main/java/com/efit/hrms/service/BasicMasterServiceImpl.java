@@ -517,6 +517,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			checkIn.setEmpCode(dto.getEmpCode());
 			checkIn.setEmpName(dto.getEmpName());
 			checkIn.setBranch(dto.getBranch());
+			checkIn.setBranchCode(dto.getBranchCode());
 			checkIn.setOrgId(dto.getOrgId());
 			checkIn.setNotify(dto.getNotify());
 			checkIn.setNotifyCode(dto.getNotifyCode());
@@ -540,24 +541,21 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			checkInOutAdjustmentRepo.save(checkIn);
 			savedEntries.add(checkIn);
 			
-//			
-//			AttendanceProcessVO attendanceProcessVO = new AttendanceProcessVO();
-//			attendanceProcessVO.setEmpName(dto.getEmpName());
-//			attendanceProcessVO.setEmpCode(dto.getEmpCode());
-//			attendanceProcessVO.setBranch(dto.getBranch());
-////			attendanceProcessVO.setBranchCode(userNameDTO.getBranchCode());
-//			attendanceProcessVO.setFinyear(String.valueOf(year));
-//			attendanceProcessVO.setCheckInDate(today);
-//			attendanceProcessVO.setEntryTime(now);
-//			attendanceProcessVO.setStatus(userNameDTO.isStatus() ? "In" : "Out");
-//			attendanceProcessVO.setSourceId(checkIn.getId());
-//
-//			attendanceProcessVO.setAttendanceMode("SYSTEM");
-//			attendanceProcessVO.setOrgId(dto.getOrgId());
-//
-//			attendanceProcessRepo.save(attendanceProcessVO);
-//			
+		      AttendanceProcessVO attendanceIn = new AttendanceProcessVO();
+		        attendanceIn.setEmpName(dto.getEmpName());
+		        attendanceIn.setEmpCode(dto.getEmpCode());
+		        attendanceIn.setBranch(dto.getBranch());
+		        attendanceIn.setBranchCode(dto.getBranchCode());
+		        attendanceIn.setCheckInDate(localDate);
+		        attendanceIn.setEntryTime(entryTime);
+		        attendanceIn.setStatus("IN");
+		        attendanceIn.setOrgId(dto.getOrgId());
+		        attendanceIn.setAttendanceMode("SYSTEM");
+		        attendanceIn.setSourceId(checkIn.getId());
+		        attendanceIn.setFinyear(String.valueOf(localDate.getYear()));
 
+		        attendanceProcessRepo.save(attendanceIn);
+		    
 		}
 
 		// Save check-out entry
@@ -567,6 +565,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			checkOut.setEmpCode(dto.getEmpCode());
 			checkOut.setEmpName(dto.getEmpName());
 			checkOut.setBranch(dto.getBranch());
+			checkOut.setBranchCode(dto.getBranchCode());
 			checkOut.setOrgId(dto.getOrgId());
 			checkOut.setNotify(dto.getNotify());
 			checkOut.setNotifyCode(dto.getNotifyCode());
@@ -589,6 +588,22 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 			checkInOutAdjustmentRepo.save(checkOut);
 			savedEntries.add(checkOut);
+			
+			   AttendanceProcessVO attendanceOut = new AttendanceProcessVO();
+		        attendanceOut.setEmpName(dto.getEmpName());
+		        attendanceOut.setEmpCode(dto.getEmpCode());
+		        attendanceOut.setBranch(dto.getBranch());
+		        attendanceOut.setBranchCode(dto.getBranchCode());
+		        attendanceOut.setCheckInDate(localDate);
+		        attendanceOut.setEntryTime(entryTime);
+		        attendanceOut.setStatus("OUT");
+		        attendanceOut.setOrgId(dto.getOrgId());
+		        attendanceOut.setAttendanceMode("SYSTEM");
+		        attendanceOut.setSourceId(checkOut.getId());
+		        attendanceOut.setFinyear(String.valueOf(localDate.getYear()));
+
+		        attendanceProcessRepo.save(attendanceOut);
+		    
 
 		}
 

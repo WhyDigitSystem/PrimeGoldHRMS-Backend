@@ -156,7 +156,7 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	boolean existsByEmployeeName(String employeeName);
 
-	boolean existsByEmail(String email);
+//	boolean existsByEmail(String email);
 
 
 	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND  (?3 = 'ALL' OR branch = ?3)", nativeQuery = true)

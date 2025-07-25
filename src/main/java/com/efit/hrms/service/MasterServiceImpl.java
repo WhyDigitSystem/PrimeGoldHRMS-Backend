@@ -898,7 +898,7 @@ public class MasterServiceImpl implements MasterService {
 	
 	
 	@Override
-	@Transactional
+	@Transactional(rollbackOn = Exception.class)
 	public Map<String, Object> uploadEmployeeExcel(MultipartFile file, Long orgId, String createdBy)
 	        throws ApplicationException, IOException {
 
@@ -911,7 +911,6 @@ public class MasterServiceImpl implements MasterService {
 
 	    Set<String> seenCodes = new HashSet<>();
 	    Set<String> seenNames = new HashSet<>();
-	    Set<String> seenEmails = new HashSet<>();
 	    Set<String> excelDuplicates = new LinkedHashSet<>();
 	    Set<String> dbDuplicates = new LinkedHashSet<>();
 
@@ -927,15 +926,13 @@ public class MasterServiceImpl implements MasterService {
 
 	        if (!seenCodes.add(dto.getEmployeeCode())) isExcelDuplicate = true;
 	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
-	        if (!seenEmails.add(dto.getEmail())) isExcelDuplicate = true;
 
 	        if (isExcelDuplicate) {
 	            excelDuplicates.add("Row " + rowNum + " → " + info);
 	        }
 
 	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ||
-	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ||
-	                             employeeRepo.existsByEmail(dto.getEmail());
+	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ;
 
 	        if (existsInDb) {
 	            dbDuplicates.add(info);
@@ -974,13 +971,14 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setCreatedBy(dto.getCreatedBy());
 	        employeeVO.setUpdatedBy(dto.getCreatedBy());
 	        employeeVO.setDateOfBirth(dto.getDateOfBirth());
-	        
+	        employeeVO.setActive(true);
+
 	        DepartmentVO departmentVO =departmentRepo.findByOrgIdAndDepartmentName(orgId, dto.getDepartment());
 	        
 	        if(departmentVO!=null) {
 		        employeeVO.setDepartment(dto.getDepartment());
 	        }else {
-		        throw new ApplicationException("Please Enter Available DepartmentName");
+		        throw new ApplicationException("Please Enter Available DepartmentName " + dto.getDepartment());
 	        }
 	        
 	        DesignationVO designationVO =designationRepo.findByOrgIdAndDesignationName(orgId, dto.getDesignation());
@@ -988,7 +986,7 @@ public class MasterServiceImpl implements MasterService {
 	        if(designationVO!=null) {
 		        employeeVO.setDesignation(dto.getDesignation());	
 	        }else {
-		        throw new ApplicationException("Please Enter Available DesignationName");
+		        throw new ApplicationException("Please Enter Available DesignationName " + dto.getDesignation());
 	        }
 	        
 	        employeeVO.setEmail(dto.getEmail());

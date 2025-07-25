@@ -38,6 +38,8 @@ public class CheckInOutAdjustmentVO {
 //	private String companyCode;
 	@Column(name = "branch")
 	private String branch;
+	@Column(name = "branchcode")
+	private String branchCode;
 	@JsonFormat(pattern="yyyy-MM-dd")
 	@Column(name = "checkindate")
 	private LocalDate checkInDate=LocalDate.now();
