@@ -161,6 +161,15 @@ public class EmployeeVO {
 		return cancel ? "T" : "F";
 	}
 
+	
+	public OverTime getOtFlag() {
+	    return otFlag;
+	}
+
+	public void setOtFlag(OverTime otFlag) {
+	    this.otFlag = otFlag;
+	}
+	
 	@OneToMany(mappedBy = "employeeVO", cascade = CascadeType.ALL)
 	@JsonManagedReference
 	List<EmployeeLeaveVO> employeeLeaveVO;

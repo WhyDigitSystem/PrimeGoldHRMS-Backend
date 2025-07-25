@@ -34,6 +34,7 @@ import com.efit.hrms.entity.DesignationVO;
 import com.efit.hrms.entity.EmployeeLeaveVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.LeaveBalanceVO;
+import com.efit.hrms.entity.OverTime;
 import com.efit.hrms.entity.ProjectMasterVO;
 import com.efit.hrms.entity.UserLoginRolesVO;
 import com.efit.hrms.entity.UserVO;
@@ -1019,6 +1020,13 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setContactPerson(dto.getContactPerson());
 	        employeeVO.setContactNumber(dto.getContactNumber());
 	        employeeVO.setContactEmail(dto.getContactEmail());
+	        employeeVO.setBioId(dto.getEmployeeCode());
+	        if (dto.getOtFlag() != null) {
+	            employeeVO.setOtFlag(dto.getOtFlag());
+	        }
+
+
+
 
 
 	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();

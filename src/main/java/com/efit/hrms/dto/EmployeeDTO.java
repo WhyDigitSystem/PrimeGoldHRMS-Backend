@@ -71,6 +71,14 @@ public class EmployeeDTO {
 	private BigDecimal esiPercentage;
     
 	private List<EmployeeLeaveDTO> employeeLeaveDTO;
-    
+
+	
+	public OverTime getOtFlag() {
+	    return otFlag;
+	}
+
+	public void setOtFlag(OverTime otFlag) {
+	    this.otFlag = otFlag;
+	}
 
 }
