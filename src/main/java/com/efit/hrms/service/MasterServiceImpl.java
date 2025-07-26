@@ -910,7 +910,7 @@ public class MasterServiceImpl implements MasterService {
 	    }
 
 	    Set<String> seenCodes = new HashSet<>();
-	    Set<String> seenNames = new HashSet<>();
+//	    Set<String> seenNames = new HashSet<>();
 	    Set<String> excelDuplicates = new LinkedHashSet<>();
 	    Set<String> dbDuplicates = new LinkedHashSet<>();
 
@@ -921,18 +921,18 @@ public class MasterServiceImpl implements MasterService {
 	        dto.setOrgId(orgId);
 	        dto.setCreatedBy(createdBy);
 
-	        String info = dto.getEmployeeName() + " - " + dto.getEmployeeCode() + " - " + dto.getEmail();
+	        String info = dto.getEmployeeCode() ;
 	        boolean isExcelDuplicate = false;
 
 	        if (!seenCodes.add(dto.getEmployeeCode())) isExcelDuplicate = true;
-	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
+//	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
 
 	        if (isExcelDuplicate) {
 	            excelDuplicates.add("Row " + rowNum + " → " + info);
 	        }
 
-	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ||
-	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ;
+	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ;
+//	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ;
 
 	        if (existsInDb) {
 	            dbDuplicates.add(info);

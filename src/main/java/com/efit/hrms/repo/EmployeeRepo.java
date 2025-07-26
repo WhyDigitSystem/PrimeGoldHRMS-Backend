@@ -154,7 +154,7 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	boolean existsByEmployeeCode(String employeeCode);
 
-	boolean existsByEmployeeName(String employeeName);
+//	boolean existsByEmployeeName(String employeeName);
 
 //	boolean existsByEmail(String email);
 
