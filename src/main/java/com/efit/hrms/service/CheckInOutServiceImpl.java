@@ -2,6 +2,7 @@ package com.efit.hrms.service;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -10,6 +11,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,20 +35,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
+import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceProcessVO;
 import com.efit.hrms.entity.CheckInOutBiometricVO;
 import com.efit.hrms.entity.CheckInOutUploadVO;
-import com.efit.hrms.entity.CheckInStatusVO;
-import com.efit.hrms.entity.CompanyVO;
-import com.efit.hrms.entity.LocationUtils;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.ShiftAssignDetailsVO;
 import com.efit.hrms.exception.ApplicationException;
+import com.efit.hrms.repo.AttendanceDailyRepo;
 import com.efit.hrms.repo.AttendanceProcessRepo;
 import com.efit.hrms.repo.CheckInOutBiometricRepo;
 import com.efit.hrms.repo.CheckInOutUploadRepo;
 import com.efit.hrms.repo.CheckInStatusRepo;
 import com.efit.hrms.repo.CompanyRepo;
 import com.efit.hrms.repo.OtCalculationRepo;
+import com.efit.hrms.repo.ShiftAssignDetailsRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -73,6 +77,12 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 	@Autowired
 	OtCalculationRepo otCalculationRepo;
+	
+	@Autowired
+	ShiftAssignDetailsRepo shiftAssignDetailsRepo;
+	
+	@Autowired
+	AttendanceDailyRepo attendanceDailyRepo;
 	
 	@Override
 	@Transactional
@@ -113,7 +123,105 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    attendanceProcessVO.setSourceId(todayCheck.getId());
 
 	    attendanceProcessRepo.save(attendanceProcessVO);
+	    
+	    LocalDate attendanceDate = today;
 
+	    // Step 1: Fetch Shift based on attendance date
+	    List<ShiftAssignDetailsVO> shifts = shiftAssignDetailsRepo
+	        .findApplicableShifts(checkInOutBiometricDTO.getEmpCode(), attendanceDate, checkInOutBiometricDTO.getOrgId());
+
+	    ShiftAssignDetailsVO latestShift = shifts.stream()
+	        .max(Comparator.comparing(ShiftAssignDetailsVO::getEffectiveFrom))
+	        .orElse(null);
+
+	    String shiftType = (latestShift != null) ? latestShift.getShiftType() : "General";
+
+	    // Step 2: Determine shiftOutTime
+	    LocalTime shiftOutTime;
+	    if (latestShift != null && latestShift.getOutTime() != null) {
+	        shiftOutTime = LocalTime.parse(latestShift.getOutTime());
+	    } else {
+	        throw new IllegalStateException("Missing OUT time for active shift.");
+	    }
+
+	    // Step 3: Calculate baseDate for pairing
+	    LocalDate baseDate;
+	    if ("NIGHT".equalsIgnoreCase(shiftType)) {
+	        if (checkInOutBiometricDTO.isStatus()) {
+	            baseDate = now.isBefore(shiftOutTime) ? today.minusDays(1) : today;
+	        } else {
+	            Optional<AttendanceProcessVO> lastIn = attendanceProcessRepo
+	                .findTopByEmpCodeAndStatusAndOrgIdAndBranchAndCheckInDateLessThanEqualOrderByCheckInDateDescEntryTimeDesc(
+	                    checkInOutBiometricDTO.getEmpCode(), "In", checkInOutBiometricDTO.getOrgId(), checkInOutBiometricDTO.getBranch(), today
+	                );
+	            baseDate = lastIn.map(AttendanceProcessVO::getCheckInDate)
+	                             .orElse(now.isBefore(shiftOutTime) ? today.minusDays(1) : today);
+	        }
+	    } else {
+	        baseDate = today;
+	    }
+
+	    // Step 4: Fetch records within that date + 1
+	    List<AttendanceProcessVO> recs = attendanceProcessRepo.findByEmpCodeAndDateRange(
+	        checkInOutBiometricDTO.getEmpCode(), baseDate, baseDate.plusDays(1), checkInOutBiometricDTO.getOrgId(), checkInOutBiometricDTO.getBranch()
+	    );
+
+	    List<LocalDateTime> inList = new ArrayList<>();
+	    List<LocalDateTime> outList = new ArrayList<>();
+
+	    for (AttendanceProcessVO rec : recs) {
+	        LocalDateTime dt = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
+	        if ("In".equalsIgnoreCase(rec.getStatus())) inList.add(dt);
+	        else if ("Out".equalsIgnoreCase(rec.getStatus())) outList.add(dt);
+	    }
+
+	    Collections.sort(inList);
+	    Collections.sort(outList);
+
+	    long effectiveSeconds = 0;
+	    int outIdx = 0;
+	    for (LocalDateTime inTime : inList) {
+	        while (outIdx < outList.size() && outList.get(outIdx).isBefore(inTime)) outIdx++;
+	        if (outIdx < outList.size()) {
+	            LocalDateTime outTime = outList.get(outIdx);
+	            if (!outTime.isBefore(inTime)) {
+	                effectiveSeconds += Duration.between(inTime, outTime).getSeconds();
+	                outIdx++;
+	            }
+	        }
+	    }
+
+	    LocalDateTime firstIn = inList.stream().min(LocalDateTime::compareTo).orElse(null);
+	    LocalDateTime lastOut = outList.stream().max(LocalDateTime::compareTo).orElse(null);
+	    long grossSeconds = (firstIn != null && lastOut != null && lastOut.isAfter(firstIn)) ?
+	        Duration.between(firstIn, lastOut).getSeconds() : 0;
+
+	    // Step 5: Save/update AttendanceDaily
+	    AttendanceDailyVO ad = attendanceDailyRepo.findByEmpCodeAndCheckInDateAndOrgIdAndBranch(
+	        checkInOutBiometricDTO.getEmpCode(), baseDate, checkInOutBiometricDTO.getOrgId(), checkInOutBiometricDTO.getBranch());
+
+	    if (ad == null) {
+	        ad = new AttendanceDailyVO();
+	        ad.setEmpCode(checkInOutBiometricDTO.getEmpCode());
+	        ad.setEmpName(checkInOutBiometricDTO.getEmpName());
+	        ad.setBranch(checkInOutBiometricDTO.getBranch());
+	        ad.setBranchCode(checkInOutBiometricDTO.getBranchCode());
+	        ad.setOrgId(checkInOutBiometricDTO.getOrgId());
+	        ad.setCheckInDate(baseDate);
+	        ad.setFinyear(String.valueOf(baseDate.getYear()));
+	        ad.setAttendanceMode("BIOMETRIC");
+	    }
+
+	    if (firstIn != null) ad.setInTime(firstIn.toLocalTime());
+	    if (lastOut != null) {
+	        ad.setOutTime(lastOut.toLocalTime());
+	        ad.setCheckOutDate(lastOut.toLocalDate());
+	    }
+
+	    ad.setEffectiveHours((int) (effectiveSeconds / 3600));
+	    ad.setGrossHours((int) (grossSeconds / 3600));
+
+	    attendanceDailyRepo.save(ad);
 	    // Build response
 	    response.put("message", checkInOutBiometricDTO.isStatus() ? "Check-in created successfully" : "Check-out created successfully");
 	    response.put("checkInBiometricVO", todayCheck);
@@ -215,11 +323,112 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	                vo.setCheckInDate(dto.getCheckInDate());
 	                vo.setEntryTime(dto.getEntryTime());
 	                vo.setStatus(dto.getStatus());
-	                vo.setSourceId(vo.getId());
+	                vo.setSourceId(dto.getId());
 	                vo.setAttendanceMode("FILES");
 	                
 
 	                attendanceProcessRepo.save(vo);
+	                
+	                
+	                
+	                LocalDate attendanceDate = dto.getCheckInDate();
+
+	                // Step 1: Fetch Shift based on attendance date
+	                List<ShiftAssignDetailsVO> shifts = shiftAssignDetailsRepo
+	                    .findApplicableShifts(dto.getEmpcode(), attendanceDate, dto.getOrgId());
+
+	                ShiftAssignDetailsVO latestShift = shifts.stream()
+	                    .max(Comparator.comparing(ShiftAssignDetailsVO::getEffectiveFrom))
+	                    .orElse(null);
+
+	                String shiftType = (latestShift != null) ? latestShift.getShiftType() : "General";
+
+	                // Step 2: Determine shiftOutTime
+	                LocalTime shiftOutTime;
+	                if (latestShift != null && latestShift.getOutTime() != null) {
+	                    shiftOutTime = LocalTime.parse(latestShift.getOutTime());
+	                } else {
+	                    throw new IllegalStateException("Missing OUT time for active shift.");
+	                }
+
+	                // Step 3: Calculate baseDate for pairing
+	                LocalDate baseDate;
+	                if ("NIGHT".equalsIgnoreCase(shiftType)) {
+	                    if ("In".equalsIgnoreCase(dto.getStatus())) {
+	                        baseDate = dto.getEntryTime().isBefore(shiftOutTime) ? dto.getCheckInDate().minusDays(1) : dto.getCheckInDate();
+	                    } else {
+	                        Optional<AttendanceProcessVO> lastIn = attendanceProcessRepo
+	                            .findTopByEmpCodeAndStatusAndOrgIdAndBranchAndCheckInDateLessThanEqualOrderByCheckInDateDescEntryTimeDesc(
+	                                dto.getEmpcode(), "In", dto.getOrgId(), dto.getBranch(), dto.getCheckInDate()
+	                            );
+	                        baseDate = lastIn.map(AttendanceProcessVO::getCheckInDate)
+	                                         .orElse(dto.getEntryTime().isBefore(shiftOutTime) ? dto.getCheckInDate().minusDays(1) : dto.getCheckInDate());
+	                    }
+	                } else {
+	                    baseDate = dto.getCheckInDate();
+	                }
+
+	                // Step 4: Fetch records within that date + 1
+	                List<AttendanceProcessVO> recs = attendanceProcessRepo.findByEmpCodeAndDateRange(
+	                    dto.getEmpcode(), baseDate, baseDate.plusDays(1), dto.getOrgId(), dto.getBranch()
+	                );
+
+	                List<LocalDateTime> inList = new ArrayList<>();
+	                List<LocalDateTime> outList = new ArrayList<>();
+
+	                for (AttendanceProcessVO rec : recs) {
+	                    LocalDateTime dt = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
+	                    if ("In".equalsIgnoreCase(rec.getStatus())) inList.add(dt);
+	                    else if ("Out".equalsIgnoreCase(rec.getStatus())) outList.add(dt);
+	                }
+
+	                Collections.sort(inList);
+	                Collections.sort(outList);
+
+	                long effectiveSeconds = 0;
+	                int outIdx = 0;
+	                for (LocalDateTime inTime : inList) {
+	                    while (outIdx < outList.size() && outList.get(outIdx).isBefore(inTime)) outIdx++;
+	                    if (outIdx < outList.size()) {
+	                        LocalDateTime outTime = outList.get(outIdx);
+	                        if (!outTime.isBefore(inTime)) {
+	                            effectiveSeconds += Duration.between(inTime, outTime).getSeconds();
+	                            outIdx++;
+	                        }
+	                    }
+	                }
+
+	                LocalDateTime firstIn = inList.stream().min(LocalDateTime::compareTo).orElse(null);
+	                LocalDateTime lastOut = outList.stream().max(LocalDateTime::compareTo).orElse(null);
+	                long grossSeconds = (firstIn != null && lastOut != null && lastOut.isAfter(firstIn)) ?
+	                    Duration.between(firstIn, lastOut).getSeconds() : 0;
+
+	                // Step 5: Save/update AttendanceDaily
+	                AttendanceDailyVO ad = attendanceDailyRepo.findByEmpCodeAndCheckInDateAndOrgIdAndBranch(
+	                    dto.getEmpcode(), baseDate, dto.getOrgId(), dto.getBranch());
+
+	                if (ad == null) {
+	                    ad = new AttendanceDailyVO();
+	                    ad.setEmpCode(dto.getEmpcode());
+	                    ad.setEmpName(dto.getEmpname());
+	                    ad.setBranch(dto.getBranch());
+	                    ad.setBranchCode(dto.getBranchCode());
+	                    ad.setOrgId(dto.getOrgId());
+	                    ad.setCheckInDate(baseDate);
+	                    ad.setFinyear(String.valueOf(baseDate.getYear()));
+	                    ad.setAttendanceMode("FILES");
+	                }
+
+	                if (firstIn != null) ad.setInTime(firstIn.toLocalTime());
+	                if (lastOut != null) {
+	                    ad.setOutTime(lastOut.toLocalTime());
+	                    ad.setCheckOutDate(lastOut.toLocalDate());
+	                }
+
+	                ad.setEffectiveHours((int) (effectiveSeconds / 3600));
+	                ad.setGrossHours((int) (grossSeconds / 3600));
+
+	                attendanceDailyRepo.save(ad);
 	            }
 
 	            result.put("message", "All records uploaded and saved successfully.");

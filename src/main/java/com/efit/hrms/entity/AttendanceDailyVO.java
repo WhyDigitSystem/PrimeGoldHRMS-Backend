@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class AttendanceDailyVO {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "attendancedailygen")
-	@SequenceGenerator(name = "attendanceprocessgen", sequenceName = "attendancedailyseq", initialValue = 1000000001, allocationSize = 1)
+	@SequenceGenerator(name = "attendancedailygen", sequenceName = "attendancedailyseq", initialValue = 1000000001, allocationSize = 1)
 	@Column(name = "attendancedailyid")
 	private Long id;
 	@Column(name = "empcode")
