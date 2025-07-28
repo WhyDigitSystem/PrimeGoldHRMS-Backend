@@ -2,6 +2,7 @@ package com.efit.hrms.service;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,7 +23,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.transaction.Transactional;
+import javax.validation.Valid;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -34,9 +37,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceProcessVO;
+import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.CheckInOutBiometricVO;
 import com.efit.hrms.entity.CheckInOutUploadVO;
 import com.efit.hrms.entity.OtCalculationVO;
@@ -44,6 +49,7 @@ import com.efit.hrms.entity.ShiftAssignDetailsVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AttendanceDailyRepo;
 import com.efit.hrms.repo.AttendanceProcessRepo;
+import com.efit.hrms.repo.AttendanceSummaryRepo;
 import com.efit.hrms.repo.CheckInOutBiometricRepo;
 import com.efit.hrms.repo.CheckInOutUploadRepo;
 import com.efit.hrms.repo.CheckInStatusRepo;
@@ -83,6 +89,9 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 	@Autowired
 	AttendanceDailyRepo attendanceDailyRepo;
+	
+	@Autowired
+	AttendanceSummaryRepo attendanceSummaryRepo;
 	
 	@Override
 	@Transactional
@@ -474,18 +483,20 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 			map.put("employeeName", record[0] != null ? record[0].toString() : "");
 			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
 			map.put("branch", record[2] != null ? record[2].toString() : "");
-			map.put("department", record[3] != null ? record[3].toString() : "");
-			map.put("month", record[4] != null ? record[4].toString() : "0");
-			map.put("year", record[5] != null ? record[5].toString() : "0");
-			map.put("totalDays", record[6] != null ? record[6].toString() : "0");
-			map.put("holidays", record[7] != null ? record[7].toString() : "0");
-			map.put("weekOffs", record[8] != null ? record[8].toString() : "0");
-			map.put("leaves", record[9] != null ? record[9].toString() : "0");
-			map.put("absent", record[10] != null ? record[10].toString() : "0");
-			map.put("lop", record[11] != null ? record[11].toString() : "0");
-			map.put("presentDays", record[12] != null ? record[12].toString() : "0");
-			map.put("salaryDays", record[13] != null ? record[13].toString() : "0");
-//			map.put("otHours", record[14] != null ? record[14].toString() : "00:00");
+			map.put("branchCode", record[3] != null ? record[3].toString() : "");
+			map.put("department", record[4] != null ? record[4].toString() : "");
+			map.put("month", record[5] != null ? new BigInteger(record[5].toString()).toString() : "0");
+			map.put("year", record[6] != null ? record[6].toString() : "0"); // Keep as string
+			map.put("totalDays", record[7] != null ? new BigInteger(record[7].toString()).toString() : "0");
+			map.put("holidays", record[8] != null ? new BigInteger(record[8].toString()).toString() : "0");
+			map.put("weekOffs", record[9] != null ? new BigInteger(record[9].toString()).toString() : "0");
+
+			map.put("leaves", record[10] != null ? new BigDecimal(record[10].toString()).toPlainString() : "0");
+			map.put("absent", record[11] != null ? ((BigDecimal) record[11]).toPlainString() : "0");
+			map.put("lop", record[12] != null ? ((BigDecimal) record[12]).toPlainString() : "0");
+			map.put("presentDays", record[13] != null ? ((BigDecimal) record[13]).toPlainString() : "0");
+			map.put("salaryDays", record[14] != null ? ((BigDecimal) record[14]).toPlainString() : "0");
+//			map.put("otHours", record[15] != null ? record[15].toString() : "00:00");
 
 
 			detailsList.add(map);
@@ -582,6 +593,119 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    }
 
 	    return orderedList;
+	}
+
+
+	
+	@Override
+	public List<AttendanceDailyVO> getAttendanceDailyByOrgId(String fromDate, String toDate, Long orgId,
+			String employeeCode, String branch) {
+		// TODO Auto-generated method stub
+		return attendanceDailyRepo.getAttendanceDailyByOrgId( fromDate,  toDate,  orgId,
+				 employeeCode,  branch);
+	}
+	
+	
+	
+	@Override
+	public Map<String, Object> createUpdateAttendanceSummary(@Valid List<AttendanceSummaryDTO> attendanceSummaryDTOList)
+	        throws ApplicationException {
+
+	    List<AttendanceSummaryVO> attendanceSummaryVOList = new ArrayList<>();
+	    String message = "";
+
+	    for (AttendanceSummaryDTO dto : attendanceSummaryDTOList) {
+	        AttendanceSummaryVO vo;
+
+	        if (ObjectUtils.isNotEmpty(dto.getId())) {
+	            vo = attendanceSummaryRepo.findById(dto.getId())
+	                    .orElseThrow(() -> new ApplicationException("Invalid AttendanceSummary details"));
+	            vo.setUpdatedBy(dto.getCreatedBy());
+	            message = "AttendanceSummary updated successfully";
+	        } else {
+	            vo = new AttendanceSummaryVO();
+	            vo.setCreatedBy(dto.getCreatedBy());
+	            vo.setUpdatedBy(dto.getCreatedBy());
+	            message = "AttendanceSummary created successfully";
+	        }
+
+	        mapAttendanceSummaryDTOToAttendanceSummaryVO(dto, vo); // ✅ Correct parameter order
+	        attendanceSummaryVOList.add(vo);
+	    }
+
+	    attendanceSummaryRepo.saveAll(attendanceSummaryVOList); // ✅ Single save for multiple records
+
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("attendanceSummaryVO", attendanceSummaryVOList);
+	    response.put("message", message);
+	    return response;
+	}
+
+	private void mapAttendanceSummaryDTOToAttendanceSummaryVO(AttendanceSummaryDTO dto, AttendanceSummaryVO vo) {
+	    vo.setEmpCode(dto.getEmpCode());
+	    vo.setEmpName(dto.getEmpName());
+	    vo.setOrgId(dto.getOrgId());
+	    vo.setDepartment(dto.getDepartment());
+	    vo.setBranch(dto.getBranch());
+	    vo.setBranchCode(dto.getBranchCode());
+
+	    vo.setFinyear(dto.getFinyear());
+	    vo.setMonth(dto.getMonth());
+	    vo.setFinyear(dto.getFinyear()); // ✅ Make sure to include year if needed
+	    vo.setTotalDays(dto.getTotalDays());
+	    vo.setHolidays(dto.getHolidays());
+	    vo.setWeekoff(dto.getWeekoff());
+	    vo.setLeaves(dto.getLeaves());
+	    vo.setAbsent(dto.getAbsent());
+	    vo.setLop(dto.getLop());
+	    vo.setPresent(dto.getPresent());
+	    vo.setSalarydays(dto.getSalarydays());
+
+	    vo.setApproveStatus("PENDING"); // default
+	}
+	
+	
+	@Override
+	public Map<String, Object> createApprovalAttendanceSummary(Long orgId, List<Long> ids, String action, String actionBy) throws ApplicationException {
+	    List<AttendanceSummaryVO> updatedList = new ArrayList<>();
+	    String message = "";
+
+	    for (Long id : ids) {
+	        AttendanceSummaryVO summaryVO = attendanceSummaryRepo.findById(id)
+	                .orElseThrow(() -> new ApplicationException("Invalid AttendanceSummary ID: " + id));
+
+	        String currentStatus = summaryVO.getApproveStatus();
+
+	        if (currentStatus == null || (!currentStatus.equalsIgnoreCase("APPROVED") && !currentStatus.equalsIgnoreCase("REJECTED"))) {
+
+	            if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
+	                summaryVO.setApproveStatus(action.toUpperCase());
+	                summaryVO.setApproveBy(actionBy);
+
+	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+	                summaryVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
+
+	                updatedList.add(summaryVO);
+	            }
+	        } else if ("APPROVED".equalsIgnoreCase(currentStatus)) {
+	            throw new ApplicationException("AttendanceSummary already approved for employee: " + summaryVO.getEmpCode());
+	        } else if ("REJECTED".equalsIgnoreCase(currentStatus)) {
+	            throw new ApplicationException("AttendanceSummary already rejected for employee: " + summaryVO.getEmpCode());
+	        }
+	    }
+
+	    attendanceSummaryRepo.saveAll(updatedList);
+
+	    if ("APPROVED".equalsIgnoreCase(action)) {
+	        message = "Attendance Summary Approved Successfully";
+	    } else if ("REJECTED".equalsIgnoreCase(action)) {
+	        message = "Attendance Summary Rejected Successfully";
+	    }
+
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("attendanceSummaryVO", updatedList);
+	    response.put("message", message);
+	    return response;
 	}
 
 

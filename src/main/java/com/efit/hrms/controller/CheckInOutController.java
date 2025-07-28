@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.Valid;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
+import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
+import com.efit.hrms.dto.CompensatoryOffDTO;
 import com.efit.hrms.dto.ResponseDTO;
+import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.service.CheckInOutService;
 
@@ -149,6 +154,83 @@ public class CheckInOutController extends BaseController{
 			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 			return ResponseEntity.ok().body(responseDTO);
 		}
+	    
+	    
+	    @GetMapping("getAttendanceDailyByOrgId")
+		public ResponseEntity<ResponseDTO> getAttendanceDailyByOrgId(@RequestParam String fromDate,@RequestParam  String toDate,@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branch) {
+			String methodName = "getAttendanceProcessByOrgId()";
+			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+			String errorMsg = null;
+			Map<String, Object> responseObjectsMap = new HashMap<>();
+			ResponseDTO responseDTO = null;
+			List<AttendanceDailyVO> attendanceDailyVO = null;
+			try {
+				attendanceDailyVO = checkInOutService.getAttendanceDailyByOrgId(fromDate,   toDate,  orgId,  employeeCode,  branch);
+			} catch (Exception e) {
+				errorMsg = e.getMessage();
+				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			}
+			if (StringUtils.isEmpty(errorMsg)) {
+				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "AttendanceProcess found by ORGID");
+				responseObjectsMap.put("attendanceDailyVO", attendanceDailyVO);
+				responseDTO = createServiceResponse(responseObjectsMap);
+			} else {
+				errorMsg = "AttendanceDaily not found for orgID: " + orgId;
+				responseDTO = createServiceResponseError(responseObjectsMap, "AttendanceDaily not found", errorMsg);
+			}
+			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			return ResponseEntity.ok().body(responseDTO);
+		}
 
+	    //AttendanceSummary
+		@PutMapping("/createUpdateAttendanceSummary")
+		public ResponseEntity<ResponseDTO> createUpdateAttendanceSummary(
+				@Valid @RequestBody List<AttendanceSummaryDTO> attendanceSummaryDTO) {
+			String methodName = "createUpdateCompOff()";
+			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+			String errorMsg = null;
+			Map<String, Object> responseObjectsMap = new HashMap<>();
+			ResponseDTO responseDTO = null;
+			try {
+				Map<String, Object> attendanceSummaryVO = checkInOutService.createUpdateAttendanceSummary(attendanceSummaryDTO);
+				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, attendanceSummaryVO.get("message"));
+				responseObjectsMap.put("attendanceSummaryVO", attendanceSummaryVO.get("attendanceSummaryVO"));
+				responseDTO = createServiceResponse(responseObjectsMap);
+			} catch (Exception e) {
+				errorMsg = e.getMessage();
+				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+				responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+			}
+			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			return ResponseEntity.ok().body(responseDTO);
+		}
+		
+		@PutMapping("/createApprovalAttendanceSummary")
+		public ResponseEntity<ResponseDTO> createApprovalAttendanceSummary(@RequestParam Long orgId, @RequestParam List<Long> id,@RequestParam String action, @RequestParam String actionBy) {
+			String methodName = "createApprovalAttendanceSummary()";
+			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+			String errorMsg = null;
+			Map<String, Object> responseObjectsMap = new HashMap<>();
+			ResponseDTO responseDTO = null;
+			try {
+				Map<String, Object> attendanceSummaryVO = checkInOutService.createApprovalAttendanceSummary(
+		                orgId, id, action, actionBy);
+
+		        // ✅ Unwrap values
+		        Object attendanceSummary = attendanceSummaryVO.get("attendanceSummaryVO");
+		        String message = (String) attendanceSummaryVO.getOrDefault("message", "AttendanceSummary Approved Successfully");
+
+		        responseObjectsMap.put("attendanceSummaryVO", attendanceSummary);
+		        responseObjectsMap.put("message", message);
+
+		        responseDTO = createServiceResponse(responseObjectsMap);
+			} catch (Exception e) {
+				errorMsg = e.getMessage();
+				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+				responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+			}
+			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			return ResponseEntity.ok().body(responseDTO);
+		}
 	
 }
