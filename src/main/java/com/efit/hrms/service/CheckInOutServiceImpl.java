@@ -94,7 +94,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	AttendanceSummaryRepo attendanceSummaryRepo;
 	
 	@Override
-	@Transactional
+	@Transactional(rollbackOn = Exception.class)
 	public Map<String, Object> createCheckInOutBiometric(CheckInOutBiometricDTO checkInOutBiometricDTO) throws ApplicationException {
 	    Map<String, Object> response = new HashMap<>();
 
@@ -242,7 +242,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 	//checkinoutupload
 
-	@Transactional
+	@Transactional(rollbackOn = Exception.class)
 	@Override
 	public String checkInOutUploadExcel(MultipartFile file, Long orgId, String createdBy) throws Exception {
 	    List<CheckInOutUploadVO> validList = new ArrayList<>();
@@ -706,6 +706,15 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    response.put("attendanceSummaryVO", updatedList);
 	    response.put("message", message);
 	    return response;
+	}
+	
+	
+	@Override
+	public List<AttendanceSummaryVO> getPendingAttendanceSummaryByOrgId(Long orgId,
+		String branch) {
+		// TODO Auto-generated method stub
+		return attendanceSummaryRepo.getPendingAttendanceSummaryByOrgId(  orgId,
+				 branch);
 	}
 
 

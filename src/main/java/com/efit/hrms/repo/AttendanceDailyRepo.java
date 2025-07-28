@@ -28,4 +28,6 @@ public interface AttendanceDailyRepo extends JpaRepository<AttendanceDailyVO, Lo
 	List<AttendanceDailyVO> getAttendanceDailyByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
 			String branch);
 
+	
+
 }

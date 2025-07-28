@@ -12,6 +12,7 @@ import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceProcessVO;
+import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.exception.ApplicationException;
 
@@ -39,6 +40,9 @@ public interface CheckInOutService {
 
 	Map<String, Object> createApprovalAttendanceSummary(Long orgId, List<Long> id, String action,
 			String actionBy) throws ApplicationException;
+
+	List<AttendanceSummaryVO> getPendingAttendanceSummaryByOrgId( Long orgId,
+			 String branch);
 
 
 

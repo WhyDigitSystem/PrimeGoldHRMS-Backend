@@ -28,9 +28,9 @@ import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
-import com.efit.hrms.dto.CompensatoryOffDTO;
 import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
+import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.service.CheckInOutService;
 
@@ -171,7 +171,7 @@ public class CheckInOutController extends BaseController{
 				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
 			}
 			if (StringUtils.isEmpty(errorMsg)) {
-				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "AttendanceProcess found by ORGID");
+				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "AttendanceDaily found by ORGID");
 				responseObjectsMap.put("attendanceDailyVO", attendanceDailyVO);
 				responseDTO = createServiceResponse(responseObjectsMap);
 			} else {
@@ -232,5 +232,32 @@ public class CheckInOutController extends BaseController{
 			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 			return ResponseEntity.ok().body(responseDTO);
 		}
+		
+		 @GetMapping("getPendingAttendanceSummaryByOrgId")
+			public ResponseEntity<ResponseDTO> getPendingAttendanceSummaryByOrgId(@RequestParam Long orgId,@RequestParam String branch) {
+				String methodName = "getPendingAttendanceSummaryByOrgId()";
+				LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+				String errorMsg = null;
+				Map<String, Object> responseObjectsMap = new HashMap<>();
+				ResponseDTO responseDTO = null;
+				List<AttendanceSummaryVO> attendanceSummaryVO = null;
+				try {
+					attendanceSummaryVO = checkInOutService.getPendingAttendanceSummaryByOrgId(  orgId,   branch);
+				} catch (Exception e) {
+					errorMsg = e.getMessage();
+					LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+				}
+				if (StringUtils.isEmpty(errorMsg)) {
+					responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Pending AttendanceSummary found by ORGID");
+					responseObjectsMap.put("attendanceSummaryVO", attendanceSummaryVO);
+					responseDTO = createServiceResponse(responseObjectsMap);
+				} else {
+					errorMsg = "AttendanceDaily not found for orgID: " + orgId;
+					responseDTO = createServiceResponseError(responseObjectsMap, "Pending AttendanceSummary not found", errorMsg);
+				}
+				LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+				return ResponseEntity.ok().body(responseDTO);
+			}
+
 	
 }
