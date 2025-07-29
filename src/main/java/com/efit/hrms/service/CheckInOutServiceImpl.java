@@ -716,6 +716,12 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		return attendanceSummaryRepo.getPendingAttendanceSummaryByOrgId(  orgId,
 				 branch);
 	}
+	
+	@Override
+	public List<AttendanceSummaryVO> getAttendanceSummaryByOrgId(String empCode,Integer month, String finYear, Long orgId, String branch) {
+		// TODO Auto-generated method stub
+		return attendanceSummaryRepo.getAttendanceSummaryByOrgId(   empCode, month, finYear,  orgId,  branch);
+	}
 
 
 }

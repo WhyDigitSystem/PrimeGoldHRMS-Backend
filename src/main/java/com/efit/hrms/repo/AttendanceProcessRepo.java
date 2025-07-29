@@ -377,7 +377,7 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "    SELECT 1\r\n"
 		    + "    FROM attendancesummary ats\r\n"
 		    + "    WHERE ats.month = MONTH(DATE(?1))\r\n"
-		    + "      AND ats.year = YEAR(DATE(?1))\r\n"
+		    + "      AND ats.finyear = YEAR(DATE(?1))\r\n"
 		    + "      AND ats.orgid = ?3\r\n"
 		    + "      AND ats.empcode = eb.employeecode\r\n"
 		    + "      AND ats.branchcode = eb.branchcode\r\n"

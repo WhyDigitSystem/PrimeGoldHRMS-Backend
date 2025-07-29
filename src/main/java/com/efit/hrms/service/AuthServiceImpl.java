@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
 	public void signup(SignUpFormDTO signUpRequest) {
 		String methodName = "signup()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-		if (ObjectUtils.isEmpty(signUpRequest) || StringUtils.isBlank(signUpRequest.getEmail())
+		if (ObjectUtils.isEmpty(signUpRequest) 
 				|| StringUtils.isBlank(signUpRequest.getUserName())) {
 			throw new ApplicationContextException(UserConstants.ERRROR_MSG_INVALID_USER_REGISTER_INFORMATION);
 		}
@@ -126,10 +126,8 @@ public class AuthServiceImpl implements AuthService {
 		UserVO userVO = new UserVO();
 
 //		userVO=userRepo.findByUserNameOrEmailOrMobileNo(signUpFormDTO.getUserName(), signUpFormDTO.getEmail(), signUpFormDTO.getEmail());
-		if (userRepo.existsByUserNameOrEmailOrMobileNo(signUpFormDTO.getUserName(), signUpFormDTO.getEmail(),
-				signUpFormDTO.getEmail())) {
-			userVO = userRepo.findByUserNameOrEmailOrMobileNo(signUpFormDTO.getUserName(), signUpFormDTO.getEmail(),
-					signUpFormDTO.getEmail());
+		if (userRepo.existsByUserName(signUpFormDTO.getUserName())) {
+			userVO = userRepo.findByUserName(signUpFormDTO.getUserName());
 
 			List<UserLoginRolesVO> roles = loginRolesRepo.findByUserVO(userVO);
 			loginRolesRepo.deleteAll(roles);

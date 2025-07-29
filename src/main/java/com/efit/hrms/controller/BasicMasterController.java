@@ -187,6 +187,7 @@ public class BasicMasterController extends BaseController {
 	public ResponseEntity<ResponseDTO> createCheckInOutAdjustment(
 			@RequestBody CheckInOutAdjustmentDTO checkInOutAdjustmentDTO) {
 
+		
 		String methodName = "createCheckInOutAdjustment()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 		String errorMsg = null;
@@ -425,7 +426,7 @@ public class BasicMasterController extends BaseController {
 
 	@GetMapping("/attendance")
 	public ResponseEntity<ResponseDTO> getAttendanceByEmpcode(@RequestParam String empcode, @RequestParam String month,
-			@RequestParam String orgId, @RequestParam String branch, @RequestParam String branchCode) {
+			@RequestParam String orgId,  @RequestParam String branchCode) {
 
 		String methodName = "getAttendanceByEmpcode()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -435,10 +436,10 @@ public class BasicMasterController extends BaseController {
 
 		try {
 			// Convert month to integer (handles "05" or "5")
-			int monthInt = Integer.parseInt(month);
+			Integer monthInt = Integer.parseInt(month);
 
 			List<Map<String, Object>> attendanceList = basicMasterService.getAttendanceByEmpcode(empcode, monthInt,
-					orgId, branch, branchCode);
+					orgId, branchCode);
 
 			if (attendanceList.isEmpty()) {
 				errorMsg = "No attendance data found for empcode: " + empcode;

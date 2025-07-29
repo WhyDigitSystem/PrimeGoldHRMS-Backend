@@ -44,6 +44,8 @@ public interface CheckInOutService {
 	List<AttendanceSummaryVO> getPendingAttendanceSummaryByOrgId( Long orgId,
 			 String branch);
 
+	List<AttendanceSummaryVO> getAttendanceSummaryByOrgId(String empCode, Integer month, String finYear, Long orgId, String branch);
+
 
 
 

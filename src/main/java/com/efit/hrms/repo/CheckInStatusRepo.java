@@ -289,14 +289,14 @@ public interface CheckInStatusRepo extends JpaRepository<CheckInStatusVO, Long>{
 			+ "Leaves AS (\r\n"
 			+ "    SELECT leavedate\r\n"
 			+ "    FROM approvalleaves\r\n"
-			+ "    WHERE employeecode = ?1 AND branchcode = ?5 AND orgid = ?3\r\n"
+			+ "    WHERE employeecode = ?1 AND branchcode = ?4 AND orgid = ?3\r\n"
 			+ "    AND leavedate BETWEEN (SELECT start_date FROM MonthRange)\r\n"
 			+ "                     AND (SELECT end_date FROM MonthRange)\r\n"
 			+ "),\r\n"
 			+ "HolidayList AS (\r\n"
 			+ "    SELECT holidaydate\r\n"
 			+ "    FROM holidays\r\n"
-			+ "    WHERE branchcode = ?5 AND orgid = ?3\r\n"
+			+ "    WHERE branchcode = ?4 AND orgid = ?3\r\n"
 			+ "    AND holidaydate BETWEEN (SELECT start_date FROM MonthRange)\r\n"
 			+ "                       AND (SELECT end_date FROM MonthRange)\r\n"
 			+ "),\r\n"
@@ -304,7 +304,7 @@ public interface CheckInStatusRepo extends JpaRepository<CheckInStatusVO, Long>{
 			+ "    SELECT d.entrydate AS weekoffdate\r\n"
 			+ "    FROM DateRange d\r\n"
 			+ "    JOIN companyweekoff wo ON DAYNAME(d.entrydate) = wo.weekoffdays\r\n"
-			+ "    JOIN branch b ON wo.companyid = b.orgid AND b.branchcode = ?5\r\n"
+			+ "    JOIN branch b ON wo.companyid = b.orgid AND b.branchcode = ?4\r\n"
 			+ ")\r\n"
 			+ "SELECT\r\n"
 			+ "    d.entrydate,\r\n"
@@ -333,7 +333,6 @@ public interface CheckInStatusRepo extends JpaRepository<CheckInStatusVO, Long>{
 	    String empcode, 
 	    int month, 
 	    String orgId, 
-	    String branch, 
 	    String branchCode
 	);
 

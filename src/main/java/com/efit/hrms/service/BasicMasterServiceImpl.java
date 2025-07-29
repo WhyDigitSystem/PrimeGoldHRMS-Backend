@@ -963,7 +963,6 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 		holidayVO.setHolidayDate(holidayDTO.getHolidayDate());
 		holidayVO.setDay(holidayDTO.getDay());
 		holidayVO.setFestival(holidayDTO.getFestival());
-
 	}
 
 	@Override
@@ -1028,9 +1027,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 		return mappedList;
 	}
 
-	public List<Map<String, Object>> getAttendanceByEmpcode(String empcode, int month, String orgId, String branch,
+	public List<Map<String, Object>> getAttendanceByEmpcode(String empcode, int month, String orgId,
 			String branchCode) {
-		return checkInStatusRepo.findByEmpcode(empcode, month, orgId, branch, branchCode);
+		return checkInStatusRepo.findByEmpcode(empcode, month, orgId, branchCode);
 	}
 
 	// holiday excel upload
