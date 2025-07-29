@@ -216,7 +216,12 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "    WHERE e.active = 1\r\n"
 		    + "      AND e.orgid = ?3\r\n"
 		    + "      AND (?4 = 'ALL' OR e.department = ?4)\r\n"
-		    + "      AND (?5 = 'ALL' OR e.branch = ?5)\r\n"
+		    + "      AND (?5 = 'ALL' OR e.branch = ?5)"
+		    + "     AND ( \r\n"
+		    + "      ?6 = 'ALL' \r\n"
+		    + "		 OR (?6 = 'EMPLOYEE' AND e.type = 'EMPLOYEE') \r\n"
+		    + "	    OR (?6 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND e.contractor = ?7) \r\n"
+		    + "		 )\r\n"
 		    + "),\r\n"
 		    + "date_series_with_emp AS (\r\n"
 		    + "    SELECT eb.employeecode, ds.dt AS checkindate\r\n"
@@ -367,12 +372,21 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "LEFT JOIN leave_days ld ON eb.employeecode = ld.employeecode\r\n"
 		    + "LEFT JOIN lop_days lop ON eb.employeecode = lop.employeecode\r\n"
 		    + "LEFT JOIN absent_days abs ON eb.employeecode = abs.employeecode\r\n"
-		    + "LEFT JOIN present_days pd ON eb.employeecode = pd.empcode\r\n"
-		    + "ORDER BY eb.employeecode;\r\n"
+		    + "LEFT JOIN present_days pd ON eb.employeecode = pd.empcode \r\n"
+		    + "WHERE NOT EXISTS (\r\n"
+		    + "    SELECT 1\r\n"
+		    + "    FROM attendancesummary ats\r\n"
+		    + "    WHERE ats.month = MONTH(DATE(?1))\r\n"
+		    + "      AND ats.year = YEAR(DATE(?1))\r\n"
+		    + "      AND ats.orgid = ?3\r\n"
+		    + "      AND ats.empcode = eb.employeecode\r\n"
+		    + "      AND ats.branchcode = eb.branchcode\r\n"
+		    + ")\r\n"
+		    + "ORDER BY eb.employeecode \r\n"
 		    + ""
 		)
 	Set<Object[]> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId, String department,
-			String branch);
+			String branch, String type,String contractor);
 
 	
 	

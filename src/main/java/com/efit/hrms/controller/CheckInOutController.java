@@ -87,7 +87,7 @@ public class CheckInOutController extends BaseController{
 
 	    @GetMapping("/getLeaveDetailsForAttendanceProcess")
 		public ResponseEntity<ResponseDTO> getLeaveDetailsForAttendanceProcess(@RequestParam String fromDate,
-				@RequestParam String toDate, @RequestParam Long orgId,@RequestParam String department,@RequestParam String branch) {
+				@RequestParam String toDate, @RequestParam Long orgId,@RequestParam String department,@RequestParam String branch,@RequestParam String type,@RequestParam String contractor) {
 
 			String methodName = "getLeaveDetailsForLeaveProcess()";
 			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -97,7 +97,7 @@ public class CheckInOutController extends BaseController{
 			List<Map<String, Object>> leaveDetailsList;
 
 			try {
-				leaveDetailsList = checkInOutService.getLeaveDetailsForAttendanceProcess(fromDate, toDate, orgId,department,branch);
+				leaveDetailsList = checkInOutService.getLeaveDetailsForAttendanceProcess(fromDate, toDate, orgId,department,branch,type,contractor);
 				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "AttendanceProcess details retrieved successfully");
 				responseObjectsMap.put("attendanceProcessVO", leaveDetailsList); // ✅ Correct key name
 				responseDTO = createServiceResponse(responseObjectsMap);

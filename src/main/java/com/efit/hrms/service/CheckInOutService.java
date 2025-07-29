@@ -23,7 +23,7 @@ public interface CheckInOutService {
 	String checkInOutUploadExcel(MultipartFile file, Long orgId, String createdBy) throws Exception;
 
 	List<Map<String, Object>> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId,
-			String department, String branch);
+			String department, String branch, String type, String contractor);
 
 
 	List<OtCalculationVO> generateOtAndSave(Long orgId);

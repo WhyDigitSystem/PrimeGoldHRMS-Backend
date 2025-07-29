@@ -14,7 +14,7 @@ public interface AttendanceSummaryRepo extends JpaRepository<AttendanceSummaryVO
 
 	@Query(nativeQuery = true, value = "    SELECT *\r\n"
 			+ "    FROM attendancesummary a \r\n"
-			+ "    WHERE a.orgid = ?1 and branchcode=?2 \r\n"
+			+ "    WHERE a.orgid = ?1 and branch=?2 \r\n"
 			+" and a.approvestatus='PENDING'\r\n"
 			+ " ")
 	List<AttendanceSummaryVO> getPendingAttendanceSummaryByOrgId( Long orgId,

@@ -464,9 +464,9 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 
 	@Override
-	public List<Map<String, Object>> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId, String department, String branch) {
+	public List<Map<String, Object>> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId, String department, String branch,String type,String contractor) {
 
-	    Set<Object[]> result = attendanceProcessRepo.getLeaveDetailsForAttendanceProcess(fromDate, toDate, orgId, department, branch);
+	    Set<Object[]> result = attendanceProcessRepo.getLeaveDetailsForAttendanceProcess(fromDate, toDate, orgId, department, branch,type,contractor);
 	    return mapLeaveDetails(result, fromDate, toDate);
 	}
 
