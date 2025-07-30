@@ -260,7 +260,7 @@ public class CheckInOutController extends BaseController{
 			}
 		 
 		 
-		 @GetMapping("getAttendanceSummaryByOrgId")
+		 @GetMapping("getApprovedAttendanceSummaryByOrgId")
 		 public ResponseEntity<ResponseDTO> getAttendanceSummaryByOrgId(
 		     @RequestParam String empCode,
 		     @RequestParam(required = false) Integer month,

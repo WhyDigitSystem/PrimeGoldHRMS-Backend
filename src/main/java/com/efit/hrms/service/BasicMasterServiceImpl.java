@@ -14,12 +14,14 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
@@ -680,168 +682,293 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 
 	@Override
 	public Map<String, Object> createCheckInOutAdjustment(CheckInOutAdjustmentDTO dto) throws ApplicationException {
-		Map<String, Object> response = new HashMap<>();
-		List<CheckInOutAdjustmentVO> savedEntries = new ArrayList<>();
+	    Map<String, Object> response = new HashMap<>();
+	    List<CheckInOutAdjustmentVO> savedEntries = new ArrayList<>();
 
-		// Common date parsing
-		String dateStr = dto.getDate();
-		LocalDate localDate = LocalDate.parse(dateStr); // Ensure format is ISO (e.g., "2024-06-01")
+	    String dateStr = dto.getDate();
+	    LocalDate localDate = LocalDate.parse(dateStr); // e.g., "2025-06-29"
+	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+	    LocalTime inTime = null;
+	    LocalTime outTime = null;
 
-		// Save check-in entry
-		if (dto.getEntryIn() != null && !dto.getEntryIn().isEmpty()) {
-			CheckInOutAdjustmentVO checkIn = new CheckInOutAdjustmentVO();
-			checkIn.setCheckInDate(localDate);
-			checkIn.setEmpCode(dto.getEmpCode());
-			checkIn.setEmpName(dto.getEmpName());
-			checkIn.setBranch(dto.getBranch());
-			checkIn.setBranchCode(dto.getBranchCode());
-			checkIn.setOrgId(dto.getOrgId());
-			checkIn.setNotify(dto.getNotify());
-			checkIn.setNotifyCode(dto.getNotifyCode());
-			checkIn.setNotifyEmail(dto.getNotifyEmail());
-			checkIn.setEmail(dto.getEmail());
+	    if (dto.getEntryIn() != null && !dto.getEntryIn().isEmpty()) {
+	        inTime = LocalTime.parse(dto.getEntryIn(), timeFormatter);
+	    }
+	    if (dto.getEntryOut() != null && !dto.getEntryOut().isEmpty()) {
+	        outTime = LocalTime.parse(dto.getEntryOut(), timeFormatter);
+	    }
 
-			LocalDate entryDate = LocalDate.parse(dto.getDate()); // e.g., "2025-06-03"
-			LocalTime entryTime = LocalTime.parse(dto.getEntryIn(), DateTimeFormatter.ofPattern("HH:mm")); // e.g.,
-																											// "09:00"
-			LocalDateTime createdOn = LocalDateTime.of(entryDate, entryTime);
+	    // Detect night shift based on time comparison
+	    boolean isNightShift = (inTime != null && outTime != null && inTime.isAfter(outTime));
+	  
+	    System.out.println();
+	    // Save IN entry
+	    if (inTime != null) {
+	        CheckInOutAdjustmentVO checkIn = new CheckInOutAdjustmentVO();
+	        checkIn.setCheckInDate(localDate);
+	        checkIn.setEmpCode(dto.getEmpCode());
+	        checkIn.setEmpName(dto.getEmpName());
+	        checkIn.setBranch(dto.getBranch());
+	        checkIn.setBranchCode(dto.getBranchCode());
+	        checkIn.setOrgId(dto.getOrgId());
+	        checkIn.setNotify(dto.getNotify());
+	        checkIn.setNotifyCode(dto.getNotifyCode());
+	        checkIn.setNotifyEmail(dto.getNotifyEmail());
+	        checkIn.setEmail(dto.getEmail());
 
-			checkIn.setCreatedOn(createdOn);
+	        checkIn.setCreatedOn(LocalDateTime.of(localDate, inTime));
+	        checkIn.setApprovalStatus("PENDING");
+	        checkIn.setStatus("IN");
+	        checkIn.setEntryTime(inTime);
 
-			checkIn.setApprovalStatus("PENDING");
-			checkIn.setStatus("IN");
+	        checkInOutAdjustmentRepo.save(checkIn);
+	        savedEntries.add(checkIn);
 
-			LocalTime entryInTime = LocalTime.parse(dto.getEntryIn(), timeFormatter);
-			checkIn.setEntryTime(entryInTime);
+	        AttendanceProcessVO attendanceIn = new AttendanceProcessVO();
+	        attendanceIn.setEmpName(dto.getEmpName());
+	        attendanceIn.setEmpCode(dto.getEmpCode());
+	        attendanceIn.setBranch(dto.getBranch());
+	        attendanceIn.setBranchCode(dto.getBranchCode());
+	        attendanceIn.setCheckInDate(localDate);
+	        attendanceIn.setEntryTime(inTime);
+	        attendanceIn.setStatus("IN");
+	        attendanceIn.setOrgId(dto.getOrgId());
+	        attendanceIn.setAttendanceMode("SYSTEM");
+	        attendanceIn.setSourceId(checkIn.getId());
+	        attendanceIn.setFinyear(String.valueOf(localDate.getYear()));
 
-			checkInOutAdjustmentRepo.save(checkIn);
-			savedEntries.add(checkIn);
+	        attendanceProcessRepo.save(attendanceIn);
+	    }
 
-			AttendanceProcessVO attendanceIn = new AttendanceProcessVO();
-			attendanceIn.setEmpName(dto.getEmpName());
-			attendanceIn.setEmpCode(dto.getEmpCode());
-			attendanceIn.setBranch(dto.getBranch());
-			attendanceIn.setBranchCode(dto.getBranchCode());
-			attendanceIn.setCheckInDate(localDate);
-			attendanceIn.setEntryTime(entryTime);
-			attendanceIn.setStatus("IN");
-			attendanceIn.setOrgId(dto.getOrgId());
-			attendanceIn.setAttendanceMode("SYSTEM");
-			attendanceIn.setSourceId(checkIn.getId());
-			attendanceIn.setFinyear(String.valueOf(localDate.getYear()));
+	    // Save OUT entry
+	    if (outTime != null) {
+	        CheckInOutAdjustmentVO checkOut = new CheckInOutAdjustmentVO();
+	        checkOut.setCheckInDate(localDate); // base date
+	        checkOut.setEmpCode(dto.getEmpCode());
+	        checkOut.setEmpName(dto.getEmpName());
+	        checkOut.setBranch(dto.getBranch());
+	        checkOut.setBranchCode(dto.getBranchCode());
+	        checkOut.setOrgId(dto.getOrgId());
+	        checkOut.setNotify(dto.getNotify());
+	        checkOut.setNotifyCode(dto.getNotifyCode());
+	        checkOut.setNotifyEmail(dto.getNotifyEmail());
+	        checkOut.setEmail(dto.getEmail());
 
-			attendanceProcessRepo.save(attendanceIn);
+	        LocalDate checkOutDate = isNightShift ? localDate.plusDays(1) : localDate;
+	        checkOut.setCheckInDate(checkOutDate); // base date
+	        checkOut.setCreatedOn(LocalDateTime.of(checkOutDate, outTime));
+	        checkOut.setApprovalStatus("PENDING");
+	        checkOut.setStatus("OUT");
+	        checkOut.setEntryTime(outTime);
 
-		}
+	        checkInOutAdjustmentRepo.save(checkOut);
+	        savedEntries.add(checkOut);
 
-		// Save check-out entry
-		if (dto.getEntryOut() != null && !dto.getEntryOut().isEmpty()) {
-			CheckInOutAdjustmentVO checkOut = new CheckInOutAdjustmentVO();
-			checkOut.setCheckInDate(localDate);
-			checkOut.setEmpCode(dto.getEmpCode());
-			checkOut.setEmpName(dto.getEmpName());
-			checkOut.setBranch(dto.getBranch());
-			checkOut.setBranchCode(dto.getBranchCode());
-			checkOut.setOrgId(dto.getOrgId());
-			checkOut.setNotify(dto.getNotify());
-			checkOut.setNotifyCode(dto.getNotifyCode());
-			checkOut.setNotifyEmail(dto.getNotifyEmail());
-			checkOut.setEmail(dto.getEmail());
+	        AttendanceProcessVO attendanceOut = new AttendanceProcessVO();
+	        attendanceOut.setEmpName(dto.getEmpName());
+	        attendanceOut.setEmpCode(dto.getEmpCode());
+	        attendanceOut.setBranch(dto.getBranch());
+	        attendanceOut.setBranchCode(dto.getBranchCode());
+	        attendanceOut.setCheckInDate(checkOutDate); // ✅ for night shift
+	        attendanceOut.setEntryTime(outTime);
+	        attendanceOut.setStatus("OUT");
+	        attendanceOut.setOrgId(dto.getOrgId());
+	        attendanceOut.setAttendanceMode("SYSTEM");
+	        attendanceOut.setSourceId(checkOut.getId());
+	        attendanceOut.setFinyear(String.valueOf(checkOutDate.getYear()));
 
-			LocalDate entryDate = LocalDate.parse(dto.getDate()); // e.g., "2025-06-03"
-			LocalTime entryTime = LocalTime.parse(dto.getEntryOut(), DateTimeFormatter.ofPattern("HH:mm")); // e.g.,
-																											// "09:00"
-			LocalDateTime createdOn = LocalDateTime.of(entryDate, entryTime);
+	        attendanceProcessRepo.save(attendanceOut);
+	    }
 
-			checkOut.setCreatedOn(createdOn);
-
-			checkOut.setApprovalStatus("PENDING");
-			checkOut.setStatus("OUT");
-
-			LocalTime entryOutTime = LocalTime.parse(dto.getEntryOut(), timeFormatter);
-			checkOut.setEntryTime(entryOutTime);
-
-			checkInOutAdjustmentRepo.save(checkOut);
-			savedEntries.add(checkOut);
-
-			AttendanceProcessVO attendanceOut = new AttendanceProcessVO();
-			attendanceOut.setEmpName(dto.getEmpName());
-			attendanceOut.setEmpCode(dto.getEmpCode());
-			attendanceOut.setBranch(dto.getBranch());
-			attendanceOut.setBranchCode(dto.getBranchCode());
-			attendanceOut.setCheckInDate(localDate);
-			attendanceOut.setEntryTime(entryTime);
-			attendanceOut.setStatus("OUT");
-			attendanceOut.setOrgId(dto.getOrgId());
-			attendanceOut.setAttendanceMode("SYSTEM");
-			attendanceOut.setSourceId(checkOut.getId());
-			attendanceOut.setFinyear(String.valueOf(localDate.getYear()));
-
-			attendanceProcessRepo.save(attendanceOut);
-
-		}
-
-		response.put("message", "Check-in/out created successfully.");
-		response.put("entries", savedEntries);
-		return response;
+	    response.put("message", "Check-in/out created successfully.");
+	    response.put("entries", savedEntries);
+	    return response;
 	}
+
+
 
 	// approval checkinout
+//	@Override
+//	public Map<String, Object> createApprovalCheckInOutAdjustment(Long orgId, String employeeCode, String action,
+//			String actionBy, LocalDate localCheckInDate, String notifyCode, String notify, String screenName)
+//			throws ApplicationException {
+//		// method body updated accordingly
+//
+//		// Fetch both IN and OUT records for the given employee and date
+//		List<CheckInOutAdjustmentVO> checkInOutAdjustments = checkInOutAdjustmentRepo
+//				.findByOrgIdAndEmpCodeAndCheckInDate(orgId, employeeCode, localCheckInDate);
+//
+//		if (checkInOutAdjustments == null || checkInOutAdjustments.isEmpty()) {
+//			throw new ApplicationException(
+//					"No CheckIn/Out adjustment records found for this employee on the given date.");
+//		}
+//
+//		// Check if all records are already approved
+//		boolean allApproved = checkInOutAdjustments.stream()
+//				.allMatch(adjustment -> "APPROVED".equalsIgnoreCase(adjustment.getApprovalStatus()));
+//		boolean allRejected = checkInOutAdjustments.stream()
+//				.allMatch(adjustment -> "REJECTED".equalsIgnoreCase(adjustment.getApprovalStatus()));
+//
+//		if (allApproved) {
+//			throw new ApplicationException("CheckIn/Out already approved.");
+//		} else if (allRejected) {
+//			throw new ApplicationException("CheckIn/Out already rejected.");
+//		}
+//
+//		// Format approval time
+//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+//		String formattedDateTime = LocalDateTime.now().format(formatter).toUpperCase();
+//
+//		// Update all records with the action
+//		for (CheckInOutAdjustmentVO adjustment : checkInOutAdjustments) {
+//			if (!"APPROVED".equalsIgnoreCase(adjustment.getApprovalStatus())) {
+//				adjustment.setApprovalStatus(action.toUpperCase());
+//				adjustment.setApproveBy(actionBy);
+//				adjustment.setApproveOn(formattedDateTime);
+//			}
+//		}
+//
+//		// Save all updated records
+//		checkInOutAdjustmentRepo.saveAll(checkInOutAdjustments);
+//
+//		Map<String, Object> response = new HashMap<>();
+//		response.put("checkInOutAdjustmentList", checkInOutAdjustments);
+//
+//		if ("APPROVED".equalsIgnoreCase(action)) {
+//			response.put("message", "Approved Successfully");
+//		} else if ("REJECTED".equalsIgnoreCase(action)) {
+//			response.put("message", "Rejected Successfully");
+//		}
+//		return response;
+//	}
+	
+	
 	@Override
 	public Map<String, Object> createApprovalCheckInOutAdjustment(Long orgId, String employeeCode, String action,
-			String actionBy, LocalDate localCheckInDate, String notifyCode, String notify, String screenName)
-			throws ApplicationException {
-		// method body updated accordingly
+	        String actionBy, LocalDate localCheckInDate, String notifyCode, String notify, String screenName)
+	        throws ApplicationException {
 
-		// Fetch both IN and OUT records for the given employee and date
-		List<CheckInOutAdjustmentVO> checkInOutAdjustments = checkInOutAdjustmentRepo
-				.findByOrgIdAndEmpCodeAndCheckInDate(orgId, employeeCode, localCheckInDate);
+	    List<CheckInOutAdjustmentVO> allAdjustments = checkInOutAdjustmentRepo
+	            .findByOrgIdAndEmpCodeAndCheckInDateBetween(
+	                    orgId, employeeCode, localCheckInDate, localCheckInDate.plusDays(1));
 
-		if (checkInOutAdjustments == null || checkInOutAdjustments.isEmpty()) {
-			throw new ApplicationException(
-					"No CheckIn/Out adjustment records found for this employee on the given date.");
-		}
+	    if (allAdjustments == null || allAdjustments.isEmpty()) {
+	        throw new ApplicationException("No CheckIn/Out adjustment records found.");
+	    }
 
-		// Check if all records are already approved
-		boolean allApproved = checkInOutAdjustments.stream()
-				.allMatch(adjustment -> "APPROVED".equalsIgnoreCase(adjustment.getApprovalStatus()));
-		boolean allRejected = checkInOutAdjustments.stream()
-				.allMatch(adjustment -> "REJECTED".equalsIgnoreCase(adjustment.getApprovalStatus()));
+	    List<CheckInOutAdjustmentVO> pendingAdjustments = allAdjustments.stream()
+	            .filter(adj -> "PENDING".equalsIgnoreCase(adj.getApprovalStatus()))
+	            .collect(Collectors.toList());
 
-		if (allApproved) {
-			throw new ApplicationException("CheckIn/Out already approved.");
-		} else if (allRejected) {
-			throw new ApplicationException("CheckIn/Out already rejected.");
-		}
+	    List<CheckInOutAdjustmentVO> alreadyApproved = allAdjustments.stream()
+	            .filter(adj -> "APPROVED".equalsIgnoreCase(adj.getApprovalStatus()))
+	            .collect(Collectors.toList());
 
-		// Format approval time
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
-		String formattedDateTime = LocalDateTime.now().format(formatter).toUpperCase();
+	    List<CheckInOutAdjustmentVO> alreadyRejected = allAdjustments.stream()
+	            .filter(adj -> "REJECTED".equalsIgnoreCase(adj.getApprovalStatus()))
+	            .collect(Collectors.toList());
 
-		// Update all records with the action
-		for (CheckInOutAdjustmentVO adjustment : checkInOutAdjustments) {
-			if (!"APPROVED".equalsIgnoreCase(adjustment.getApprovalStatus())) {
-				adjustment.setApprovalStatus(action.toUpperCase());
-				adjustment.setApproveBy(actionBy);
-				adjustment.setApproveOn(formattedDateTime);
-			}
-		}
+	    Map<String, Object> response = new HashMap<>();
 
-		// Save all updated records
-		checkInOutAdjustmentRepo.saveAll(checkInOutAdjustments);
+	    if (pendingAdjustments.isEmpty()) {
+	        if (!alreadyApproved.isEmpty() && alreadyRejected.isEmpty()) {
+	            throw new ApplicationException("This CheckIn/Out is already Approved.");
+	        } else if (alreadyApproved.isEmpty() && !alreadyRejected.isEmpty()) {
+	            throw new ApplicationException("This CheckIn/Out is already Rejected.");
+	        } else {
+	            throw new ApplicationException("All adjustments are already Approved or Rejected.");
+	        }
+	    }
 
-		Map<String, Object> response = new HashMap<>();
-		response.put("checkInOutAdjustmentList", checkInOutAdjustments);
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+	    String approvedOn = LocalDateTime.now().format(formatter).toUpperCase();
 
-		if ("APPROVED".equalsIgnoreCase(action)) {
-			response.put("message", "Approved Successfully");
-		} else if ("REJECTED".equalsIgnoreCase(action)) {
-			response.put("message", "Rejected Successfully");
-		}
-		return response;
+	    List<CheckInOutAdjustmentVO> approvedAdjustments = new ArrayList<>();
+
+	    List<CheckInOutAdjustmentVO> inList = pendingAdjustments.stream()
+	            .filter(e -> "IN".equalsIgnoreCase(e.getStatus()))
+	            .sorted(Comparator.comparing(CheckInOutAdjustmentVO::getCheckInDate)
+	                    .thenComparing(CheckInOutAdjustmentVO::getEntryTime))
+	            .collect(Collectors.toList());
+
+	    List<CheckInOutAdjustmentVO> outList = pendingAdjustments.stream()
+	            .filter(e -> "OUT".equalsIgnoreCase(e.getStatus()))
+	            .sorted(Comparator.comparing(CheckInOutAdjustmentVO::getCheckInDate)
+	                    .thenComparing(CheckInOutAdjustmentVO::getEntryTime))
+	            .collect(Collectors.toList());
+
+	    Set<Long> usedOutIds = new HashSet<>();
+
+	    for (CheckInOutAdjustmentVO in : inList) {
+	        for (CheckInOutAdjustmentVO out : outList) {
+	            if (usedOutIds.contains(out.getId())) continue;
+
+	            boolean isValidPair = out.getCheckInDate().isAfter(in.getCheckInDate()) ||
+	                    (out.getCheckInDate().isEqual(in.getCheckInDate()) &&
+	                            out.getEntryTime().isAfter(in.getEntryTime()));
+
+	            if (isValidPair) {
+	                in.setApprovalStatus("APPROVED");
+	                in.setApproveBy(actionBy);
+	                in.setApproveOn(approvedOn);
+
+	                out.setApprovalStatus("APPROVED");
+	                out.setApproveBy(actionBy);
+	                out.setApproveOn(approvedOn);
+
+	                approvedAdjustments.add(in);
+	                approvedAdjustments.add(out);
+	                usedOutIds.add(out.getId());
+
+	                LocalDateTime fullIn = LocalDateTime.of(in.getCheckInDate(), in.getEntryTime());
+	                LocalDateTime fullOut = LocalDateTime.of(out.getCheckInDate(), out.getEntryTime());
+	                long seconds = Duration.between(fullIn, fullOut).getSeconds();
+
+	                AttendanceDailyVO existing = attendanceDailyRepo
+	                        .findByEmpCodeAndCheckInDateAndOrgIdAndBranch(
+	                                in.getEmpCode(), in.getCheckInDate(), orgId, in.getBranch());
+
+	                boolean isDuplicate = existing != null &&
+	                        in.getEntryTime().equals(existing.getInTime()) &&
+	                        out.getEntryTime().equals(existing.getOutTime());
+
+	                if (isDuplicate) break;
+
+	                AttendanceDailyVO daily = (existing != null) ? existing : new AttendanceDailyVO();
+	                daily.setEmpCode(in.getEmpCode());
+	                daily.setEmpName(in.getEmpName());
+	                daily.setBranch(in.getBranch());
+	                daily.setBranchCode(in.getBranchCode());
+	                daily.setOrgId(in.getOrgId());
+	                daily.setCheckInDate(in.getCheckInDate());
+	                daily.setFinyear(String.valueOf(in.getCheckInDate().getYear()));
+	                daily.setAttendanceMode("System");
+
+	                daily.setInTime(in.getEntryTime());
+	                daily.setOutTime(out.getEntryTime());
+	                daily.setCheckOutDate(out.getCheckInDate());
+	                daily.setEffectiveHours((int) (seconds / 3600));
+	                daily.setGrossHours((int) (seconds / 3600));
+
+	                attendanceDailyRepo.save(daily);
+	                break;
+	            }
+	        }
+	    }
+
+	    if (!approvedAdjustments.isEmpty()) {
+	        checkInOutAdjustmentRepo.saveAll(approvedAdjustments);
+	        response.put("checkInOutAdjustmentList", approvedAdjustments);
+	        response.put("message", "Approved Successfully");
+	    } else {
+	        throw new ApplicationException("No valid pending IN/OUT pairs found to approve.");
+	    }
+
+	    return response;
 	}
+
+
 
 	@Override
 	public List<Map<String, Object>> getRequestCheckInOutByOrgId(Long orgId, String branch,
