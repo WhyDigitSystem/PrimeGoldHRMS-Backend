@@ -557,54 +557,147 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 		return distance <= allowedRadius;
 	}
 
+//	@Override
+//	public Map<String, Object> createApprovalCheckOut(Long orgId, String employeeCode, String action, String actionBy,
+//			LocalDate localCheckInDate, String notifyCode, String notify, String screenName)
+//			throws ApplicationException {
+//
+//		CheckInVO checkInVO = checkInRepo.findTopByOrgIdAndEmpCodeAndCheckInDateAndStatusOrderByCreatedOnDesc(orgId,
+//				employeeCode, localCheckInDate, "OUT");
+//		String message = "";
+//
+//		if (checkInVO.getApprovalStatus() == null || (!checkInVO.getApprovalStatus().equalsIgnoreCase("Approved"))
+//				&& (!checkInVO.getApprovalStatus().equalsIgnoreCase("Rejected"))) {
+//
+//			if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
+//
+//				if ("REJECTED".equalsIgnoreCase(action)) {
+//					// Type casting from String to LocalTime
+//					LocalTime checkOutTimeCast = LocalTime.parse("00:00:00");
+//
+//					// Set entry time
+//					checkInVO.setEntryTime(checkOutTimeCast);
+//				}
+//
+//				checkInVO.setApprovalStatus(action);
+//				checkInVO.setApproveBy(actionBy);
+//
+//				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+//				checkInVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
+//
+//				checkInRepo.save(checkInVO);
+//
+//				if (checkInVO.getApprovalStatus().equalsIgnoreCase("Approved")) {
+//					message = "Approved Successfully";
+//				} else if (checkInVO.getApprovalStatus().equalsIgnoreCase("Rejected")) {
+//					message = "Rejected Successfully";
+//				}
+//			}
+//
+//		} else if (checkInVO.getApprovalStatus().equalsIgnoreCase("Approved")) {
+//			throw new ApplicationException("This CheckOut Already Approved");
+//		} else if (checkInVO.getApprovalStatus().equalsIgnoreCase("Rejected")) {
+//			throw new ApplicationException("This CheckOut Already Rejected");
+//		}
+//
+//		Map<String, Object> response = new HashMap<>();
+//		response.put("checkInVO", checkInVO);
+//		response.put("message", message);
+//		return response;
+//	}
+	
 	@Override
 	public Map<String, Object> createApprovalCheckOut(Long orgId, String employeeCode, String action, String actionBy,
-			LocalDate localCheckInDate, String notifyCode, String notify, String screenName)
-			throws ApplicationException {
+	        LocalDate localCheckInDate, String notifyCode, String notify, String screenName)
+	        throws ApplicationException {
 
-		CheckInVO checkInVO = checkInRepo.findTopByOrgIdAndEmpCodeAndCheckInDateAndStatusOrderByCreatedOnDesc(orgId,
-				employeeCode, localCheckInDate, "OUT");
-		String message = "";
+	    CheckInVO checkOutVO = checkInRepo.findTopByOrgIdAndEmpCodeAndCheckInDateAndStatusOrderByCreatedOnDesc(
+	            orgId, employeeCode, localCheckInDate, "OUT");
 
-		if (checkInVO.getApprovalStatus() == null || (!checkInVO.getApprovalStatus().equalsIgnoreCase("Approved"))
-				&& (!checkInVO.getApprovalStatus().equalsIgnoreCase("Rejected"))) {
+	    String message = "";
 
-			if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
+	    if (checkOutVO == null) {
+	        throw new ApplicationException("No CheckOut record found.");
+	    }
 
-				if ("REJECTED".equalsIgnoreCase(action)) {
-					// Type casting from String to LocalTime
-					LocalTime checkOutTimeCast = LocalTime.parse("00:00:00");
+	    if (checkOutVO.getApprovalStatus() == null ||
+	        (!"Approved".equalsIgnoreCase(checkOutVO.getApprovalStatus()) &&
+	         !"Rejected".equalsIgnoreCase(checkOutVO.getApprovalStatus()))) {
 
-					// Set entry time
-					checkInVO.setEntryTime(checkOutTimeCast);
-				}
+	        if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
 
-				checkInVO.setApprovalStatus(action);
-				checkInVO.setApproveBy(actionBy);
+	            if ("REJECTED".equalsIgnoreCase(action)) {
+	                // Set entry time to 00:00:00 for rejected check-out
+	                checkOutVO.setEntryTime(LocalTime.parse("00:00:00"));
+	            }
 
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
-				checkInVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
+	            checkOutVO.setApprovalStatus(action);
+	            checkOutVO.setApproveBy(actionBy);
+	            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+	            checkOutVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
 
-				checkInRepo.save(checkInVO);
+	            checkInRepo.save(checkOutVO);
 
-				if (checkInVO.getApprovalStatus().equalsIgnoreCase("Approved")) {
-					message = "Approved Successfully";
-				} else if (checkInVO.getApprovalStatus().equalsIgnoreCase("Rejected")) {
-					message = "Rejected Successfully";
-				}
-			}
+	            if ("APPROVED".equalsIgnoreCase(action)) {
+	                // ✅ Find matching IN record
+	                CheckInVO checkInVO = checkInRepo.findTopByOrgIdAndEmpCodeAndCheckInDateAndStatusOrderByCreatedOnDesc(
+	                        orgId, employeeCode, localCheckInDate, "IN");
 
-		} else if (checkInVO.getApprovalStatus().equalsIgnoreCase("Approved")) {
-			throw new ApplicationException("This CheckOut Already Approved");
-		} else if (checkInVO.getApprovalStatus().equalsIgnoreCase("Rejected")) {
-			throw new ApplicationException("This CheckOut Already Rejected");
-		}
+	                if (checkInVO != null && checkInVO.getEntryTime() != null && checkOutVO.getEntryTime() != null) {
+	                    // Compute duration
+	                    LocalDateTime fullIn = LocalDateTime.of(checkInVO.getCheckInDate(), checkInVO.getEntryTime());
+	                    LocalDateTime fullOut = LocalDateTime.of(checkOutVO.getCheckInDate(), checkOutVO.getEntryTime());
 
-		Map<String, Object> response = new HashMap<>();
-		response.put("checkInVO", checkInVO);
-		response.put("message", message);
-		return response;
+	                    long seconds = Duration.between(fullIn, fullOut).getSeconds();
+	                    int hours = (int) (seconds / 3600);
+
+	                    // Check existing AttendanceDaily record
+	                    AttendanceDailyVO existing = attendanceDailyRepo
+	                            .findByEmpCodeAndCheckInDateAndOrgIdAndBranch(
+	                                    employeeCode, localCheckInDate, orgId, checkOutVO.getBranch());
+
+	                    boolean isDuplicate = existing != null &&
+	                            checkInVO.getEntryTime().equals(existing.getInTime()) &&
+	                            checkOutVO.getEntryTime().equals(existing.getOutTime());
+
+	                    if (!isDuplicate) {
+	                        AttendanceDailyVO daily = (existing != null) ? existing : new AttendanceDailyVO();
+	                        daily.setEmpCode(employeeCode);
+	                        daily.setEmpName(checkOutVO.getEmpName());
+	                        daily.setBranch(checkOutVO.getBranch());
+	                        daily.setBranchCode(checkOutVO.getBranchCode());
+	                        daily.setOrgId(orgId);
+	                        daily.setCheckInDate(localCheckInDate);
+	                        daily.setCheckOutDate(checkOutVO.getCheckInDate());
+	                        daily.setFinyear(String.valueOf(localCheckInDate.getYear()));
+	                        daily.setAttendanceMode("System");
+
+	                        daily.setInTime(checkInVO.getEntryTime());
+	                        daily.setOutTime(checkOutVO.getEntryTime());
+	                        daily.setEffectiveHours(hours);
+	                        daily.setGrossHours(hours);
+
+	                        attendanceDailyRepo.save(daily);
+	                    }
+	                }
+	                message = "Approved Successfully";
+	            } else if ("REJECTED".equalsIgnoreCase(action)) {
+	                message = "Rejected Successfully";
+	            }
+	        }
+
+	    } else if ("Approved".equalsIgnoreCase(checkOutVO.getApprovalStatus())) {
+	        throw new ApplicationException("This CheckOut Already Approved");
+	    } else if ("Rejected".equalsIgnoreCase(checkOutVO.getApprovalStatus())) {
+	        throw new ApplicationException("This CheckOut Already Rejected");
+	    }
+
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("checkInVO", checkOutVO);
+	    response.put("message", message);
+	    return response;
 	}
+
 
 	@Override
 	public Map<String, Object> createRequestCheckOut(CheckinRequestDTO checkinRequestDTO) throws ApplicationException {
