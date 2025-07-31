@@ -615,6 +615,11 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 			String empcode, String string, long orgId, String branch, LocalDate today);
 
 
+
+
+	AttendanceProcessVO findBySourceId(Long id);
+
+
 	
 
 
