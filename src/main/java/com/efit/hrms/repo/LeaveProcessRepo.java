@@ -60,26 +60,26 @@ public interface LeaveProcessRepo extends JpaRepository<LeaveProcessVO, Long>{
 	
 	
 	@Query(nativeQuery = true, value =
-		    "SELECT \r\n" +
-		    "    lp.employeename,\r\n" +
-		    "    lp.employeecode,\r\n" +
-		    "    e.branch,\r\n" +
-		    "    e.department,\r\n" +
-		    "    SUM(lp.totalcompanyworkingdays) AS totalcompanyworkingdays,\r\n" +
-		    "    SUM(lp.totalleave) AS totalleave,\r\n" +
-		    "    SUM(lp.lopleave) AS lopleave,\r\n" +
-		    "    SUM(lp.emptotalworkingdays) AS emptotalworkingdays,\r\n" +
-		    "    SUM(lp.empsalarydays) AS empsalarydays\r\n" +
-		    "FROM leaveprocess lp\r\n" +
-		    "JOIN employee e ON lp.employeecode = e.employeecode\r\n" +
-		    "WHERE lp.orgid = ?1\r\n" +
-		    "  AND lp.month = ?2\r\n" +
-		    "  AND lp.year = ?3\r\n" +
-		    "  AND lp.approvedstatus = 'PENDING'\r\n" +
-		    "  AND (?4 = 'ALL' OR e.department = ?4)\r\n" +
-		    "  AND (?5 = 'ALL' OR e.branch = ?5)\r\n" +
-		    "GROUP BY lp.employeename, lp.employeecode, e.branch, e.department\r\n" +
-		    "ORDER BY lp.employeename ASC"
+		    "SELECT \r\n"
+		    + "    asu.empname,\r\n"
+		    + "    asu.empcode,\r\n"
+		    + "    e.branch,\r\n"
+		    + "    e.department,\r\n"
+		    + "    SUM(asu.totaldays) AS totalcompanyworkingdays,\r\n"
+		    + "    SUM(asu.leaves) AS totalleave,\r\n"
+		    + "    SUM(asu.lop) AS lopleave,\r\n"
+		    + "    SUM(asu.present) AS emptotalworkingdays,\r\n"
+		    + "    SUM(asu.salarydays) AS empsalarydays\r\n"
+		    + "FROM attendancesummary asu\r\n"
+		    + "JOIN employee e ON asu.empcode = e.employeecode\r\n"
+		    + "WHERE asu.orgid = ?1\r\n"
+		    + "  AND asu.month = ?2\r\n"
+		    + "  AND asu.finyear = ?3\r\n"
+		    + "  AND asu.approvestatus = 'APPROVED'\r\n"
+		    + "  AND (?4 = 'ALL' OR e.department = ?4)\r\n"
+		    + "  AND (?5 = 'ALL' OR e.branch = ?5)\r\n"
+		    + "GROUP BY asu.empname, asu.empcode, e.branch, e.department\r\n"
+		    + "ORDER BY asu.empname ASC"
 		)
 		Set<Object[]> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch);
 
