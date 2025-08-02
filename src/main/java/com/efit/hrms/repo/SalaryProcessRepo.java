@@ -65,7 +65,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "        empsalarydays,\r\n"
 			+ "        emptotalworkingdays,\r\n"
 			+ "        actuals,\r\n"
-			+ "        joiningdate\r\n"
+			+ "        payslipeffectivedate\r\n"
 			+ "    FROM (\r\n"
 			+ "        -- Individual earnings\r\n"
 			+ "        SELECT \r\n"
@@ -77,7 +77,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "            s.empsalarydays,\r\n"
 			+ "            s.emptotalworkingdays,\r\n"
 			+ "            ROUND((d.amount / s.empsalarydays) * s.emptotalworkingdays, 0) AS actuals,\r\n"
-			+ "            a.joiningdate\r\n"
+			+ "            a.payslipeffectivedate\r\n"
 			+ "        FROM \r\n"
 			+ "            salarystructure b,\r\n"
 			+ "            employee a,\r\n"
@@ -92,7 +92,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "            AND b.orgid = ?1\r\n"
 			+ "            AND s.month = ?3\r\n"
 			+ "            AND s.year = ?4\r\n"
-			+ "            AND (?3 >= MONTH(a.joiningdate) OR YEAR(a.joiningdate) <= ?4)\r\n"
+			+ "            AND (?3 >= MONTH(a.payslipeffectivedate) OR YEAR(a.payslipeffectivedate) <= ?4)\r\n"
 			+ "        GROUP BY  \r\n"
 			+ "            b.employeename,\r\n"
 			+ "            b.orgid,\r\n"
@@ -101,7 +101,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "            d.amount,\r\n"
 			+ "            s.empsalarydays,\r\n"
 			+ "            s.emptotalworkingdays,\r\n"
-			+ "            a.joiningdate\r\n"
+			+ "            a.payslipeffectivedate\r\n"
 			+ "        \r\n"
 			+ "        UNION\r\n"
 			+ "        \r\n"
@@ -115,7 +115,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "            0 AS empsalarydays,\r\n"
 			+ "            0 AS emptotalworkingdays,\r\n"
 			+ "            SUM(ROUND((d.amount / s.empsalarydays) * s.emptotalworkingdays, 0)) AS actuals,\r\n"
-			+ "            a.joiningdate\r\n"
+			+ "            a.payslipeffectivedate\r\n"
 			+ "        FROM \r\n"
 			+ "            salarystructure b,\r\n"
 			+ "            employee a,\r\n"
@@ -130,9 +130,9 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "            AND b.orgid = ?1\r\n"
 			+ "            AND s.month = ?3\r\n"
 			+ "            AND s.year = ?4\r\n"
-			+ "            AND (?3 >= MONTH(a.joiningdate) OR YEAR(a.joiningdate) <= ?4)\r\n"
+			+ "            AND (?3 >= MONTH(a.payslipeffectivedate) OR YEAR(a.payslipeffectivedate) <= ?4)\r\n"
 			+ "        GROUP BY \r\n"
-			+ "            a.joiningdate\r\n"
+			+ "            a.payslipeffectivedate\r\n"
 			+ "    ) AS a ")
 	List<Object[]> findpayslipearningsdetails(Long orgId, String employeeCode, Long month, Long year);
 
@@ -144,7 +144,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 	        "    AND b.active = 1 \n" +
 	        "    AND b.employeecode = ?2 \n" +
 	        "    AND b.orgid = ?1 \n" +
-	        "    AND (YEAR(a.joiningdate) < ?4 OR (YEAR(a.joiningdate) = ?4 AND MONTH(a.joiningdate) <= ?3)) \n" +
+	        "    AND (YEAR(a.payslipeffectivedate) < ?4 OR (YEAR(a.payslipeffectivedate) = ?4 AND MONTH(a.payslipeffectivedate) <= ?3)) \n" +
 	        "  UNION \n" +
 	        "  SELECT '' AS employee, '' AS orgid, '' AS employeecode, 'Total Deduction' AS heading, SUM(c.amount) \n" +
 	        "  FROM employee a, salarystructure b, salarydetectiondetails c \n" +
@@ -153,7 +153,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 	        "    AND b.active = 1 \n" +
 	        "    AND b.employeecode = ?2 \n" +
 	        "    AND b.orgid = ?1 \n" +
-	        "    AND (YEAR(a.joiningdate) < ?4 OR (YEAR(a.joiningdate) = ?4 AND MONTH(a.joiningdate) <= ?3)) \n" +
+	        "    AND (YEAR(a.payslipeffectivedate) < ?4 OR (YEAR(a.payslipeffectivedate) = ?4 AND MONTH(a.payslipeffectivedate) <= ?3)) \n" +
 	        ") a", nativeQuery = true)
 	Set<Object[]> findpayslipdeductionsdetails(Long orgId, String Employeecode , Long Month,Long year);
 	
@@ -181,7 +181,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "        b.active = 1\r\n"
 			+ "        AND b.employeecode = ?2\r\n"
 			+ "        AND b.orgid = ?1\r\n"
-			+ "        AND MONTH(a.joiningdate) >= ?3\r\n"
+			+ "        AND MONTH(a.payslipeffectivedate) >= ?3\r\n"
 			+ "        AND s.month = ?3\r\n"
 			+ "        AND s.year = ?4\r\n"
 			+ "    GROUP BY \r\n"
@@ -203,8 +203,8 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "        b.active = 1\r\n"
 			+ "        AND b.employeecode = ?2\r\n"
 			+ "        AND b.orgid = ?1\r\n"
-			+ "        AND ?3 >= MONTH(a.joiningdate)\r\n"
-			+ "        AND ?4 >= YEAR(a.joiningdate)\r\n"
+			+ "        AND ?3 >= MONTH(a.payslipeffectivedate)\r\n"
+			+ "        AND ?4 >= YEAR(a.payslipeffectivedate)\r\n"
 			+ "    GROUP BY \r\n"
 			+ "        a.employee,\r\n"
 			+ "        a.orgid,\r\n"

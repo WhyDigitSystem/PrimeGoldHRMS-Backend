@@ -34,7 +34,6 @@ import com.efit.hrms.entity.DesignationVO;
 import com.efit.hrms.entity.EmployeeLeaveVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.LeaveBalanceVO;
-import com.efit.hrms.entity.OverTime;
 import com.efit.hrms.entity.ProjectMasterVO;
 import com.efit.hrms.entity.UserLoginRolesVO;
 import com.efit.hrms.entity.UserVO;
@@ -316,6 +315,8 @@ public class MasterServiceImpl implements MasterService {
 		employeeVO.setFlag(employeeDTO.isFlag());
 		employeeVO.setOtFlag(employeeDTO.getOtFlag());	
 		employeeVO.setBioId(employeeDTO.getBioId());
+		employeeVO.setPayslipEffectiveDate(employeeDTO.getPayslipEffectiveDate());
+
 
 		
 		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());

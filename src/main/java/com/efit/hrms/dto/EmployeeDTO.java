@@ -62,6 +62,8 @@ public class EmployeeDTO {
     private Long orgId;
     private boolean active;
 	private String bioId;
+	private LocalDate payslipEffectiveDate;
+
 
 	private OverTime otFlag;
 

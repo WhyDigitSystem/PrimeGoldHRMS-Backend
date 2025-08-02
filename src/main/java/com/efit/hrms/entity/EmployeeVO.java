@@ -110,7 +110,8 @@ public class EmployeeVO {
 	private String cancelRemark;
 	@Column(name = "active")
 	private boolean active;
-	
+	@Column(name = "payslipeffectivedate")
+	private LocalDate payslipEffectiveDate;
 	
 	@Column(name = "contractor",length = 30)
 	private String contractor;
