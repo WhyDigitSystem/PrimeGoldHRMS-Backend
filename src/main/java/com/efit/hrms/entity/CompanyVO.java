@@ -114,6 +114,9 @@ public class CompanyVO {
 	
 	@Column(name = "ottype")
 	private String otType;
+	
+	@Column(name = "otpolicy")
+	private String otPolicy;
 
 	@Column(name = "locationaddress")
 	private String locationAddress;

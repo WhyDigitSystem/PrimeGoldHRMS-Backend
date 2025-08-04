@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -532,42 +533,59 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 	    for (Object[] row : rows) {
-	        String empcode = (String) row[0];
-	        LocalDate checkindate = ((java.sql.Date) row[2]).toLocalDate();
+	        try {
+	            String empcode = (String) row[0];
+	            LocalDate checkindate = ((java.sql.Date) row[2]).toLocalDate();
 
-	        // Check if record already exists
-	        Optional<OtCalculationVO> existingOpt = otCalculationRepo.findByEmpcodeAndCheckindate(empcode, checkindate);
-	        OtCalculationVO vo = existingOpt.orElse(new OtCalculationVO());
+	            // Check if record already exists
+	            Optional<OtCalculationVO> existingOpt = otCalculationRepo.findByEmpcodeAndCheckindate(empcode, checkindate);
+	            OtCalculationVO vo = existingOpt.orElse(new OtCalculationVO());
 
-	        vo.setEmpcode(empcode);
-	        vo.setEmpname((String) row[1]);
-	        vo.setCheckindate(checkindate);
+	            vo.setEmpcode(empcode);
+	            vo.setEmpname((String) row[1]);
+	            vo.setCheckindate(checkindate);
 
-	        // Set IN/OUT time
-	        String intimeStr = (String) row[3];
-	        String outtimeStr = (String) row[4];
-	        vo.setIntime(LocalTime.parse(intimeStr, timeFormatter));
-	        vo.setOuttime(LocalTime.parse(outtimeStr, timeFormatter));
+	            // Set IN/OUT time
+	            String intimeStr = (String) row[3];
+	            String outtimeStr = (String) row[4];
 
-	        // Set OT hours as integer
-	        Integer otHours = row[5] != null ? Integer.parseInt(row[5].toString()) : 0;
-	        vo.setOthours(otHours); 
+	            vo.setIntime(LocalTime.parse(intimeStr, timeFormatter));
+	            vo.setOuttime(LocalTime.parse(outtimeStr, timeFormatter));
 
-	        vo.setOtamount(new BigDecimal(String.valueOf(row[6])));
+	            // OT Hours
+	            Integer otHours = row[5] != null ? Integer.parseInt(row[5].toString().trim()) : 0;
+	            vo.setOthours(otHours);
 
-	        // ✅ Fix: rate as BigDecimal from String
-	        vo.setRate(row[7] != null ? new BigDecimal(row[7].toString()) : BigDecimal.ZERO);
+	            // OT Amount and Rate (safely parsed)
+	            vo.setOtamount(safeBigDecimal(row[6]));
+	            vo.setRate(safeBigDecimal(row[7]));
 
-	        vo.setOttype(row[8] != null ? row[8].toString() : null);
-	        vo.setOtcategory(row[9] != null ? row[9].toString() : null);
-	        vo.setStatus("PENDING");
+	            // OT Type, Category, Company Policy
+	            vo.setOttype(row[8] != null ? row[8].toString().trim() : null);
+	            vo.setOtcategory(row[9] != null ? row[9].toString().trim() : null);
+	            vo.setCompanyOtPolicy(row[10] != null ? row[10].toString().trim() : null);
 
-	        vo.setCreatedon(LocalDateTime.now());
+	            vo.setStatus("PENDING");
+	            vo.setCreatedon(LocalDateTime.now());
 
-	        resultList.add(vo);
+	            resultList.add(vo);
+	        } catch (Exception e) {
+	            System.err.println("Error processing OT row: " + Arrays.toString(row));
+	            e.printStackTrace(); // Optionally log this instead
+	        }
 	    }
 
 	    return otCalculationRepo.saveAll(resultList);
+	}
+
+
+	private BigDecimal safeBigDecimal(Object obj) {
+	    try {
+	        return obj != null ? new BigDecimal(obj.toString().trim()) : BigDecimal.ZERO;
+	    } catch (NumberFormatException e) {
+	        System.err.println("Invalid BigDecimal input: " + obj);
+	        return BigDecimal.ZERO;
+	    }
 	}
 
 

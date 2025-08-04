@@ -53,6 +53,8 @@ public class CompanyDTO {
 
 	private OverTime otFlag;
 	private String otType;
+	private String otPolicy;
+
 
 	private Double latitude;
 	private Double longitude;

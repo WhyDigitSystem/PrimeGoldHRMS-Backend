@@ -60,6 +60,9 @@ public class OtCalculationVO {
     @Column(name = "otcategory")
     private String otcategory;
     
+    @Column(name = "companyotpolicy")
+    private String companyOtPolicy;
+    
     @Column(name = "status")
     private String status;
 
