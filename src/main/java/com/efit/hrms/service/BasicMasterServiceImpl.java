@@ -2072,8 +2072,10 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			map.put("panno", ch[9] != null ? ch[9].toString() : ""); // PAN Number
 			map.put("uanno", ch[10] != null ? ch[10].toString() : ""); // UAN Number
 			map.put("effectiveworkingdays", ch[11] != null ? ch[11].toString() : ""); // Effective Working Days
-			map.put("totalworkingdays", ch[12] != null ? ch[12].toString() : ""); // Total Working Days
+			map.put("monthDays", ch[12] != null ? ch[12].toString() : ""); 
 			map.put("bankName", ch[13] != null ? ch[13].toString() : ""); // Bank Name
+			map.put("lop", ch[14] != null ? ch[14].toString() : ""); // Bank Name
+
 
 			// Add the map to the result list
 			list.add(map);
@@ -2108,14 +2110,16 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			throw new RuntimeException("Employee not found for code: " + employeeCode);
 		}
 
-		LocalDate joiningDate = employeeVO.getJoiningDate();
+		LocalDate paySlipEffectiveDate = employeeVO.getPayslipEffectiveDate();
 		LocalDate payslipDate = LocalDate.of(year.intValue(), month.intValue(), 1);
+		
+		LocalDate joiningDate = employeeVO.getJoiningDate();
 
 //			    System.out.println(joiningDate);
 //			    System.out.println(payslipDate);
 
-		if (payslipDate.isBefore(joiningDate.withDayOfMonth(1))) {
-			throw new RuntimeException("Payslip date is before the employee's joining date.");
+		if (payslipDate.isBefore(paySlipEffectiveDate.withDayOfMonth(1))) {
+			throw new RuntimeException("Payslip date is before the employee's PaySlipEffectiveDate date.");
 		}
 
 		for (Object[] ch : salaryprocessVO) {
@@ -2125,8 +2129,8 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			map.put("employeecode", ch[2] != null ? ch[2].toString() : "");
 			map.put("heading", ch[3] != null ? ch[3].toString() : "");
 			map.put("amount", ch[4] != null ? ch[4].toString() : "");
-			map.put("effectiveworkingdays", ch[5] != null ? ch[5].toString() : "");
-			map.put("totalworkingdays", ch[6] != null ? ch[6].toString() : "");
+			map.put("totalCompanyWorkingDays", ch[5] != null ? ch[5].toString() : "");
+			map.put("empSalaryDays", ch[6] != null ? ch[6].toString() : "");
 			map.put("actuals", ch[7] != null ? ch[7].toString() : "");
 			map.put("joiningDate", joiningDate != null ? joiningDate.toString() : "");
 			list.add(map);

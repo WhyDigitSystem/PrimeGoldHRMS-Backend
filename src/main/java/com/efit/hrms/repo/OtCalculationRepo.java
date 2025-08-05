@@ -1,6 +1,7 @@
 package com.efit.hrms.repo;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,7 +69,10 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 		    		+ "           omd.otrate, omd.slab, omd.effectivefrom, omd.effectiveto\r\n"
 		    		+ "    FROM otmaster om\r\n"
 		    		+ "    JOIN otmasterdetails omd ON omd.otmasterid = om.otmasterid\r\n"
-		    		+ "    WHERE om.orgid = ?1 AND om.active = 1 AND omd.applicable = 1\r\n"
+		    		+ "    WHERE om.orgid = ?1\r\n"
+		    		+ "      AND om.active = 1\r\n"
+		    		+ "      AND omd.applicable = 1\r\n"
+		    		+ "      AND om.ottype = (SELECT otpolicy FROM company WHERE companyid = ?1)\r\n"
 		    		+ "),\r\n"
 		    		+ "combined_cte AS (\r\n"
 		    		+ "    SELECT a.empcode, a.empname, a.branch, a.branchcode, a.checkindate,\r\n"
@@ -129,10 +133,11 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 		    		+ "           ELSE 0\r\n"
 		    		+ "       END AS otamount,\r\n"
 		    		+ "\r\n"
-		    		+ "      CASE \r\n"
-		    		+ "    WHEN cp.otpolicy = 'Hourly' THEN '0'\r\n"
-		    		+ "    ELSE fr.otrate\r\n"
-		    		+ "END AS rate ,\r\n"
+		    		+ "       CASE \r\n"
+		    		+ "           WHEN cp.otpolicy = 'Hourly' THEN '0'\r\n"
+		    		+ "           ELSE fr.otrate\r\n"
+		    		+ "       END AS rate,\r\n"
+		    		+ "       \r\n"
 		    		+ "       fr.ottype,\r\n"
 		    		+ "       fr.otcategory,\r\n"
 		    		+ "       cp.otpolicy AS companyotpolicy\r\n"
@@ -143,7 +148,6 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 		    		+ "JOIN calendar_days_cte cd ON cd.empcode = fr.empcode\r\n"
 		    		+ "WHERE fr.rn = 1\r\n"
 		    		+ "ORDER BY fr.checkindate, fr.empcode;\r\n"
-		    		+ "\r\n"
 		    		+ "",
 		    nativeQuery = true
 		)
@@ -152,5 +156,10 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 
 
 	Optional<OtCalculationVO> findByEmpcodeAndCheckindate(String empcode, LocalDate checkindate);
+
+
+
+	Optional<OtCalculationVO> findByEmpcodeAndCheckindateAndIntimeAndOuttime(String empcode, LocalDate checkindate,
+			LocalTime intime, LocalTime outtime);
 
 }
