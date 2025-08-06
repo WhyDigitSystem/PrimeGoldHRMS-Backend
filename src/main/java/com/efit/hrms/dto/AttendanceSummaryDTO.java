@@ -29,6 +29,7 @@ public class AttendanceSummaryDTO {
 	private BigDecimal present;
 	private BigDecimal salarydays;
 	private String createdBy;
+	private Long otHours;
 
 	
 	private String approveStatus;

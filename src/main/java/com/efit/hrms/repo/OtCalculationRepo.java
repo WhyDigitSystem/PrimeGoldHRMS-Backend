@@ -146,8 +146,13 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 		    		+ "JOIN company_ot_policy cp ON cp.companyid = ?1\r\n"
 		    		+ "JOIN salary_cte s ON s.employeecode = fr.empcode\r\n"
 		    		+ "JOIN calendar_days_cte cd ON cd.empcode = fr.empcode\r\n"
+		    		+ "LEFT JOIN otcalculation otc\r\n"
+		    		+ "  ON otc.empcode = fr.empcode\r\n"
+		    		+ " AND otc.checkindate = fr.checkindate\r\n"
 		    		+ "WHERE fr.rn = 1\r\n"
-		    		+ "ORDER BY fr.checkindate, fr.empcode;\r\n"
+		    		+ "  AND (otc.status = 'PENDING' OR otc.status IS NULL OR otc.empcode IS NULL)\r\n"
+		    		+ "ORDER BY fr.checkindate, fr.empcode\r\n"
+		    		+ "\r\n"
 		    		+ "",
 		    nativeQuery = true
 		)
@@ -161,5 +166,45 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 
 	Optional<OtCalculationVO> findByEmpcodeAndCheckindateAndIntimeAndOuttime(String empcode, LocalDate checkindate,
 			LocalTime intime, LocalTime outtime);
+
+
+	@Query(nativeQuery = true, value = "SELECT a.*\r\n"
+			+ "FROM otcalculation a\r\n"
+			+ "JOIN employee e ON e.employeecode = a.empcode\r\n"
+			+ "WHERE a.orgid = ?3\r\n"
+			+ "  AND (UPPER(?4) = 'ALL' OR a.empcode = ?4)\r\n"
+			+ "  AND (UPPER(?5) = 'ALL' OR UPPER(e.branch) = UPPER(?5))\r\n"
+			+ "  AND (UPPER(?6) = 'ALL' OR UPPER(e.department) = UPPER(?6))\r\n"
+			+ "  AND (\r\n"
+			+ "       UPPER(?7) = 'ALL'\r\n"
+			+ "       OR (UPPER(?7) = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
+			+ "       OR (UPPER(?7) = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND UPPER(e.contractor) = UPPER(?8))\r\n"
+			+ "  )\r\n"
+			+ "  AND a.checkindate BETWEEN ?1 AND ?2\r\n"
+			+ "  AND e.active = 1\r\n"
+			+ "  AND a.status = 'PENDING';\r\n"
+			+ "")
+	List<OtCalculationVO> getPendingOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
+			String branch, String department, String type, String contractor);
+
+
+	@Query(nativeQuery = true, value = "SELECT a.*\r\n"
+			+ "FROM otcalculation a\r\n"
+			+ "JOIN employee e ON e.employeecode = a.empcode\r\n"
+			+ "WHERE a.orgid = ?3\r\n"
+			+ "  AND (UPPER(?4) = 'ALL' OR a.empcode = ?4)\r\n"
+			+ "  AND (UPPER(?5) = 'ALL' OR UPPER(e.branch) = UPPER(?5))\r\n"
+			+ "  AND (UPPER(?6) = 'ALL' OR UPPER(e.department) = UPPER(?6))\r\n"
+			+ "  AND (\r\n"
+			+ "       UPPER(?7) = 'ALL'\r\n"
+			+ "       OR (UPPER(?7) = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
+			+ "       OR (UPPER(?7) = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND UPPER(e.contractor) = UPPER(?8))\r\n"
+			+ "  )\r\n"
+			+ "  AND a.checkindate BETWEEN ?1 AND ?2\r\n"
+			+ "  AND e.active = 1\r\n"
+			+ "  AND a.status = 'APPROVED' \r\n"
+			+ "")
+	List<OtCalculationVO> getApprovedOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
+			String branch, String department, String type, String contractor);
 
 }

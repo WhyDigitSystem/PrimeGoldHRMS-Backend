@@ -120,6 +120,58 @@ public class CheckInOutController extends BaseController{
 	    }
 	   
 	    
+	    @GetMapping("getPendingOTHoursByOrgId")
+	 		public ResponseEntity<ResponseDTO> getPendingOTHoursByOrgId(@RequestParam String fromDate,@RequestParam  String toDate,@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branch,@RequestParam String department,@RequestParam String type,@RequestParam (required = false) String contractor) {
+	 			String methodName = "getAttendanceProcessByOrgId()";
+	 			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+	 			String errorMsg = null;
+	 			Map<String, Object> responseObjectsMap = new HashMap<>();
+	 			ResponseDTO responseDTO = null;
+	 			List<OtCalculationVO> otCalculationVO = null;
+	 			try {
+	 				otCalculationVO = checkInOutService.getPendingOTHoursByOrgId(fromDate,   toDate,  orgId,  employeeCode,  branch,department,type,contractor);
+	 			} catch (Exception e) {
+	 				errorMsg = e.getMessage();
+	 				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	 			}
+	 			if (StringUtils.isEmpty(errorMsg)) {
+	 				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "OtCalculation found by ORGID");
+	 				responseObjectsMap.put("otCalculationVO", otCalculationVO);
+	 				responseDTO = createServiceResponse(responseObjectsMap);
+	 			} else {
+	 				errorMsg = "OtCalculation not found for orgID: " + orgId;
+	 				responseDTO = createServiceResponseError(responseObjectsMap, "OtCalculation not found", errorMsg);
+	 			}
+	 			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	 			return ResponseEntity.ok().body(responseDTO);
+	 		}
+	    
+	    @GetMapping("getApprovedOTHoursByOrgId")
+ 		public ResponseEntity<ResponseDTO> getApprovedOTHoursByOrgId(@RequestParam String fromDate,@RequestParam  String toDate,@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branch,@RequestParam String department,@RequestParam String type,@RequestParam (required = false) String contractor) {
+ 			String methodName = "getAttendanceProcessByOrgId()";
+ 			LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+ 			String errorMsg = null;
+ 			Map<String, Object> responseObjectsMap = new HashMap<>();
+ 			ResponseDTO responseDTO = null;
+ 			List<OtCalculationVO> otCalculationVO = null;
+ 			try {
+ 				otCalculationVO = checkInOutService.getApprovedOTHoursByOrgId(fromDate,   toDate,  orgId,  employeeCode,  branch,department,type,contractor);
+ 			} catch (Exception e) {
+ 				errorMsg = e.getMessage();
+ 				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+ 			}
+ 			if (StringUtils.isEmpty(errorMsg)) {
+ 				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "OtCalculation found by ORGID");
+ 				responseObjectsMap.put("otCalculationVO", otCalculationVO);
+ 				responseDTO = createServiceResponse(responseObjectsMap);
+ 			} else {
+ 				errorMsg = "OtCalculation not found for orgID: " + orgId;
+ 				responseDTO = createServiceResponseError(responseObjectsMap, "OtCalculation not found", errorMsg);
+ 			}
+ 			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+ 			return ResponseEntity.ok().body(responseDTO);
+ 		}
+
 	    //monthlyprocess
 	    
 	    @GetMapping("/getMonthlyProcess")

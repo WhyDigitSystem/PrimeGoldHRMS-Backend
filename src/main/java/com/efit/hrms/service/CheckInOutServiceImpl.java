@@ -503,7 +503,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 			map.put("lop", record[12] != null ? ((BigDecimal) record[12]).toPlainString() : "0");
 			map.put("presentDays", record[13] != null ? ((BigDecimal) record[13]).toPlainString() : "0");
 			map.put("salaryDays", record[14] != null ? ((BigDecimal) record[14]).toPlainString() : "0");
-//			map.put("otHours", record[15] != null ? record[15].toString() : "00:00");
+			map.put("otHours", record[15] != null ? record[15].toString() : "00:00");
 
 			detailsList.add(map);
 		}
@@ -586,6 +586,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 				vo.setOttype(ottype);
 				vo.setOtcategory(otcategory);
 				vo.setCompanyOtPolicy(companyOtPolicy);
+				vo.setOrgId(orgId);
 				vo.setStatus("PENDING");
 
 				resultList.add(vo);
@@ -615,6 +616,21 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 			System.err.println("Invalid BigDecimal input: " + obj);
 			return BigDecimal.ZERO;
 		}
+	}
+
+	
+	@Override
+	public List<OtCalculationVO> getPendingOTHoursByOrgId(String fromDate, String toDate, Long orgId,
+			String employeeCode, String branch,String department,String type,String contractor) {
+		// TODO Auto-generated method stub
+		return otCalculationRepo.getPendingOTHoursByOrgId(fromDate, toDate, orgId, employeeCode, branch,department,type,contractor);
+	}
+
+	@Override
+	public List<OtCalculationVO> getApprovedOTHoursByOrgId(String fromDate, String toDate, Long orgId,
+			String employeeCode, String branch,String department,String type,String contractor) {
+		// TODO Auto-generated method stub
+		return otCalculationRepo.getApprovedOTHoursByOrgId(fromDate, toDate, orgId, employeeCode, branch,department,type,contractor);
 	}
 
 //monthlyprocess
@@ -703,6 +719,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		vo.setLop(dto.getLop());
 		vo.setPresent(dto.getPresent());
 		vo.setSalarydays(dto.getSalarydays());
+		vo.setOtHours(dto.getOtHours());
 
 		vo.setApproveStatus("PENDING"); // default
 	}

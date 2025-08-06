@@ -65,6 +65,9 @@ public class AttendanceSummaryVO {
 	@Column(name = "modifiedBy")
 	private String updatedBy;
 	
+	@Column(name = "othours")
+	private Long otHours;
+	
 	@Column(name = "approvestatus")
 	private String approveStatus;
 	@Column(name = "approveby")

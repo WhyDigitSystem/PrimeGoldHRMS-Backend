@@ -46,6 +46,12 @@ public interface CheckInOutService {
 
 	List<AttendanceSummaryVO> getAttendanceSummaryByOrgId(String empCode, Integer month, String finYear, Long orgId, String branch);
 
+	List<OtCalculationVO> getPendingOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
+			String branch, String department, String type, String contractor);
+
+	List<OtCalculationVO> getApprovedOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
+			String branch, String department, String type, String contractor);
+
 
 
 

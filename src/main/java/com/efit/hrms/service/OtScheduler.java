@@ -26,8 +26,8 @@ public class OtScheduler {
     }
 
 //    @Scheduled(cron = "0 0 1 * * ?") // runs daily at 1:00 AM
-//    @Scheduled(cron = "0 */2 * * * ?") // runs every 2 minutes
-    @Scheduled(cron = "0 0 */5 * * ?")
+    @Scheduled(cron = "0 */2 * * * ?") // runs every 2 minutes
+//    @Scheduled(cron = "0 0 */5 * * ?")
     public void runOtCalculationJob() {
         List<Long> orgIds = companyRepo.findActiveCompanyIds();
 

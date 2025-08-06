@@ -68,6 +68,11 @@ public class OtCalculationVO {
 
     @Column(name = "createdon")
     private LocalDateTime createdon;
+    
+    @Column(name = "orgid")
+    private Long orgId;
+    
+
 
     // Getters and Setters
 }
