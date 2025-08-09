@@ -1,13 +1,16 @@
 package com.efit.hrms.repo;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.efit.hrms.entity.AttendanceDailyVO;
+import com.efit.hrms.entity.CompanyVO;
 
 @Repository
 public interface AttendanceDailyRepo extends JpaRepository<AttendanceDailyVO, Long>{
@@ -28,6 +31,13 @@ public interface AttendanceDailyRepo extends JpaRepository<AttendanceDailyVO, Lo
 	List<AttendanceDailyVO> getAttendanceDailyByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
 			String branch);
 
-	
+	@Query("SELECT a FROM AttendanceDailyVO a WHERE a.empCode = :empCode AND a.orgId = :orgId AND a.branch = :branch AND a.checkInDate BETWEEN :fromDate AND :toDate")
+    List<AttendanceDailyVO> findByEmpCodeAndDateRangeAndOrgIdAndBranch(
+        @Param("empCode") String empCode,
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate,
+        @Param("orgId") long orgId,
+        @Param("branch") String branch);
 
+	
 }

@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
-import com.efit.hrms.entity.AttendanceProcessVO;
 import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.exception.ApplicationException;
@@ -51,6 +50,8 @@ public interface CheckInOutService {
 
 	List<OtCalculationVO> getApprovedOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
 			String branch, String department, String type, String contractor);
+
+//	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 
 
 
