@@ -69,7 +69,7 @@ public class CheckInOutController extends BaseController{
 	
 	
 
-	    @PutMapping("/checkInOutUploadExcel")
+	    @PostMapping("/checkInOutUploadExcel")
 	    public ResponseEntity<String> checkInOutUploadExcel(@RequestParam("files") MultipartFile file,@RequestParam Long orgId,@RequestParam String createdBy) {
 	        if (file.isEmpty()) {
 	            return ResponseEntity.badRequest().body("File is empty.");
@@ -343,15 +343,5 @@ public class CheckInOutController extends BaseController{
 				return ResponseEntity.ok().body(responseDTO);
 			}
 
-//	
-//		 @PostMapping("/testupload")
-//		    public ResponseEntity<?> uploadExcel(@RequestParam("file") MultipartFile file) {
-//		        try {
-//		            List<AttendanceRecordVO> records = checkInOutService.processExcel(file);
-//		            return ResponseEntity.ok(records);  // returns JSON
-//		        } catch (Exception e) {
-//		            e.printStackTrace();
-//		            return ResponseEntity.internalServerError().body("Failed to process Excel.");
-//		        }
-//		    }
+
 }

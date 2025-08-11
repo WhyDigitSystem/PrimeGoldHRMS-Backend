@@ -1134,7 +1134,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	        	}
 
 
-	        result.put("message", "Upload and calculation successful.");
+	        result.put("message", "Attendance Uploaded successful.");
 	        return new ObjectMapper().writeValueAsString(result);
 
 	    } catch (Exception e) {
