@@ -72,7 +72,10 @@ public class OtCalculationVO {
     @Column(name = "orgid")
     private Long orgId;
     
-
+    @Column(name = "approveby")
+	private String approveBy;
+	@Column(name = "approveon")
+	private String approveOn;
 
     // Getters and Setters
 }

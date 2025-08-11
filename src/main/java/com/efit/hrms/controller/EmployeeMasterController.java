@@ -657,7 +657,7 @@ public class EmployeeMasterController extends BaseController{
 	
 	@GetMapping("/getPayOnHandsForSalaryProcess")
 	public ResponseEntity<ResponseDTO> getPayOnHandsForSalaryProcess(
-	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection) {
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
 
 	    String methodName = "getPayOnHandsForSalaryProcess()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -667,7 +667,7 @@ public class EmployeeMasterController extends BaseController{
 	    List<Map<String, Object>> salaryProcessVO;
 
 	    try {
-	    	salaryProcessVO = employeeMasterService.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays,grossPay,empSalaryDays,sumOfDetection);
+	    	salaryProcessVO = employeeMasterService.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays,grossPay,empSalaryDays,sumOfDetection, otAmount);
 	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "NetPay details retrieved successfully");
 	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
 	        responseDTO = createServiceResponse(responseObjectsMap);

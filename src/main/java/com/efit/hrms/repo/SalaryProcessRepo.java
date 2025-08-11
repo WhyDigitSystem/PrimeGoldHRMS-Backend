@@ -21,8 +21,21 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 	@Query(nativeQuery = true, value = "select * from salaryprocess a where a.salaryprocessid=?1 ")
 	SalaryProcessVO getSalaryProcessById(Long id);
 
-	@Query(nativeQuery = true, value = "select amount , sumofearning,sumofdetection from salarystructure a where a.orgid=?1 and employeecode=?2 ORDER BY a.date DESC \r\n"
-			+ "LIMIT 1 ")
+	@Query(nativeQuery = true, value = "SELECT \r\n"
+			+ "    a.amount, \r\n"
+			+ "    a.sumofearning, \r\n"
+			+ "    a.sumofdetection, \r\n"
+			+ "    COALESCE(SUM(ot.otamount), 0) AS totalotamount\r\n"
+			+ "FROM salarystructure a\r\n"
+			+ "LEFT JOIN otcalculation ot\r\n"
+			+ "    ON a.employeecode = ot.empcode\r\n"
+			+ "    AND ot.status = 'APPROVED'\r\n"
+			+ "WHERE a.orgid = ?1\r\n"
+			+ "  AND a.employeecode = ?2\r\n"
+			+ "GROUP BY a.amount, a.sumofearning, a.sumofdetection, a.date\r\n"
+			+ "ORDER BY a.date DESC\r\n"
+			+ "LIMIT 1 \r\n"
+			+ " ")
 	Set<Object[]> getSalaryStructureForSalaryProcess(Long orgId, String employeeCode);
 
 //	@Query(value = "            SELECT ROUND((?2 / ?1) * ?3) - ?4 AS netPay \r\n"
@@ -35,10 +48,10 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //		Set<Object[]> getNetPayForSalaryProcess(BigDecimal grossPay, BigDecimal sumOfDetection);
 
 
-	@Query(value = "SELECT ROUND((CAST(?2 AS DECIMAL) / CAST(?1 AS DECIMAL)) * CAST(?3 AS DECIMAL) - CAST(?4 AS DECIMAL), 2) AS payonhand", 
+	@Query(value = "SELECT ROUND(((CAST(?2 AS DECIMAL) / CAST(?1 AS DECIMAL)) * CAST(?3 AS DECIMAL) - CAST(?4 AS DECIMAL)) + CAST(?5 AS DECIMAL), 2) AS payonhand", 
 		       nativeQuery = true)
 	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, Long empSalaryDays,
-			BigDecimal sumOfDetection);
+			BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	
 

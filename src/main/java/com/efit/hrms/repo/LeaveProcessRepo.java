@@ -60,7 +60,7 @@ public interface LeaveProcessRepo extends JpaRepository<LeaveProcessVO, Long>{
 	
 	
 	@Query(nativeQuery = true, value =
-		    "SELECT \r\n"
+		    "SELECT\r\n"
 		    + "    asu.empname,\r\n"
 		    + "    asu.empcode,\r\n"
 		    + "    e.branch,\r\n"
@@ -69,9 +69,12 @@ public interface LeaveProcessRepo extends JpaRepository<LeaveProcessVO, Long>{
 		    + "    SUM(asu.leaves) AS totalleave,\r\n"
 		    + "    SUM(asu.lop) AS lopleave,\r\n"
 		    + "    SUM(asu.present) AS emptotalworkingdays,\r\n"
-		    + "    SUM(asu.salarydays) AS empsalarydays\r\n"
+		    + "    SUM(asu.salarydays) AS empsalarydays,\r\n"
+		    + "   SUM(asu.othours) AS totalothours \r\n"
 		    + "FROM attendancesummary asu\r\n"
-		    + "JOIN employee e ON asu.empcode = e.employeecode\r\n"
+		    + "JOIN employee e \r\n"
+		    + "    ON asu.empcode = e.employeecode\r\n"
+		    + "\r\n"
 		    + "WHERE asu.orgid = ?1\r\n"
 		    + "  AND asu.month = ?2\r\n"
 		    + "  AND asu.finyear = ?3\r\n"
@@ -79,7 +82,8 @@ public interface LeaveProcessRepo extends JpaRepository<LeaveProcessVO, Long>{
 		    + "  AND (?4 = 'ALL' OR e.department = ?4)\r\n"
 		    + "  AND (?5 = 'ALL' OR e.branch = ?5)\r\n"
 		    + "GROUP BY asu.empname, asu.empcode, e.branch, e.department\r\n"
-		    + "ORDER BY asu.empname ASC"
+		    + "ORDER BY asu.empname ASC;\r\n"
+		    + ""
 		)
 		Set<Object[]> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch);
 

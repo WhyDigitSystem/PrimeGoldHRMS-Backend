@@ -580,6 +580,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("netPay", record[0] != null ? record[0].toString() : "");
 			map.put("sumOfEarningAmount", record[1] != null ? record[1].toString() : "");
 			map.put("sumOfDetectionAmount", record[2] != null ? record[2].toString() : "");
+			map.put("otAmount", record[3] != null ? record[3].toString() : "");
 
 
 			detailsList.add(map);
@@ -608,6 +609,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("lopLeave", record[6] != null ? record[6].toString() : "0");
 			map.put("empTotalWorkingDays", record[7] != null ? record[7].toString() : "0");
 			map.put("empSalaryDays", record[8] != null ? record[8].toString() : "0");
+			map.put("otHours", record[9] != null ? record[9].toString() : "0");
 
 			detailsList.add(map);
 		}
@@ -635,9 +637,9 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //	
 	@Override
 	public List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			Long empSalaryDays,BigDecimal sumOfDetection) {
+			Long empSalaryDays,BigDecimal sumOfDetection,BigDecimal otAmount) {
 		Set<Object[]> result = salaryProcessRepo.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays, grossPay,
-				empSalaryDays,sumOfDetection);
+				empSalaryDays,sumOfDetection, otAmount);
 		return getPayOnHandsForSalaryProcess(result);
 	}
 

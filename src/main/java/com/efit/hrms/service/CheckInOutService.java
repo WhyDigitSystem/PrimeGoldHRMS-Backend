@@ -51,6 +51,8 @@ public interface CheckInOutService {
 	List<OtCalculationVO> getApprovedOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
 			String branch, String department, String type, String contractor);
 
+	Map<String, Object> createApprovalOtCalculation(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
+
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 
 

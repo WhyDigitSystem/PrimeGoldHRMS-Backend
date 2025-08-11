@@ -343,5 +343,36 @@ public class CheckInOutController extends BaseController{
 				return ResponseEntity.ok().body(responseDTO);
 			}
 
+		 
+		 @PutMapping("/createApprovalOtCalculation")
+			public ResponseEntity<ResponseDTO> createApprovalOtCalculation(@RequestParam Long orgId, @RequestParam List<Long> id,@RequestParam String action, @RequestParam String actionBy) {
+				String methodName = "createApprovalOtCalculation()";
+				LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+				String errorMsg = null;
+				Map<String, Object> responseObjectsMap = new HashMap<>();
+				ResponseDTO responseDTO = null;
+				try {
+					Map<String, Object> otCalculationVO = checkInOutService.createApprovalOtCalculation(
+			                orgId, id, action, actionBy);
+
+			        // ✅ Unwrap values
+			        Object otCalculation = otCalculationVO.get("otCalculationVO");
+			        String message = (String) otCalculationVO.getOrDefault("message", "OtCalculation Approved Successfully");
+
+			        responseObjectsMap.put("otCalculationVO", otCalculation);
+			        responseObjectsMap.put("message", message);
+
+			        responseDTO = createServiceResponse(responseObjectsMap);
+				} catch (Exception e) {
+					errorMsg = e.getMessage();
+					LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+					responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+				}
+				LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+				return ResponseEntity.ok().body(responseDTO);
+			}
+			
+		 
+		 
 
 }

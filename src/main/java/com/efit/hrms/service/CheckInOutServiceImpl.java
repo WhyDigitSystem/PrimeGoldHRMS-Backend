@@ -51,6 +51,7 @@ import com.efit.hrms.entity.CheckInOutBiometricVO;
 import com.efit.hrms.entity.CheckInOutUploadVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.OtMasterVO;
 import com.efit.hrms.entity.ShiftAssignDetailsVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AttendanceDailyRepo;
@@ -62,6 +63,7 @@ import com.efit.hrms.repo.CheckInStatusRepo;
 import com.efit.hrms.repo.CompanyRepo;
 import com.efit.hrms.repo.EmployeeRepo;
 import com.efit.hrms.repo.OtCalculationRepo;
+import com.efit.hrms.repo.OtMasterRepo;
 import com.efit.hrms.repo.ShiftAssignDetailsRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -94,6 +96,9 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	@Autowired
 	AttendanceSummaryRepo attendanceSummaryRepo;
+	
+	@Autowired
+	OtMasterRepo otMasterRepo;
 
 
 	@Autowired
@@ -1785,5 +1790,54 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 //	            return "";
 //	    }
 //	}
+	
+	
+	@Override
+	public Map<String, Object> createApprovalOtCalculation(Long orgId, List<Long> ids, String action,
+			String actionBy) throws ApplicationException {
+		List<OtCalculationVO> updatedList = new ArrayList<>();
+		String message = "";
+
+		for (Long id : ids) {
+			OtCalculationVO otCalculationVO = otCalculationRepo.findById(id)
+					.orElseThrow(() -> new ApplicationException("Invalid otCalculation ID: " + id));
+
+			String currentStatus = otCalculationVO.getStatus();
+
+			if (currentStatus == null
+					|| (!currentStatus.equalsIgnoreCase("APPROVED") && !currentStatus.equalsIgnoreCase("REJECTED"))) {
+
+				if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
+					otCalculationVO.setStatus(action.toUpperCase());
+					otCalculationVO.setApproveBy(actionBy);
+
+					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+					otCalculationVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
+
+					updatedList.add(otCalculationVO);
+				}
+			} else if ("APPROVED".equalsIgnoreCase(currentStatus)) {
+				throw new ApplicationException(
+						"OtCalculation already approved for employee: ");
+			} else if ("REJECTED".equalsIgnoreCase(currentStatus)) {
+				throw new ApplicationException(
+						"OtCalculation already rejected for employee: ");
+			}
+		}
+
+		otCalculationRepo.saveAll(updatedList);
+
+		if ("APPROVED".equalsIgnoreCase(action)) {
+			message = "OtCalculation Approved Successfully";
+		} else if ("REJECTED".equalsIgnoreCase(action)) {
+			message = "OtCalculation Rejected Successfully";
+		}
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("otCalculationVO", updatedList);
+		response.put("message", message);
+		return response;
+	}
+
 
 }
