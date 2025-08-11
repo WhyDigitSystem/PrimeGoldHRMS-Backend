@@ -184,19 +184,6 @@ List<Map<String, Object>> GetCountofNewAssignedTask(Long Orgid,String Assignedby
 
 
 	String generateEmployeeCodeByOrgId(EmployeeDTOnew employeeDTOnew);
-
-
-	
-
-
-
-
-
-
-	
-
-
-	
 	
 	
 }
