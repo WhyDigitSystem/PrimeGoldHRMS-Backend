@@ -2187,6 +2187,24 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 	}
 
 	@Override
+	public List<Map<String, Object>> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long Month, String year) {
+		Set<Object[]> raw = salaryProcessRepo.getpayslipPayOnHandAmount(orgId, employeeCode, Month, year);
+		return getpaysliphandsondetails(raw);
+	}
+
+	private List<Map<String, Object>> getpayslipPayOnHandAmount(Set<Object[]> raw) {
+		List<Map<String, Object>> List1 = new ArrayList<>();
+		for (Object[] ch : raw) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("payOnHand", ch[0] != null ? ch[0].toString() : ""); // Empty string if null
+
+			List1.add(map);
+		}
+		return List1;
+	}
+
+	
+	@Override
 	public List<Map<String, Object>> getpaysliphandsondetails(Long orgId, String Employeecode, Long Month, Long year) {
 		Set<Object[]> raw = salaryProcessRepo.findpayslipshandsondetails(orgId, Employeecode, Month, year);
 		return getpaysliphandsondetails(raw);
@@ -2205,7 +2223,7 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 		}
 		return List1;
 	}
-
+	
 	@Override
 	public List<Map<String, Object>> getTodayAttendanceReportByOrgId(Long orgId, String branch, String date) {
 		return checkInStatusRepo.getTodayAttendanceReportByOrgId(orgId, branch, date);

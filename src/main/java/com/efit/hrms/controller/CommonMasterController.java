@@ -1007,9 +1007,60 @@ public class CommonMasterController extends BaseController {
 			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 			return ResponseEntity.ok().body(responseDTO);
 		}
+		
+		
+		@PostMapping("/uploadDepartment")
+		public ResponseEntity<ResponseDTO> uploadDepartment(@RequestParam("files") MultipartFile file,
+				@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+			String methodName = "uploadDepartment()";
+			Map<String, Object> responseObjectsMap = new HashMap<>();
+			ResponseDTO responseDTO;
+
+			try {
+				// Call service method to process Excel upload
+				commonMasterService.uploadDepartment(file, orgId, createdBy);
+
+				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "UploadDepartment data uploaded successfully");
+				responseDTO = createServiceResponse(responseObjectsMap);
+
+			} catch (Exception e) {
+				String errorMsg = e.getMessage();
+				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+				responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+			}
+
+			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			return ResponseEntity.ok().body(responseDTO);
+
+		}
 
 		//Designation
 		
+		@PostMapping("/uploadDesignation")
+		public ResponseEntity<ResponseDTO> uploadDesignation(@RequestParam("files") MultipartFile file,
+				@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+			String methodName = "uploadDesignation()";
+			Map<String, Object> responseObjectsMap = new HashMap<>();
+			ResponseDTO responseDTO;
+
+			try {
+				// Call service method to process Excel upload
+				commonMasterService.uploadDesignation(file, orgId, createdBy);
+
+				responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "uploadDesignation data uploaded successfully");
+				responseDTO = createServiceResponse(responseObjectsMap);
+
+			} catch (Exception e) {
+				String errorMsg = e.getMessage();
+				LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+				responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+			}
+
+			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			return ResponseEntity.ok().body(responseDTO);
+
+		}
+
 		
 		@GetMapping("/getDesignationByOrgId")
 		public ResponseEntity<ResponseDTO> getDesignationByOrgId(@RequestParam Long orgid) {

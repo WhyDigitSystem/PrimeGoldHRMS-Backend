@@ -1242,6 +1242,36 @@ public class BasicMasterController extends BaseController {
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	
+	@GetMapping("/getpayslipPayOnHandAmount")
+	public ResponseEntity<ResponseDTO> getpayslipPayOnHandAmount(@RequestParam Long orgId, String Employeecode,@RequestParam Long month,@RequestParam String year) {
+		String methodName = "getpayslipPayOnHandAmount()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<Map<String, Object>> mapp = new ArrayList<>();
+
+		try {
+			mapp = basicMasterService.getpayslipPayOnHandAmount(  orgId,  Employeecode,  month,  year);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Payslip PayOnHand Details retrieved successfully");
+			responseObjectsMap.put("payslip", mapp);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Payslip PayOnHand Details to retrieve Charge Type",
+					errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
 
 	@GetMapping("/getpayslipearningdetails")
 	public ResponseEntity<ResponseDTO> getpayslipearningdetails(@RequestParam Long orgId, String Employeecode,

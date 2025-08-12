@@ -168,6 +168,10 @@ public interface CommonMasterService {
 	List<Map<String, Object>> getAllActiveRolesByOrgId(Long orgId);
 	
 	List<RolesVO> getRolesByOrgId(Long orgId);
+
+	void uploadDepartment(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
+	void uploadDesignation(MultipartFile file, Long orgId, String createdBy) throws Exception;
 	
 	
 

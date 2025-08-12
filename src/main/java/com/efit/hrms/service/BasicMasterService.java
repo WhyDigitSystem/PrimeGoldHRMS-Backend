@@ -184,6 +184,8 @@ List<Map<String, Object>> GetCountofNewAssignedTask(Long Orgid,String Assignedby
 
 
 	String generateEmployeeCodeByOrgId(EmployeeDTOnew employeeDTOnew);
+
+	List<Map<String, Object>> getpayslipPayOnHandAmount(Long orgId, String employeecode, Long month, String year);
 	
 	
 }

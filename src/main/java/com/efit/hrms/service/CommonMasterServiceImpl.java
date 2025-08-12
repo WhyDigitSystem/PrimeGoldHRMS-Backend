@@ -1,5 +1,7 @@
 package com.efit.hrms.service;
 
+import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,12 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1242,6 +1250,112 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		departmentVO.setOrgId(departmentDTO.getOrgId());
 
 	}
+	
+	@Override
+	public void uploadDepartment(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<DepartmentVO> departmentList = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String deptCode = getCellValueAsString(row.getCell(0)); // Column 0: departmentcode
+	            String deptName = getCellValueAsString(row.getCell(1)); // Column 1: departmentname
+
+	            if (deptCode == null || deptName == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            DepartmentVO dept = new DepartmentVO();
+	            dept.setDepartmentCode(deptCode.trim());
+	            dept.setDepartmentName(deptName.trim());
+	            dept.setOrgId(orgId);
+	            dept.setCreatedBy(createdBy);
+
+	            departmentList.add(dept);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        departmentRepo.saveAll(departmentList);
+	    }
+	}
+
+	private String getCellValueAsString(Cell cell) {
+	    if (cell == null) return null;
+	    switch (cell.getCellType()) {
+	        case STRING:
+	            return cell.getStringCellValue();
+	        case NUMERIC:
+	            if (DateUtil.isCellDateFormatted(cell)) {
+	                return cell.getDateCellValue().toString();
+	            } else {
+	                return String.valueOf((long) cell.getNumericCellValue());
+	            }
+	        case BOOLEAN:
+	            return String.valueOf(cell.getBooleanCellValue());
+	        case FORMULA:
+	            return cell.getCellFormula();
+	        default:
+	            return null;
+	    }
+	}
+
+	//designation
+	
+	@Override
+	public void uploadDesignation(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<DesignationVO> designationList = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String designationCode = getCellValueAsString(row.getCell(0)); // Column 0: departmentcode
+	            String designationName = getCellValueAsString(row.getCell(1)); // Column 1: departmentname
+
+	            if (designationCode == null || designationName == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            DesignationVO dept = new DesignationVO();
+	            dept.setDesignationCode(designationCode.trim());
+	            dept.setDesignationName(designationName.trim());
+	            dept.setOrgId(orgId);
+	            dept.setCreatedBy(createdBy);
+
+	            designationList.add(dept);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        designationRepo.saveAll(designationList);
+	    }
+	}
+
+	
+	
+
 
 	@Override
 	public Map<String, Object> createUpdateDesignation(DesignationDTO designationDTO) throws ApplicationException {

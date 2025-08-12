@@ -239,6 +239,14 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			@Query("SELECT s FROM SalaryProcessVO s WHERE s.orgId = ?1 AND s.employeeCode = ?2 AND s.month = ?3 AND s.year = ?4")
 			List<SalaryProcessVO> findByOrgIdAndEmployeeCodeAndMonthAndYear(Long orgId, String employeeCode, Long month, String year);
 
+			
+			@Query("SELECT s.payOnHand \r\n"
+					+ "FROM SalaryProcessVO s \r\n"
+					+ "WHERE s.orgId = ?1 AND s.employeeCode = ?2 AND s.month = ?3 AND s.year = ?4\r\n"
+					+ "")
+			Set<Object[]> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long month, String year);
+
+
 	
 
 
