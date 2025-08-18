@@ -54,6 +54,9 @@ public interface CommonMasterService {
 																								// entity
 
 	void deleteCountry(Long countryid);
+	
+	void uploadCountry(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
 
 	// State
 
@@ -66,6 +69,9 @@ public interface CommonMasterService {
 	Map<String, Object> createUpdateState(StateDTO stateDTO) throws ApplicationException;
 
 	void deleteState(Long stateid);
+	
+	void uploadState(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
 
 	// city
 
@@ -78,6 +84,8 @@ public interface CommonMasterService {
 	Map<String, Object> createUpdateCity(CityDTO cityDTO) throws ApplicationException;
 
 	void deleteCity(Long cityid);
+	
+	void uploadCity(MultipartFile file, Long orgId, String createdBy) throws Exception;
 
 	// Currency
 
@@ -88,6 +96,9 @@ public interface CommonMasterService {
 	Map<String, Object> createUpdateCurrency(CurrencyDTO currencyDTO) throws ApplicationException;
 
 	void deleteCurrency(Long currencyid);
+	
+	void uploadCurrency(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
 
 	// region
 
@@ -100,6 +111,9 @@ public interface CommonMasterService {
 	Map<String, Object> createUpdateRegion(RegionDTO regionDTO) throws ApplicationException;
 
 	void deleteRegion(Long regionid);
+	
+	void uploadRegion(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
 
 	// Company
 
@@ -151,6 +165,9 @@ public interface CommonMasterService {
 	Optional<DepartmentVO> getDepartmentById(Long id);
 
 	List<DepartmentVO> getDepartmentByOrgId(Long orgId);
+	
+	void uploadDepartment(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
 
 	// Designation
 	Map<String, Object> createUpdateDesignation(DesignationDTO designationDTO) throws ApplicationException;
@@ -158,6 +175,9 @@ public interface CommonMasterService {
 	Optional<DesignationVO> getDesignationById(Long id);
 
 	List<DesignationVO> getDesignationByOrgId(Long orgId);
+	
+	void uploadDesignation(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
 	
 	//Roles
 	
@@ -169,9 +189,12 @@ public interface CommonMasterService {
 	
 	List<RolesVO> getRolesByOrgId(Long orgId);
 
-	void uploadDepartment(MultipartFile file, Long orgId, String createdBy) throws Exception;
 
-	void uploadDesignation(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
+
+
+
+
 	
 	
 

@@ -134,6 +134,31 @@ public class CommonMasterController extends BaseController {
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	@PostMapping("/uploadCountry")
+	public ResponseEntity<ResponseDTO> uploadCountry(@RequestParam("files") MultipartFile file,
+			@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+		String methodName = "uploadCountry()";
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+
+		try {
+			// Call service method to process Excel upload
+			commonMasterService.uploadCountry(file, orgId, createdBy);
+
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Country data uploaded successfully");
+			responseDTO = createServiceResponse(responseObjectsMap);
+
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
+	}
 
 	// State
 
@@ -238,6 +263,33 @@ public class CommonMasterController extends BaseController {
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	
+	@PostMapping("/uploadState")
+	public ResponseEntity<ResponseDTO> uploadState(@RequestParam("files") MultipartFile file,
+			@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+		String methodName = "uploadCountry()";
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+
+		try {
+			// Call service method to process Excel upload
+			commonMasterService.uploadState(file, orgId, createdBy);
+
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "State data uploaded successfully");
+			responseDTO = createServiceResponse(responseObjectsMap);
+
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
+	}
+	
 	// city
 
 	@GetMapping("/city")
@@ -340,6 +392,33 @@ public class CommonMasterController extends BaseController {
 		return ResponseEntity.ok().body(responseDTO);
 	}
 
+	
+	@PostMapping("/uploadCity")
+	public ResponseEntity<ResponseDTO> uploadCity(@RequestParam("files") MultipartFile file,
+			@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+		String methodName = "uploadCity()";
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+
+		try {
+			// Call service method to process Excel upload
+			commonMasterService.uploadCity(file, orgId, createdBy);
+
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "City data uploaded successfully");
+			responseDTO = createServiceResponse(responseObjectsMap);
+
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
+	}
+	
+	
 	// Region
 
 	@GetMapping("/getAllRegion")
@@ -438,6 +517,31 @@ public class CommonMasterController extends BaseController {
 		}
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	@PostMapping("/uploadRegion")
+	public ResponseEntity<ResponseDTO> uploadRegion(@RequestParam("files") MultipartFile file,
+			@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+		String methodName = "uploadRegion()";
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+
+		try {
+			// Call service method to process Excel upload
+			commonMasterService.uploadRegion(file, orgId, createdBy);
+
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Region data uploaded successfully");
+			responseDTO = createServiceResponse(responseObjectsMap);
+
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
 	}
 
 	// Currency
@@ -543,6 +647,32 @@ public class CommonMasterController extends BaseController {
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	@PostMapping("/uploadCurrency")
+	public ResponseEntity<ResponseDTO> uploadCurrency(@RequestParam("files") MultipartFile file,
+			@RequestParam("orgId") Long orgId, @RequestParam("createdBy") String createdBy) {
+		String methodName = "uploadCurrency()";
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+
+		try {
+			// Call service method to process Excel upload
+			commonMasterService.uploadCurrency(file, orgId, createdBy);
+
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Currency data uploaded successfully");
+			responseDTO = createServiceResponse(responseObjectsMap);
+
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
+	}
+
 
 	// Company
 

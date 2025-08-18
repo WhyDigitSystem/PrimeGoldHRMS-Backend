@@ -37,7 +37,7 @@ public class CityVO {
 	@Column(name = "state")
 	private String state;
 	@Column(name = "active")
-	private boolean active;
+	private boolean active = true;
 	@Column(name = "createdby")
 	private String createdBy;
 	@Column(name = "modifiedby")

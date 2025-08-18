@@ -33,7 +33,7 @@ public class CountryVO {
 	@Column(name = "countrycode")
 	private String countryCode;
 	@Column(name = "active")
-	private boolean active;
+	private boolean active= true;
 	@Column(name = "orgid")
 	private Long orgId;
 //	@Column(name = "userid")

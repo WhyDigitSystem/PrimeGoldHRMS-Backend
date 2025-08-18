@@ -31,7 +31,7 @@ public class RegionVO {
 	@Column(name = "region")
 	private String regionName;
 	@Column(name = "active")
-	private boolean active;
+	private boolean active = true;
 	@Column(name = "createdby")
 	private String createdBy;
 	@Column(name = "modifiedby")

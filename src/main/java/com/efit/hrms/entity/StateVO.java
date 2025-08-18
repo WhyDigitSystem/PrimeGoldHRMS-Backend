@@ -40,7 +40,7 @@ public class StateVO {
 	@Column(name="statenumber")
 	 private String stateNumber;
 	@Column(name="active")
-    private boolean active;
+    private boolean active =true;
 //	@Column(name="userid")
 //    private String userId;
     @Column(name="createdby")
