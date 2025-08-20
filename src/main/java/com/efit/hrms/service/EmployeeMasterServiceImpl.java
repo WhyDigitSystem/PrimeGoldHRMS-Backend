@@ -487,6 +487,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setGrossPay(salaryProcessDTO.getGrossPay());
 				salaryProcessVO.setNetPay(salaryProcessDTO.getNetPay());
 				salaryProcessVO.setPayOnHand(salaryProcessDTO.getPayOnHand());
+				salaryProcessVO.setOtHours(salaryProcessDTO.getOtHours());
+				salaryProcessVO.setOtAmount(salaryProcessDTO.getOtAmount());
 				salaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
 				salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());

@@ -55,6 +55,10 @@ public class SalaryProcessVO {
 	private BigDecimal grossPay;
 	@Column(name = "netpay")
 	private BigDecimal netPay;
+	@Column(name = "othours")
+	private BigDecimal otHours;
+	@Column(name = "otamount")
+	private BigDecimal otAmount;
 	@Column(name = "payonhand")
 	private BigDecimal payOnHand;
 	@Column(name = "approvedstatus")
