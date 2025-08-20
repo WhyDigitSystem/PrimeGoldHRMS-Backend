@@ -2187,21 +2187,18 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long Month, String year) {
-		Set<Object[]> raw = salaryProcessRepo.getpayslipPayOnHandAmount(orgId, employeeCode, Month, year);
-		return getpaysliphandsondetails(raw);
+	public List<Map<String, Object>> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long month, String year) {
+	    Set<BigDecimal> raw = salaryProcessRepo.getpayslipPayOnHandAmount(orgId, employeeCode, month, year);
+	    List<Map<String, Object>> result = new ArrayList<>();
+
+	    for (BigDecimal payOnHand : raw) {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("payOnHand", payOnHand != null ? payOnHand : BigDecimal.ZERO);
+	        result.add(map);
+	    }
+	    return result;
 	}
 
-	private List<Map<String, Object>> getpayslipPayOnHandAmount(Set<Object[]> raw) {
-		List<Map<String, Object>> List1 = new ArrayList<>();
-		for (Object[] ch : raw) {
-			Map<String, Object> map = new HashMap<>();
-			map.put("payOnHand", ch[0] != null ? ch[0].toString() : ""); // Empty string if null
-
-			List1.add(map);
-		}
-		return List1;
-	}
 
 	
 	@Override
