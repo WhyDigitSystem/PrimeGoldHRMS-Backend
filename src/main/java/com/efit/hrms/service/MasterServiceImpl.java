@@ -404,13 +404,20 @@ public class MasterServiceImpl implements MasterService {
 		if (employeeDTO.getId() != null) {
 			employeeLeaveRepo.deleteAll(existingLeaves);
 
-			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
-					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
-			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
+//			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
+//					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
 		}
 
 		List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
 		List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+		
+		  List<LeaveBalanceVO> existingBalances =
+		            leaveBalanceRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+
+		    Set<String> existingBalanceCodes = existingBalances.stream()
+		            .map(LeaveBalanceVO::getLeaveCode)
+		            .collect(Collectors.toSet());
 
 		// 5. Process validated leave records
 		for (EmployeeLeaveDTO employeeLeaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
@@ -426,20 +433,25 @@ public class MasterServiceImpl implements MasterService {
 			employeeLeaveVOs.add(employeeLeaveVO);
 
 			// Create LeaveBalanceVO object
-			LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
-			leaveBalanceVO.setLeaveCode(leaveCode);
-			leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
-			leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
-			leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
-			leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-			leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
-			leaveBalanceVO.setBranch(employeeDTO.getBranch());
-			leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
-			leaveBalanceVO.setLeaveStatus("Assigned");
-			leaveBalanceVOs.add(leaveBalanceVO);
+			  if (employeeDTO.getId() == null || !existingBalanceCodes.contains(leaveCode)) {
+
+		        	LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
+		        leaveBalanceVO.setLeaveCode(leaveCode);
+		        leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
+		        leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
+		        leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
+		        leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+		        leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
+		        leaveBalanceVO.setBranch(employeeDTO.getBranch());
+		        leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
+		        leaveBalanceVO.setLeaveStatus("Assigned");
+		        leaveBalanceVOs.add(leaveBalanceVO);
+		        
+		        } 
 		}
 
 		// 6. Save new leave records
+	    employeeLeaveRepo.saveAll(employeeLeaveVOs);
 		leaveBalanceRepo.saveAll(leaveBalanceVOs);
 		employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
 
