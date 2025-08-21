@@ -371,7 +371,32 @@ public class CheckInOutController extends BaseController{
 				LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 				return ResponseEntity.ok().body(responseDTO);
 			}
-			
+		
+		 
+		 @GetMapping("/getEmployeeNameForApprovalOtProcess")
+			public ResponseEntity<ResponseDTO> getEmployeeNameForApprovalOtProcess(@RequestParam Long orgId,@RequestParam String department,@RequestParam String branch,@RequestParam String type,@RequestParam(required=false) String contractor) {
+
+				String methodName = "getEmployeeNameForApprovalOtProcess()";
+				LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+				Map<String, Object> responseObjectsMap = new HashMap<>();
+				ResponseDTO responseDTO;
+				List<Map<String, Object>> leaveDetailsList;
+
+				try {
+					leaveDetailsList = checkInOutService.getEmployeeNameForApprovalOtProcess( orgId,department,branch,type,contractor);
+					responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Employee Details details retrieved successfully");
+					responseObjectsMap.put("attendanceProcessVO", leaveDetailsList); // ✅ Correct key name
+					responseDTO = createServiceResponse(responseObjectsMap);
+				} catch (Exception e) {
+					String errorMsg = e.getMessage();
+					LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+					responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve Employee Details details", errorMsg);
+				}
+
+				LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+				return ResponseEntity.ok().body(responseDTO);
+			}
 		 
 		 
 

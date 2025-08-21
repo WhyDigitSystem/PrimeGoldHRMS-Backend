@@ -572,7 +572,7 @@ public class EmployeeMasterController extends BaseController{
 
 	@GetMapping("/getLeaveDetailsforSalaryProcess")
 	public ResponseEntity<ResponseDTO> getLeaveDetailsforSalaryProcess(@RequestParam Long orgId,
-			@RequestParam Long month, @RequestParam String year,@RequestParam String department,@RequestParam String branch) {
+			@RequestParam Long month, @RequestParam String year,@RequestParam String department,@RequestParam String branch,@RequestParam String type,@RequestParam(required=false)  String contractor) {
 
 		String methodName = "getLeaveDetailsforSalaryProcess()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -582,7 +582,7 @@ public class EmployeeMasterController extends BaseController{
 		List<Map<String, Object>> salaryProcessVO;
 
 		try {
-			salaryProcessVO = employeeMasterService.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch);
+			salaryProcessVO = employeeMasterService.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch,type,contractor);
 			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "salaryProcess details retrieved successfully");
 			responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
 			responseDTO = createServiceResponse(responseObjectsMap);

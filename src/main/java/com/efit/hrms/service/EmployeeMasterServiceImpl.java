@@ -591,8 +591,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year,String department,String branch) {
-		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch);
+	public List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year,String department,String branch, String type, String contractor) {
+		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch, type,  contractor);
 		return getLeaveDetailsforSalaryProcess(result);
 	}
 

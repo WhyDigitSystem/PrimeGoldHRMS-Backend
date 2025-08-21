@@ -1838,6 +1838,26 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		response.put("message", message);
 		return response;
 	}
+	
+	
+	@Override
+	public List<Map<String, Object>> getEmployeeNameForApprovalOtProcess(Long orgId, String branch,
+	        String department, String type, String contractor) {
+	    List<Object[]> rawList = otMasterRepo.getEmployeeNameForApprovalOtProcess(orgId, branch,
+	            department, type, contractor);   // change to Object[]
+	    return mapLeaveDetails(rawList);
+	}
 
+	private List<Map<String, Object>> mapLeaveDetails(List<Object[]> result) {
+	    List<Map<String, Object>> detailsList = new ArrayList<>();
+
+	    for (Object[] record : result) {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("employeeName", record[0] != null ? record[0].toString() : "");
+	        map.put("employeeCode", record[1] != null ? record[1].toString() : "");
+	        detailsList.add(map);
+	    }
+	    return detailsList;
+	}
 
 }

@@ -2074,7 +2074,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 			map.put("effectiveworkingdays", ch[11] != null ? ch[11].toString() : ""); // Effective Working Days
 			map.put("monthDays", ch[12] != null ? ch[12].toString() : ""); 
 			map.put("bankName", ch[13] != null ? ch[13].toString() : ""); // Bank Name
-			map.put("lop", ch[14] != null ? ch[14].toString() : ""); // Bank Name
+			map.put("lop", ch[14] != null ? ch[14].toString() : ""); 
+			map.put("otHours", ch[15] != null ? ch[15].toString() : ""); 
+
 
 
 			// Add the map to the result list
