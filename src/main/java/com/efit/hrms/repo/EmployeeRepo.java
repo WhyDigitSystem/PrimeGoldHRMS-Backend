@@ -1,5 +1,6 @@
 package com.efit.hrms.repo;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.efit.hrms.entity.CurrencyVO;
 import com.efit.hrms.entity.EmployeeVO;
+import com.efit.hrms.entity.ShiftAssignDetailsVO;
 
 public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
@@ -166,6 +168,9 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 
 	EmployeeVO findByEmployeeCodeAndOrgId(String empCode, Long orgId);
+    List<EmployeeVO> findByEmployeeCodeInAndOrgId(Set<String> employeeCodes, Long orgId);
+
+
 
 //	EmployeeVO findByEmployeeVO(String empCode);
 

@@ -54,6 +54,8 @@ public class AttendanceDailyVO {
 	private long grossHours;
 	@Column(name = "effectivehours")
 	private long effectiveHours;
+	@Column(name = "createdby")
+	private String createdBy;  
 	
 	@Column(name = "attendancemode")
 	private String attendanceMode;

@@ -52,6 +52,9 @@ public class AttendanceProcessVO {
 	private long orgId;
 	@Column(name = "sourceid")
 	private Long sourceId;
+	
+	@Column(name = "createdby")
+	private String createdBy;  
 
 	@Column(name = "attendancemode")
 	private String attendanceMode;

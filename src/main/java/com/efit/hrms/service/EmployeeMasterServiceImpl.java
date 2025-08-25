@@ -640,22 +640,36 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	@Override
 	public List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
 			Long empSalaryDays,BigDecimal sumOfDetection,BigDecimal otAmount) {
-		Set<Object[]> result = salaryProcessRepo.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays, grossPay,
+		
+		Set<Object[]> result;
+		
+	    if (empSalaryDays != null && empSalaryDays > 0) {
+		 result = salaryProcessRepo.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays, grossPay,
 				empSalaryDays,sumOfDetection, otAmount);
+		}else {
+			 result = new HashSet<>();
+		}
 		return getPayOnHandsForSalaryProcess(result);
 	}
 
 	private List<Map<String, Object>> getPayOnHandsForSalaryProcess(Set<Object[]> result) {
-		List<Map<String, Object>> detailsList = new ArrayList<>();
-
-		for (Object[] record : result) {
-			Map<String, Object> map = new HashMap<>();
-			map.put("payOnHand", record[0] != null ? record[0].toString() : "");
+	    List<Map<String, Object>> detailsList = new ArrayList<>();
 
 
-			detailsList.add(map);
-		}
-		return detailsList;
+	    if (result.isEmpty()) {
+	        // no records from DB → return default payOnHand = "0"
+	        Map<String, Object> defaultMap = new HashMap<>();
+	        defaultMap.put("payOnHand", "0");
+	        detailsList.add(defaultMap);
+	        return detailsList;
+	    }
+	    
+	    for (Object[] record : result) {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("payOnHand", record[0] != null ? record[0].toString() : "0"); // default 0
+	        detailsList.add(map);
+	    }
+	    return detailsList;
 	}
 	
 
