@@ -1787,6 +1787,12 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	                LocalDateTime inDT = LocalDateTime.of(firstIn.getCheckInDate(), firstIn.getEntryTime());
 	                LocalDateTime outDT = LocalDateTime.of(lastOut.getCheckInDate(), lastOut.getEntryTime());
+
+	                // 🔥 Fix: handle night shift (out next day)
+	                if (outDT.isBefore(inDT)) {
+	                    outDT = outDT.plusDays(1);
+	                }
+
 	                long grossSeconds = Duration.between(inDT, outDT).getSeconds();
 
 	                AttendanceDailyVO ad = new AttendanceDailyVO();
@@ -1805,6 +1811,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	                ad.setGrossHours((int) (grossSeconds / 3600));
 	                ad.setCreatedBy(createdBy);
 	                dailyListQueue.add(ad);
+
 	            }));
 	        }
 
