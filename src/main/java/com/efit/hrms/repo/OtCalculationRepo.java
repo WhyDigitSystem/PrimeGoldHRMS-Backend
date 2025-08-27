@@ -357,7 +357,8 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 			+ "  )\r\n"
 			+ "  AND a.checkindate BETWEEN ?1 AND ?2\r\n"
 			+ "  AND e.active = 1\r\n"
-			+ "  AND a.status = 'PENDING';\r\n"
+			+ "  AND a.status = 'PENDING' ORDER BY  a.empcode ASC\r\n"
+			+ " \r\n"
 			+ "")
 	List<OtCalculationVO> getPendingOTHoursByOrgId(String fromDate, String toDate, Long orgId, String employeeCode,
 			String branch, String department, String type, String contractor);
