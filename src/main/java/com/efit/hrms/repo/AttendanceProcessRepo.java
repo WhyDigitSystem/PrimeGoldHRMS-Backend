@@ -17,10 +17,6 @@ import com.efit.hrms.entity.AttendanceProcessVO;
 @Repository
 public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO, Long>{
 
-
-	
-	
-	
 	
 //	@Query(nativeQuery = true, value = 
 //		    "WITH RECURSIVE date_series AS (\r\n"
@@ -281,10 +277,13 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "        a.empcode,\r\n"
 		    + "        a.checkindate,\r\n"
 		    + "        SUM(a.effectivehours) AS total_effectivehours,\r\n"
-		    + "        CASE\r\n"
-		    + "            WHEN SUM(a.effectivehours) >= (sh.shifthours / 2) THEN 1\r\n"
-		    + "            WHEN SUM(a.effectivehours) >= (sh.shifthours / 4) THEN 0.5\r\n"
-		    + "            ELSE 0\r\n"
+		    + "        CASE"
+		    + " WHEN SUM(a.effectivehours) >= (sh.shifthours / 2) THEN 1\r\n"
+		    + "    WHEN SUM(a.effectivehours) >= (sh.shifthours / 4) THEN 0.5\r\n"
+		    + "    ELSE 0\r\n"
+//		    + "            WHEN SUM(a.effectivehours) >= sh.shifthours THEN 1\r\n"
+//		    + "            WHEN SUM(a.effectivehours) >= sh.shifthours / 2 THEN 0.5\r\n"
+//		    + "            ELSE 0\r\n"
 		    + "        END AS present_value\r\n"
 		    + "    FROM attendancedaily a\r\n"
 		    + "    JOIN shiftassigndetails sd\r\n"
@@ -336,11 +335,13 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "      UNION ALL\r\n"
 		    + "      SELECT empcode AS employeecode, 0.5 AS abs_value FROM att_data WHERE present_value = 0.5\r\n"
 		    + "      UNION ALL\r\n"
+		    + "      -- only count missing days depending on shift type\r\n"
 		    + "      SELECT nm.employeecode, 1 AS abs_value\r\n"
 		    + "      FROM normal_missing_days nm\r\n"
 		    + "      JOIN shiftassigndetails s ON s.employeecode = nm.employeecode\r\n"
 		    + "      JOIN shiftmaster sm ON sm.shiftcode = s.shiftcode AND sm.nightshift = 0\r\n"
 		    + "      WHERE DATE(s.effectivefrom) <= nm.checkindate AND DATE(s.effectiveto) >= nm.checkindate\r\n"
+		    + "      \r\n"
 		    + "      UNION ALL\r\n"
 		    + "      SELECT n.employeecode, 1 AS abs_value\r\n"
 		    + "      FROM night_missing_days n\r\n"
@@ -365,6 +366,7 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "      JOIN shiftassigndetails s ON s.employeecode = nm.employeecode\r\n"
 		    + "      JOIN shiftmaster sm ON sm.shiftcode = s.shiftcode AND sm.nightshift = 0\r\n"
 		    + "      WHERE DATE(s.effectivefrom) <= nm.checkindate AND DATE(s.effectiveto) >= nm.checkindate\r\n"
+		    + "\r\n"
 		    + "      UNION ALL\r\n"
 		    + "      SELECT n.employeecode, 1 FROM night_missing_days n\r\n"
 		    + "  ) all_lop\r\n"
@@ -425,15 +427,13 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "      AND ats.empcode = eb.employeecode\r\n"
 		    + "      AND ats.branchcode = eb.branchcode\r\n"
 		    + ")\r\n"
-		    + "ORDER BY eb.employeecode;\r\n"
-		    + "\r\n"
-		    + "\r\n"
+		    + "ORDER BY eb.employeecode \r\n"
 		    + ""
 		)
 	Set<Object[]> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId, String department,
 			String branch, String type,String contractor);
-
 	
+
 	
 	
 	@Query(nativeQuery = true, value = 
