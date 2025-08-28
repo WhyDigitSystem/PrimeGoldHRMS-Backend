@@ -549,6 +549,28 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 	public Optional<GroupVO> getPreGroupById(Long id) {
 		return groupRepo.findById(id);
 	}
+	
+	@Override
+	public List<Map<String, Object>> getEmployeeNameForGroupMaster(Long orgId, String branch, String department,
+			String type, String contractor) {
+		List<Object[]> rawList = groupRepo.getEmployeeNameForGroupMaster(orgId, branch, department, type,
+				contractor); // change to Object[]
+		return mapLeaveDetails(rawList);
+	}
+
+	private List<Map<String, Object>> mapLeaveDetails(List<Object[]> result) {
+		List<Map<String, Object>> detailsList = new ArrayList<>();
+
+		for (Object[] record : result) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("employeeName", record[0] != null ? record[0].toString() : "");
+			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
+			map.put("department", record[1] != null ? record[1].toString() : "");
+
+			detailsList.add(map);
+		}
+		return detailsList;
+	}
 
 	// GroupsalaryStructure
 	@Transactional

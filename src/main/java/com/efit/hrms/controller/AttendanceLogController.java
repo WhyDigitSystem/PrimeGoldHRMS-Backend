@@ -54,5 +54,23 @@ public class AttendanceLogController extends BaseController {
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	@GetMapping("/api/WebAPI/GetAttendanceInOutProcessedET")
+	public List<AttendanceLogVO> getAttendance1(@RequestParam String StartDate,@RequestParam String EndDate) {
+		String methodName = "getAttendance1()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<AttendanceLogVO> attendanceLogVO = new ArrayList<>();
+		try {
+			attendanceLogVO = attendanceLogService.getAllAttendanceLogDetails1(StartDate, EndDate);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		
+		return attendanceLogVO;
+	}
 
 }

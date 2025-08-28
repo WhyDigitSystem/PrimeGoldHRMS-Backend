@@ -63,6 +63,9 @@ public interface ShiftMasterService {
 
 	Optional<GroupVO> getPreGroupById(Long id);
 	
+	List<Map<String, Object>> getEmployeeNameForGroupMaster(Long orgId, String department, String branch, String type,
+			String contractor);
+	
 	//GroupSalaryStructure
 
 	Map<String, Object> createUpdateGroupSalaryStructure(GroupSalaryStructureDTO groupSalaryStructureDTO) throws ApplicationException;
@@ -82,5 +85,7 @@ public interface ShiftMasterService {
 
 	List<Map<String, Object>> getAllEmployeeAndShiftMasterDetails(Long orgId, String type, String contractor,
 			String department, String shift, String shiftCode, String branchCode, LocalDate effectiveFrom);
+
+	
 
 }

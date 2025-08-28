@@ -53,6 +53,13 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 		return null;
 		
 	}
+
+
+
+	@Override
+	public List<AttendanceLogVO> getAllAttendanceLogDetails1(String startDate, String endDate) {
+		return attendanceLogRepo.findAll();
+	}
 	
 	
 	

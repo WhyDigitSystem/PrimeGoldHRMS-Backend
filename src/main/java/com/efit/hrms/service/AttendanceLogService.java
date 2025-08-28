@@ -13,6 +13,8 @@ public interface AttendanceLogService {
 
 	List<AttendanceLogVO> getAllAttendanceLogDetails(String startDate, String endDate);
 
+	List<AttendanceLogVO> getAllAttendanceLogDetails1(String startDate, String endDate);
+
 	
 	
 
