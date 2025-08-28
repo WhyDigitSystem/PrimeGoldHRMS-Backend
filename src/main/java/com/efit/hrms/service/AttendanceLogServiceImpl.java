@@ -15,7 +15,7 @@ import com.efit.hrms.repo.AttendanceLogRepo;
 @Service
 public class AttendanceLogServiceImpl implements AttendanceLogService {
 	
-	public static final Logger LOGGER = LoggerFactory.getLogger(EmployeeMasterServiceImpl.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(AttendanceLogServiceImpl.class);
 	
 	@Autowired
 	AttendanceLogRepo attendanceLogRepo;
