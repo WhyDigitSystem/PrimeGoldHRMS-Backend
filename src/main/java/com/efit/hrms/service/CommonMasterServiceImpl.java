@@ -1,5 +1,7 @@
 package com.efit.hrms.service;
 
+import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,12 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -238,6 +246,10 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		companyVO.setLatitude(companyDTO.getLatitude());
 		companyVO.setLongitude(companyDTO.getLongitude());
 		companyVO.setHybrid(companyDTO.isHybrid());
+		companyVO.setOtFlag(companyDTO.getOtFlag());
+		companyVO.setOtType(companyDTO.getOtType());
+		companyVO.setOtPolicy(companyDTO.getOtPolicy());
+
 		companyVO.setLocationAddress(companyDTO.getLocationAddress());
 		if (companyDTO.getAttendanceMode() != null && !companyDTO.getAttendanceMode().isEmpty()) {
 		    String modeString = String.join(",", companyDTO.getAttendanceMode());
@@ -313,7 +325,10 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		companyVO.setLatitude(companyDTO.getLatitude());
 		companyVO.setLongitude(companyDTO.getLongitude());
 		companyVO.setHybrid(companyDTO.isHybrid());
+		companyVO.setOtFlag(companyDTO.getOtFlag());
+		companyVO.setOtType(companyDTO.getOtType());
 		companyVO.setLocationAddress(companyDTO.getLocationAddress());
+		companyVO.setOtPolicy(companyDTO.getOtPolicy());
 		 if (companyDTO.getAttendanceMode() != null && !companyDTO.getAttendanceMode().isEmpty()) {
 		        String modeString = String.join(",", companyDTO.getAttendanceMode());
 		        companyVO.setAttendanceMode(modeString);
@@ -535,6 +550,47 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 
 		countryRepo.deleteById(countryid);
 	}
+	
+	
+	@Override
+	public void uploadCountry(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<CountryVO> countryVO = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String countryCode = getCellValueAsString(row.getCell(0)); // Column 0: Countrycode
+	            String countryName = getCellValueAsString(row.getCell(1)); // Column 1: Countryname
+
+	            if (countryCode == null || countryName == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            CountryVO country = new CountryVO();
+	            country.setCountryCode(countryCode.trim().toUpperCase());
+	            country.setCountryName(countryName.trim().toUpperCase());
+	            country.setOrgId(orgId);
+	            country.setCreatedBy(createdBy);
+
+	            countryVO.add(country);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        countryRepo.saveAll(countryVO);
+	    }
+	}
 
 	// State
 
@@ -651,6 +707,51 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 	public void deleteState(Long countryid) {
 		stateRepo.deleteById(countryid);
 	}
+	
+	@Override
+	public void uploadState(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<StateVO> stateVO = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String stateCode = getCellValueAsString(row.getCell(0)); // Column 0: statecode
+	            String stateName = getCellValueAsString(row.getCell(1)); // Column 1: statename
+	            String stateNumber = getCellValueAsString(row.getCell(2)); 
+	            String country = getCellValueAsString(row.getCell(3)); 
+
+	            if (stateCode == null || stateName == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            StateVO state = new StateVO();
+	            state.setStateCode(stateCode.trim().toUpperCase());
+	            state.setStateName(stateName.trim().toUpperCase());
+	            state.setStateNumber(stateNumber.trim().toUpperCase());
+	            state.setCountry(country.trim().toUpperCase());
+
+	            state.setOrgId(orgId);
+	            state.setCreatedBy(createdBy);
+
+	            stateVO.add(state);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        stateRepo.saveAll(stateVO);
+	    }
+	}
 
 	// City
 
@@ -735,6 +836,52 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		cityVO.setActive(cityDTO.isActive());
 		cityVO.setOrgId(cityDTO.getOrgId());
 		cityVO.setCancel(cityDTO.isCancel());
+	}
+	
+	
+	@Override
+	public void uploadCity(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<CityVO> cityVO = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String cityCode = getCellValueAsString(row.getCell(0)); // Column 0: statecode
+	            String cityName = getCellValueAsString(row.getCell(1)); // Column 1: statename
+	            String state = getCellValueAsString(row.getCell(2)); 
+	            String country = getCellValueAsString(row.getCell(3)); 
+
+	            if (cityName == null || cityCode == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            CityVO city = new CityVO();
+	            city.setCityCode(cityCode.trim().toUpperCase());
+	            city.setCityName(cityName.trim().toUpperCase());
+	            city.setState(state.trim().toUpperCase());
+	            city.setCountry(country.trim().toUpperCase());
+
+	            city.setOrgId(orgId);
+	            city.setCreatedBy(createdBy);
+
+	            cityVO.add(city);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        cityRepo.saveAll(cityVO);
+	    }
 	}
 
 	@Override
@@ -828,6 +975,50 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 	@Override
 	public void deleteRegion(Long regionid) {
 		regionRepo.deleteById(regionid);
+	}
+	
+	
+	
+	@Override
+	public void uploadRegion(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<RegionVO> regionVO = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String regionCode = getCellValueAsString(row.getCell(0)); // Column 0: statecode
+	            String regionName = getCellValueAsString(row.getCell(1)); // Column 1: statename
+
+	            if (regionName == null || regionCode == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            RegionVO region = new RegionVO();
+	            region.setRegionCode(regionCode.trim().toUpperCase());
+	            region.setRegionName(regionName.trim().toUpperCase());
+	    
+
+	            region.setOrgId(orgId);
+	            region.setCreatedBy(createdBy);
+
+	            regionVO.add(region);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        regionRepo.saveAll(regionVO);
+	    }
 	}
 
 	// Currency
@@ -943,6 +1134,55 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		currencyRepo.deleteById(currencyid);
 
 	}
+	
+	@Override
+	public void uploadCurrency(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<CurrencyVO> currencyVO = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String currencyname = getCellValueAsString(row.getCell(0)); // Column 0: statecode
+	            String subCurrency = getCellValueAsString(row.getCell(1)); // Column 1: statename
+	            String currencyDescription = getCellValueAsString(row.getCell(2)); 
+	            String country = getCellValueAsString(row.getCell(3)); 
+
+	            if (currencyname == null || subCurrency == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            
+	            CurrencyVO currency = new CurrencyVO();
+	            currency.setCurrency(currencyname.trim().toUpperCase());
+	            currency.setSubCurrency(subCurrency.trim().toUpperCase());
+	            currency.setCurrencyDescription(currencyDescription.trim().toUpperCase());
+	            currency.setCountry(country.trim().toUpperCase());
+	            currency.setOrgId(orgId);
+	            currency.setCreatedBy(createdBy);
+
+	            // add object to list
+	            currencyVO.add(currency);
+
+	        }
+
+	        workbook.close();
+
+	        
+	        // Save to DB
+	        currencyRepo.saveAll(currencyVO);
+	    }
+	}
+
 
 	@Override
 	public Map<String, Object> createUpdateScreenNames(ScreenNamesDTO screenNamesDTO) throws ApplicationException {
@@ -1235,6 +1475,112 @@ public class CommonMasterServiceImpl implements CommonMasterService {
 		departmentVO.setOrgId(departmentDTO.getOrgId());
 
 	}
+	
+	@Override
+	public void uploadDepartment(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<DepartmentVO> departmentList = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String deptCode = getCellValueAsString(row.getCell(0)); // Column 0: departmentcode
+	            String deptName = getCellValueAsString(row.getCell(1)); // Column 1: departmentname
+
+	            if (deptCode == null || deptName == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            DepartmentVO dept = new DepartmentVO();
+	            dept.setDepartmentCode(deptCode.trim().toUpperCase());
+	            dept.setDepartmentName(deptName.trim().toUpperCase());
+	            dept.setOrgId(orgId);
+	            dept.setCreatedBy(createdBy);
+
+	            departmentList.add(dept);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        departmentRepo.saveAll(departmentList);
+	    }
+	}
+
+	private String getCellValueAsString(Cell cell) {
+	    if (cell == null) return null;
+	    switch (cell.getCellType()) {
+	        case STRING:
+	            return cell.getStringCellValue();
+	        case NUMERIC:
+	            if (DateUtil.isCellDateFormatted(cell)) {
+	                return cell.getDateCellValue().toString();
+	            } else {
+	                return String.valueOf((long) cell.getNumericCellValue());
+	            }
+	        case BOOLEAN:
+	            return String.valueOf(cell.getBooleanCellValue());
+	        case FORMULA:
+	            return cell.getCellFormula();
+	        default:
+	            return null;
+	    }
+	}
+
+	//designation
+	
+	@Override
+	public void uploadDesignation(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("File is empty");
+	    }
+
+	    try (InputStream inputStream = file.getInputStream()) {
+	        Workbook workbook = new XSSFWorkbook(inputStream);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        List<DesignationVO> designationList = new ArrayList<>();
+
+	        // Skip header (start from row 1)
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String designationCode = getCellValueAsString(row.getCell(0)); // Column 0: departmentcode
+	            String designationName = getCellValueAsString(row.getCell(1)); // Column 1: departmentname
+
+	            if (designationCode == null || designationName == null) {
+	                continue; // Skip invalid rows
+	            }
+
+	            DesignationVO dept = new DesignationVO();
+	            dept.setDesignationCode(designationCode.trim().toUpperCase());
+	            dept.setDesignationName(designationName.trim().toUpperCase());
+	            dept.setOrgId(orgId);
+	            dept.setCreatedBy(createdBy);
+
+	            designationList.add(dept);
+	        }
+
+	        workbook.close();
+
+	        // Save to DB
+	        designationRepo.saveAll(designationList);
+	    }
+	}
+
+	
+	
+
 
 	@Override
 	public Map<String, Object> createUpdateDesignation(DesignationDTO designationDTO) throws ApplicationException {

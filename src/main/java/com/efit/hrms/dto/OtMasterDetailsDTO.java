@@ -11,10 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OtMasterDetailsDTO {
 
-	private int slab;
+	private String slab;
 	private int minHours;
 	private int maxHours;
-	private int otrate;
+	private String otrate;
 	private LocalDate effectiveFrom;
 	private LocalDate effectiveTo;
 	private boolean applicable;

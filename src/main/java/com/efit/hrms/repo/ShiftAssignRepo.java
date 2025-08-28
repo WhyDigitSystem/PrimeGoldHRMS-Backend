@@ -56,11 +56,15 @@ public interface ShiftAssignRepo extends JpaRepository<ShiftAssignVO, Long>{
 	        + ") sa ON sa.employeecode = e.employeecode AND sa.shiftcode = s.shiftcode \r\n"
 	        + "WHERE \r\n"
 	        + "    e.orgid = ?1 \r\n"
-	        + "    AND (e.type = ?2 OR (e.type = ?3 AND (?3 IS NOT NULL AND e.contractor = ?3))) \r\n"
-	        + "    AND (e.department = ?4 OR ?4 = 'All') \r\n"
+		    + "  AND (?4 = 'ALL' OR e.department = ?4)\r\n"
+		    + "  AND (?7 = 'ALL' OR e.branchcode = ?7)\r\n"
+		    + "  AND (\r\n"
+		    + "        ?2 = 'ALL'\r\n"
+		    + "        OR (?2 = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
+		    + "        OR (?3 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND (?3 IS NULL OR e.contractor = ?3))\r\n"
+		    + "      )\r\n"
 	        + "    AND s.shift = ?5 \r\n"
 	        + "    AND s.shiftcode = ?6 \r\n"
-	        + "    AND s.branchcode = ?7 \r\n"
 	        + "    AND e.active = true \r\n"
 	        + "    AND (sa.latest_effective IS NULL OR sa.latest_effective < ?8)", nativeQuery = true)
 	Set<Object[]> getAllEmployeeAndShiftMasterDetails(

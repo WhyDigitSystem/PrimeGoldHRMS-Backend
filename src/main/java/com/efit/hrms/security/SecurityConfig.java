@@ -41,7 +41,7 @@ public class SecurityConfig {
 						"/api/documentType/**", "/api/taxInvoice/**", "/api/arapAdjustments/**","/api/goalsController/**",
 						"/api/costdebitnote/**", "/api/costInvoice/**","/api/irnCreditNote/**","/api/basicmaster/**","/api/employeemaster/**","/api/sequenceConfig/**","/api/leaveprocess/**","/api/employeedocuments/**","/api/timesheet/**","/api/ticketcontroller/**","/api/managetax/**",
 						"/api/shiftmaster/**","/api/advance/**",
-						"/api/shiftmaster/**","/api/checkinout/**")
+						"/api/shiftmaster/**","/api/checkinout/**","/api/roles/**","/getAttendance")
 
 
 				.permitAll().antMatchers("/api/**").hasAnyRole("USER", "GUEST_USER").anyRequest().authenticated();

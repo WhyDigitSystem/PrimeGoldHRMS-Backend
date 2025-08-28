@@ -1,15 +1,16 @@
 package com.efit.hrms.repo;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.efit.hrms.entity.CurrencyVO;
 import com.efit.hrms.entity.EmployeeVO;
+import com.efit.hrms.entity.ShiftAssignDetailsVO;
 
 public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
@@ -64,7 +65,10 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "e.contractor As contractor,\r\n"
 			+ "e.contactperson As contactPerson,\r\n"
 			+ "e.contactnumber As contactNumber,\r\n"
-			+ "e.email As contactEmail \r\n"
+			+ "e.email As contactEmail ,"
+			+ "e.otflag As otFlag,"
+			+ "e.bioid As bioId ,"
+			+ "e.payslipeffectivedate\r\n"
 			+ "FROM employee e\r\n"
 			+ "JOIN company c ON e.orgid = c.companyid\r\n"
 			+ "WHERE e.orgid = ?1 ORDER BY e.employee ASC \r\n"
@@ -153,14 +157,22 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	boolean existsByEmployeeCode(String employeeCode);
 
-	boolean existsByEmployeeName(String employeeName);
+//	boolean existsByEmployeeName(String employeeName);
 
-	boolean existsByEmail(String email);
+//	boolean existsByEmail(String email);
 
 
 	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND  (?3 = 'ALL' OR branch = ?3)", nativeQuery = true)
 	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branch);
 //
+
+
+	EmployeeVO findByEmployeeCodeAndOrgId(String empCode, Long orgId);
+    List<EmployeeVO> findByEmployeeCodeInAndOrgId(Set<String> employeeCodes, Long orgId);
+
+
+
+//	EmployeeVO findByEmployeeVO(String empCode);
 
 
 

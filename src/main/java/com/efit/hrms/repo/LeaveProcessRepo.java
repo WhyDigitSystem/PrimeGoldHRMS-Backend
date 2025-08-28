@@ -58,107 +58,47 @@ public interface LeaveProcessRepo extends JpaRepository<LeaveProcessVO, Long>{
 //	Set<Object[]> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId);
 
 	
-	@Query(nativeQuery = true, value = 
-		    "WITH RECURSIVE date_series AS ( \n" +
-		    "    SELECT DATE(?1) AS dt \n" +
-		    "    UNION ALL \n" +
-		    "    SELECT DATE_ADD(dt, INTERVAL 1 DAY) \n" +
-		    "    FROM date_series \n" +
-		    "    WHERE dt < DATE(?2) \n" +
-		    "), \n" +
-		    "month_count AS ( \n" +
-		    "    SELECT  \n" +
-		    "        MONTH(dt) AS month, \n" +
-		    "        YEAR(dt) AS year, \n" +
-		    "        COUNT(*) AS days_in_month \n" +
-		    "    FROM date_series \n" +
-		    "    GROUP BY MONTH(dt), YEAR(dt) \n" +
-		    "), \n" +
-		    "max_month_info AS ( \n" +
-		    "    SELECT  \n" +
-		    "        month, \n" +
-		    "        year, \n" +
-		    "        (SELECT COUNT(*) FROM date_series) AS totalcompanyworkingdays \n" +
-		    "    FROM month_count \n" +
-		    "    ORDER BY days_in_month DESC \n" +
-		    "    LIMIT 1 \n" +
-		    ") \n" +
-		    "SELECT  \n" +
-		    "    lb.employee AS employeename, \n" +
-		    "    lb.employeecode, \n" +
-		    "    e.branch, \n" +
-		    "    e.department, \n" +
-		    "    mm.totalcompanyworkingdays, \n" +
-		    "    mm.month, \n" +
-		    "    mm.year, \n" +
-		    "    COALESCE(b.totalleaves, 0) AS totalleaves, \n" +
-		    "    COALESCE(c.lopleaves, 0) AS lopleaves, \n" +
-		    "    (mm.totalcompanyworkingdays - COALESCE(c.lopleaves, 0)) AS empsalarydays, \n" +
-		    "    (mm.totalcompanyworkingdays - COALESCE(b.totalleaves, 0)) AS emptotalworkingdays \n" +
-		    "FROM leavebalance lb \n" +
-		    "JOIN employee e ON lb.employeecode = e.employeecode \n" +
-		    "CROSS JOIN max_month_info mm \n" +
-		    "LEFT JOIN ( \n" +
-		    "    SELECT  \n" +
-		    "        employeecode,  \n" +
-		    "        SUM(totalleave) AS totalleaves  \n" +
-		    "    FROM approvalleaves  \n" +
-		    "    WHERE leavedate BETWEEN DATE(?1) AND DATE(?2) \n" +
-		    "      AND orgid = ?3 \n" +
-		    "    GROUP BY employeecode \n" +
-		    ") b ON lb.employeecode = b.employeecode \n" +
-		    "LEFT JOIN ( \n" +
-		    "    SELECT  \n" +
-		    "        employeecode,  \n" +
-		    "        SUM(totalleave) AS lopleaves  \n" +
-		    "    FROM approvalleaves \n" +
-		    "    WHERE leavetype = 'LOSS OF PAY' \n" +
-		    "      AND leavedate BETWEEN DATE(?1) AND DATE(?2) \n" +
-		    "      AND orgid = ?3 \n" +
-		    "    GROUP BY employeecode \n" +
-		    ") c ON lb.employeecode = c.employeecode \n" +
-		    "WHERE lb.orgid = ?3 \n" +
-		    "AND (?4 = 'ALL' OR e.department = ?4) \n" +
-		    "AND (?5 = 'ALL' OR e.branch = ?5) \n" +
-		    "AND NOT EXISTS ( \n" +
-		    "    SELECT 1  \n" +
-		    "    FROM leaveprocess lp  \n" +
-		    "    WHERE lp.employeecode = lb.employeecode \n" +
-		    "      AND lp.year = mm.year \n" +
-		    "      AND lp.month = mm.month \n" +
-		    "      AND lp.orgid = ?3 \n" +
-		    ") \n" +
-		    "GROUP BY  \n" +
-		    "    lb.employee, lb.employeecode, e.branch, e.department, \n" +
-		    "    mm.totalcompanyworkingdays, mm.month, mm.year, b.totalleaves, c.lopleaves \n" +
-		    "ORDER BY lb.employee ASC"
-		)
-		Set<Object[]> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId, String department, String branch);
-
 	
 	@Query(nativeQuery = true, value =
-		    "SELECT \r\n" +
-		    "    lp.employeename,\r\n" +
-		    "    lp.employeecode,\r\n" +
-		    "    e.branch,\r\n" +
-		    "    e.department,\r\n" +
-		    "    SUM(lp.totalcompanyworkingdays) AS totalcompanyworkingdays,\r\n" +
-		    "    SUM(lp.totalleave) AS totalleave,\r\n" +
-		    "    SUM(lp.lopleave) AS lopleave,\r\n" +
-		    "    SUM(lp.emptotalworkingdays) AS emptotalworkingdays,\r\n" +
-		    "    SUM(lp.empsalarydays) AS empsalarydays\r\n" +
-		    "FROM leaveprocess lp\r\n" +
-		    "JOIN employee e ON lp.employeecode = e.employeecode\r\n" +
-		    "WHERE lp.orgid = ?1\r\n" +
-		    "  AND lp.month = ?2\r\n" +
-		    "  AND lp.year = ?3\r\n" +
-		    "  AND lp.approvedstatus = 'PENDING'\r\n" +
-		    "  AND (?4 = 'ALL' OR e.department = ?4)\r\n" +
-		    "  AND (?5 = 'ALL' OR e.branch = ?5)\r\n" +
-		    "GROUP BY lp.employeename, lp.employeecode, e.branch, e.department\r\n" +
-		    "ORDER BY lp.employeename ASC"
+		    "SELECT\r\n"
+		    + "    asu.empname,\r\n"
+		    + "    asu.empcode,\r\n"
+		    + "    e.branch,\r\n"
+		    + "    e.department,\r\n"
+		    + "    SUM(asu.totaldays) AS totalcompanyworkingdays,\r\n"
+		    + "    SUM(asu.leaves) AS totalleave,\r\n"
+		    + "    SUM(asu.lop) AS lopleave,\r\n"
+		    + "    SUM(asu.present) AS emptotalworkingdays,\r\n"
+		    + "    SUM(asu.salarydays) AS empsalarydays,\r\n"
+		    + "    SUM(asu.othours) AS totalothours\r\n"
+		    + "FROM attendancesummary asu\r\n"
+		    + "JOIN employee e \r\n"
+		    + "    ON asu.empcode = e.employeecode\r\n"
+		    + "WHERE asu.orgid = ?1\r\n"
+		    + "  AND asu.month = ?2\r\n"
+		    + "  AND asu.finyear = ?3\r\n"
+		    + "  AND asu.approvestatus = 'APPROVED'\r\n"
+		    + "  AND (?4 = 'ALL' OR e.department = ?4)\r\n"
+		    + "  AND (?5 = 'ALL' OR e.branch = ?5)\r\n"
+		    + "  AND (\r\n"
+		    + "        ?6 = 'ALL'\r\n"
+		    + "        OR (?6 = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
+		    + "        OR (?6 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND (?7 IS NULL OR e.contractor = ?7))\r\n"
+		    + "      )\r\n"
+		    + "  AND NOT EXISTS (\r\n"
+		    + "        SELECT 1 \r\n"
+		    + "        FROM salaryprocess sp\r\n"
+		    + "        WHERE sp.orgid = asu.orgid\r\n"
+		    + "          AND sp.employeecode = asu.empcode\r\n"
+		    + "          AND sp.month = asu.month\r\n"
+		    + "          AND sp.year = asu.finyear\r\n"
+		    + "  )\r\n"
+		    + "GROUP BY asu.empname, asu.empcode, e.branch, e.department\r\n"
+		    + "ORDER BY asu.empname ASC \r\n"
+		    + " \r\n"
+		    + ""
 		)
-		Set<Object[]> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch);
+		Set<Object[]> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch, String type, String contractor);
 
 	List<LeaveProcessVO> findByEmployeeCodeAndOrgIdAndMonthAndYear(String employeeCode, Long orgId, Long month,
 			String year);

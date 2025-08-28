@@ -24,8 +24,6 @@ import com.efit.hrms.dto.TaskDTO;
 import com.efit.hrms.dto.UserNameDTO;
 import com.efit.hrms.entity.AnnouncementVO;
 import com.efit.hrms.entity.CalendarVO;
-import com.efit.hrms.entity.CheckInOutAdjustmentVO;
-import com.efit.hrms.entity.CheckInVO;
 import com.efit.hrms.entity.CircularVO;
 import com.efit.hrms.entity.EmployeeCodeConfigVO;
 import com.efit.hrms.entity.HolidayVO;
@@ -55,7 +53,7 @@ public interface BasicMasterService {
 
 	List<Map<String, Object>> getStatusByEmpcode(String empcode);
 
-	List<Map<String, Object>> getAttendanceByEmpcode(String empcode, int  month, String orgId, String branch, String branchCode);
+	List<Map<String, Object>> getAttendanceByEmpcode(String empcode, int  month, String orgId, String branchcode);
 
 	void excelUploadForHolidays(MultipartFile[] files, String createdBy, Long orgId)
 			throws EncryptedDocumentException, ApplicationException, java.io.IOException;
@@ -187,18 +185,7 @@ List<Map<String, Object>> GetCountofNewAssignedTask(Long Orgid,String Assignedby
 
 	String generateEmployeeCodeByOrgId(EmployeeDTOnew employeeDTOnew);
 
-
-	
-
-
-
-
-
-
-	
-
-
-	
+	List<Map<String, Object>> getpayslipPayOnHandAmount(Long orgId, String employeecode, Long month, String year);
 	
 	
 }

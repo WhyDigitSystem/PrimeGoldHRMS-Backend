@@ -29,10 +29,10 @@ public class ScreenNamesVO {
 	@Column(name = "screennameid")
 	private Long id;
 
-	@Column(name = "screenname", length = 25)
+	@Column(name = "screenname", length = 255)
 	private String screenName;
 
-	@Column(name = "screencode", length = 10)
+	@Column(name = "screencode", length = 50)
 	private String screenCode;
 
 	private boolean active;

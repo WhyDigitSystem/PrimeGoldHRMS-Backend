@@ -70,7 +70,7 @@ public class AemployeeVO {
 	private String bankName;
 	@Column(name = "ifsccode",length = 12)
 	private String ifscCode;
-	@Column(name = "department",length = 30)
+	@Column(name = "department")
 	private String department;
 	@Column(name = "grade",length = 12)
 	private String grade;
@@ -92,7 +92,7 @@ public class AemployeeVO {
 //	private String role;
 	@Column(name = "resigndate")
 	private LocalDate resignDate;
-	@Column(name = "designation",length = 30)
+	@Column(name = "designation")
 	private String designation;
 	@Column(name = "dateofbirth")
 	private LocalDate dateOfBirth;
@@ -112,6 +112,15 @@ public class AemployeeVO {
 	private boolean active;
 	
 	
+	@Column(name = "contractor",length = 30)
+	private String contractor;
+	@Column(name = "contactperson",length = 150)
+	private String contactPerson;
+	@Column(name = "contactnumber",length = 150)
+	private String contactNumber;
+	@Column(name = "contactgmail",length = 150)
+	private String contactEmail;
+	
 	@Column(name = "pfflag")
 	private boolean pfFlag;
 	@Column(name = "esiflag")
@@ -124,6 +133,12 @@ public class AemployeeVO {
 	private String flagValue;
 	@Column(name = "flag")
 	private boolean flag;
+	
+	@Column(name = "otflag")
+	private OverTime otFlag;
+	
+	@Column(name = "bioid")
+	private String bioId;
 	
 	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")

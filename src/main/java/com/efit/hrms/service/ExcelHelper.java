@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.EmployeeDTO;
 import com.efit.hrms.dto.EmployeeLeaveDTO;
+import com.efit.hrms.entity.OverTime;
 import com.efit.hrms.exception.ApplicationException;
 
 @Component
@@ -79,13 +80,16 @@ public class ExcelHelper {
                     dto.setContactPerson(getStringValue(row.getCell(36)));
                     dto.setContactNumber(getStringValue(row.getCell(37)));
                     dto.setContactEmail(getStringValue(row.getCell(38)));
+                    
+                    String otFlagStr = getStringValue(row.getCell(39)); // "YES", "NO", etc.
+                    dto.setOtFlag(OverTime.fromString(otFlagStr));      // ✅ Converts String to OverTime enum
 
 
                     // Leave section now starts at cell 35
                     List<EmployeeLeaveDTO> leaveList = new ArrayList<>();
-                    String[] codes = getSafeSplit(row, 39);
-                    String[] types = getSafeSplit(row, 40);
-                    String[] totals = getSafeSplit(row, 41);
+                    String[] codes = getSafeSplit(row, 40);
+                    String[] types = getSafeSplit(row, 41);
+                    String[] totals = getSafeSplit(row, 42);
 
                     for (int j = 0; j < codes.length; j++) {
                         if (codes[j] == null || codes[j].trim().isEmpty()) continue;

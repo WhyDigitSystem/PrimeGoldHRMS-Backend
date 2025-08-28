@@ -70,7 +70,7 @@ public class EmployeeVO {
 	private String bankName;
 	@Column(name = "ifsccode",length = 12)
 	private String ifscCode;
-	@Column(name = "department",length = 30)
+	@Column(name = "department")
 	private String department;
 	@Column(name = "grade",length = 12)
 	private String grade;
@@ -92,7 +92,7 @@ public class EmployeeVO {
 //	private String role;
 	@Column(name = "resigndate")
 	private LocalDate resignDate;
-	@Column(name = "designation",length = 30)
+	@Column(name = "designation")
 	private String designation;
 	@Column(name = "dateofbirth")
 	private LocalDate dateOfBirth;
@@ -110,7 +110,8 @@ public class EmployeeVO {
 	private String cancelRemark;
 	@Column(name = "active")
 	private boolean active;
-	
+	@Column(name = "payslipeffectivedate")
+	private LocalDate payslipEffectiveDate;
 	
 	@Column(name = "contractor",length = 30)
 	private String contractor;
@@ -134,6 +135,12 @@ public class EmployeeVO {
 	@Column(name = "flag")
 	private boolean flag;
 	
+	@Column(name = "otflag")
+	private OverTime otFlag;
+	
+	@Column(name = "bioid")
+	private String bioId;
+	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
 
@@ -155,6 +162,15 @@ public class EmployeeVO {
 		return cancel ? "T" : "F";
 	}
 
+	
+	public OverTime getOtFlag() {
+	    return otFlag;
+	}
+
+	public void setOtFlag(OverTime otFlag) {
+	    this.otFlag = otFlag;
+	}
+	
 	@OneToMany(mappedBy = "employeeVO", cascade = CascadeType.ALL)
 	@JsonManagedReference
 	List<EmployeeLeaveVO> employeeLeaveVO;

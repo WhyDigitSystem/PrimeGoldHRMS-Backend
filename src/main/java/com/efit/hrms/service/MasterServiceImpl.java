@@ -313,7 +313,12 @@ public class MasterServiceImpl implements MasterService {
 		employeeVO.setBranchCode(employeeDTO.getBranchCode());
 		employeeVO.setFlagValue(employeeDTO.getFlagValue());
 		employeeVO.setFlag(employeeDTO.isFlag());
+		employeeVO.setOtFlag(employeeDTO.getOtFlag());	
+		employeeVO.setBioId(employeeDTO.getBioId());
+		employeeVO.setPayslipEffectiveDate(employeeDTO.getPayslipEffectiveDate());
 
+
+		
 		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 
 		if (userVO != null) {
@@ -399,13 +404,20 @@ public class MasterServiceImpl implements MasterService {
 		if (employeeDTO.getId() != null) {
 			employeeLeaveRepo.deleteAll(existingLeaves);
 
-			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
-					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
-			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
+//			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
+//					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
 		}
 
 		List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
 		List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+		
+		  List<LeaveBalanceVO> existingBalances =
+		            leaveBalanceRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+
+		    Set<String> existingBalanceCodes = existingBalances.stream()
+		            .map(LeaveBalanceVO::getLeaveCode)
+		            .collect(Collectors.toSet());
 
 		// 5. Process validated leave records
 		for (EmployeeLeaveDTO employeeLeaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
@@ -421,20 +433,25 @@ public class MasterServiceImpl implements MasterService {
 			employeeLeaveVOs.add(employeeLeaveVO);
 
 			// Create LeaveBalanceVO object
-			LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
-			leaveBalanceVO.setLeaveCode(leaveCode);
-			leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
-			leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
-			leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
-			leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-			leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
-			leaveBalanceVO.setBranch(employeeDTO.getBranch());
-			leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
-			leaveBalanceVO.setLeaveStatus("Assigned");
-			leaveBalanceVOs.add(leaveBalanceVO);
+			  if (employeeDTO.getId() == null || !existingBalanceCodes.contains(leaveCode)) {
+
+		        	LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
+		        leaveBalanceVO.setLeaveCode(leaveCode);
+		        leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
+		        leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
+		        leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
+		        leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+		        leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
+		        leaveBalanceVO.setBranch(employeeDTO.getBranch());
+		        leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
+		        leaveBalanceVO.setLeaveStatus("Assigned");
+		        leaveBalanceVOs.add(leaveBalanceVO);
+		        
+		        } 
 		}
 
 		// 6. Save new leave records
+	    employeeLeaveRepo.saveAll(employeeLeaveVOs);
 		leaveBalanceRepo.saveAll(leaveBalanceVOs);
 		employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
 
@@ -894,7 +911,7 @@ public class MasterServiceImpl implements MasterService {
 	
 	
 	@Override
-	@Transactional
+	@Transactional(rollbackOn = Exception.class)
 	public Map<String, Object> uploadEmployeeExcel(MultipartFile file, Long orgId, String createdBy)
 	        throws ApplicationException, IOException {
 
@@ -906,8 +923,7 @@ public class MasterServiceImpl implements MasterService {
 	    }
 
 	    Set<String> seenCodes = new HashSet<>();
-	    Set<String> seenNames = new HashSet<>();
-	    Set<String> seenEmails = new HashSet<>();
+//	    Set<String> seenNames = new HashSet<>();
 	    Set<String> excelDuplicates = new LinkedHashSet<>();
 	    Set<String> dbDuplicates = new LinkedHashSet<>();
 
@@ -918,20 +934,18 @@ public class MasterServiceImpl implements MasterService {
 	        dto.setOrgId(orgId);
 	        dto.setCreatedBy(createdBy);
 
-	        String info = dto.getEmployeeName() + " - " + dto.getEmployeeCode() + " - " + dto.getEmail();
+	        String info = dto.getEmployeeCode() ;
 	        boolean isExcelDuplicate = false;
 
 	        if (!seenCodes.add(dto.getEmployeeCode())) isExcelDuplicate = true;
-	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
-	        if (!seenEmails.add(dto.getEmail())) isExcelDuplicate = true;
+//	        if (!seenNames.add(dto.getEmployeeName())) isExcelDuplicate = true;
 
 	        if (isExcelDuplicate) {
 	            excelDuplicates.add("Row " + rowNum + " → " + info);
 	        }
 
-	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ||
-	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ||
-	                             employeeRepo.existsByEmail(dto.getEmail());
+	        boolean existsInDb = employeeRepo.existsByEmployeeCode(dto.getEmployeeCode()) ;
+//	                             employeeRepo.existsByEmployeeName(dto.getEmployeeName()) ;
 
 	        if (existsInDb) {
 	            dbDuplicates.add(info);
@@ -970,13 +984,14 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setCreatedBy(dto.getCreatedBy());
 	        employeeVO.setUpdatedBy(dto.getCreatedBy());
 	        employeeVO.setDateOfBirth(dto.getDateOfBirth());
-	        
+	        employeeVO.setActive(true);
+
 	        DepartmentVO departmentVO =departmentRepo.findByOrgIdAndDepartmentName(orgId, dto.getDepartment());
 	        
 	        if(departmentVO!=null) {
 		        employeeVO.setDepartment(dto.getDepartment());
 	        }else {
-		        throw new ApplicationException("Please Enter Available DepartmentName");
+		        throw new ApplicationException("Please Enter Available DepartmentName " + dto.getDepartment());
 	        }
 	        
 	        DesignationVO designationVO =designationRepo.findByOrgIdAndDesignationName(orgId, dto.getDesignation());
@@ -984,7 +999,7 @@ public class MasterServiceImpl implements MasterService {
 	        if(designationVO!=null) {
 		        employeeVO.setDesignation(dto.getDesignation());	
 	        }else {
-		        throw new ApplicationException("Please Enter Available DesignationName");
+		        throw new ApplicationException("Please Enter Available DesignationName " + dto.getDesignation());
 	        }
 	        
 	        employeeVO.setEmail(dto.getEmail());
@@ -1016,6 +1031,13 @@ public class MasterServiceImpl implements MasterService {
 	        employeeVO.setContactPerson(dto.getContactPerson());
 	        employeeVO.setContactNumber(dto.getContactNumber());
 	        employeeVO.setContactEmail(dto.getContactEmail());
+	        employeeVO.setBioId(dto.getEmployeeCode());
+	        if (dto.getOtFlag() != null) {
+	            employeeVO.setOtFlag(dto.getOtFlag());
+	        }
+
+
+
 
 
 	        List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();

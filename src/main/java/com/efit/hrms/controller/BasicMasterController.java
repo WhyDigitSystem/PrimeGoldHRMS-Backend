@@ -187,11 +187,13 @@ public class BasicMasterController extends BaseController {
 	public ResponseEntity<ResponseDTO> createCheckInOutAdjustment(
 			@RequestBody CheckInOutAdjustmentDTO checkInOutAdjustmentDTO) {
 
+		
 		String methodName = "createCheckInOutAdjustment()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 		String errorMsg = null;
 		Map<String, Object> responseObjectsMap = new HashMap<>();
 		ResponseDTO responseDTO = null;
+		
 
 		try {
 			// Convert checkOutDate from String to LocalDate
@@ -424,7 +426,7 @@ public class BasicMasterController extends BaseController {
 
 	@GetMapping("/attendance")
 	public ResponseEntity<ResponseDTO> getAttendanceByEmpcode(@RequestParam String empcode, @RequestParam String month,
-			@RequestParam String orgId, @RequestParam String branch, @RequestParam String branchCode) {
+			@RequestParam String orgId,  @RequestParam String branchCode) {
 
 		String methodName = "getAttendanceByEmpcode()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -434,10 +436,10 @@ public class BasicMasterController extends BaseController {
 
 		try {
 			// Convert month to integer (handles "05" or "5")
-			int monthInt = Integer.parseInt(month);
+			Integer monthInt = Integer.parseInt(month);
 
 			List<Map<String, Object>> attendanceList = basicMasterService.getAttendanceByEmpcode(empcode, monthInt,
-					orgId, branch, branchCode);
+					orgId, branchCode);
 
 			if (attendanceList.isEmpty()) {
 				errorMsg = "No attendance data found for empcode: " + empcode;
@@ -1234,6 +1236,36 @@ public class BasicMasterController extends BaseController {
 			responseDTO = createServiceResponse(responseObjectsMap);
 		} else {
 			responseDTO = createServiceResponseError(responseObjectsMap, "Payslip Employee to retrieve Charge Type",
+					errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	
+	@GetMapping("/getpayslipPayOnHandAmount")
+	public ResponseEntity<ResponseDTO> getpayslipPayOnHandAmount(@RequestParam Long orgId, String Employeecode,@RequestParam Long month,@RequestParam String year) {
+		String methodName = "getpayslipPayOnHandAmount()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<Map<String, Object>> mapp = new ArrayList<>();
+
+		try {
+			mapp = basicMasterService.getpayslipPayOnHandAmount(  orgId,  Employeecode,  month,  year);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Payslip PayOnHand Details retrieved successfully");
+			responseObjectsMap.put("payslip", mapp);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Payslip PayOnHand Details to retrieve Charge Type",
 					errorMsg);
 		}
 

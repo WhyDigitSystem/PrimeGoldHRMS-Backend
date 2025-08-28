@@ -18,6 +18,7 @@ public class CheckInOutAdjustmentDTO {
 	private Long orgId;
 	private String branch;
 	private String email;
+	private String branchCode;
 
 	private String notify;
 	private String notifyCode;

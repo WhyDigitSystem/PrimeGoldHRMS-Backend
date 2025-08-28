@@ -937,57 +937,59 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 		return leaveProcessRepo.getLeaveProcessByOrgId(orgId);
 	}
 
-	@Override
-	public List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId, String department, String branch) {
-		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId,department,branch);
-		return mapLeaveDetails(result,fromDate,toDate);
-	}
-
-	private List<Map<String, Object>> mapLeaveDetails(Set<Object[]> result, String fromDate, String toDate) {
-		List<Map<String, Object>> detailsList = new ArrayList<>();
-		 if (result == null || result.isEmpty()) {
-		        // Compare fromDate and toDate
-		        String monthName = getMonthWithMoreDays(fromDate, toDate);
-		        throw new RuntimeException("Attendance process already done in " + monthName + " month.");
-		    }
-		for (Object[] record : result) {
-			Map<String, Object> map = new HashMap<>();
-			map.put("employeeName", record[0] != null ? record[0].toString() : "");
-			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
-			map.put("branch", record[2] != null ? record[2].toString() : "");
-			map.put("department", record[3] != null ? record[3].toString() : "");
-			map.put("totalCompanyWorkingDays", record[4] != null ? record[4].toString() : "0");
-			map.put("month", record[5] != null ? record[5].toString() : "0");
-			map.put("year", record[6] != null ? record[6].toString() : "0");
-			map.put("totalLeave", record[7] != null ? record[7].toString() : "0");
-			map.put("lopLeave", record[8] != null ? record[8].toString() : "0");
-			map.put("empSalaryDays", record[9] != null ? record[9].toString() : "0");
-			map.put("empTotalWorkingDays", record[10] != null ? record[10].toString() : "0");
-
-			detailsList.add(map);
-		}
-		return detailsList;
-	}
-
-	
-	private String getMonthWithMoreDays(String fromDate, String toDate) {
-	    try {
-	        LocalDate from = LocalDate.parse(fromDate);
-	        LocalDate to = LocalDate.parse(toDate);
-
-	        YearMonth fromMonth = YearMonth.from(from);
-	        YearMonth toMonth = YearMonth.from(to);
-
-	        int fromDays = fromMonth.lengthOfMonth();
-	        int toDays = toMonth.lengthOfMonth();
-
-	        YearMonth selectedMonth = (fromDays >= toDays) ? fromMonth : toMonth;
-
-	        return selectedMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-	    } catch (DateTimeParseException e) {
-	        return "Unknown";
-	    }
-	}
+//	@Override
+//	public List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId, String department, String branch) {
+//
+//	    Set<Object[]> result = leaveProcessRepo.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId, department, branch);
+//	    return mapLeaveDetails(result, fromDate, toDate);
+//	}
+//
+//
+//	private List<Map<String, Object>> mapLeaveDetails(Set<Object[]> result, String fromDate, String toDate) {
+//		List<Map<String, Object>> detailsList = new ArrayList<>();
+//		 if (result == null || result.isEmpty()) {
+//		        // Compare fromDate and toDate
+//		        String monthName = getMonthWithMoreDays(fromDate, toDate);
+//		        throw new RuntimeException("Attendance process already done in " + monthName + " month.");
+//		    }
+//		for (Object[] record : result) {
+//			Map<String, Object> map = new HashMap<>();
+//			map.put("employeeName", record[0] != null ? record[0].toString() : "");
+//			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
+//			map.put("branch", record[2] != null ? record[2].toString() : "");
+//			map.put("department", record[3] != null ? record[3].toString() : "");
+//			map.put("totalCompanyWorkingDays", record[4] != null ? record[4].toString() : "0");
+//			map.put("month", record[5] != null ? record[5].toString() : "0");
+//			map.put("year", record[6] != null ? record[6].toString() : "0");
+//			map.put("totalLeave", record[7] != null ? record[7].toString() : "0");
+//			map.put("lopLeave", record[8] != null ? record[8].toString() : "0");
+//			map.put("empSalaryDays", record[9] != null ? record[9].toString() : "0");
+//			map.put("empTotalWorkingDays", record[10] != null ? record[10].toString() : "0");
+//
+//			detailsList.add(map);
+//		}
+//		return detailsList;
+//	}
+//
+//	
+//	private String getMonthWithMoreDays(String fromDate, String toDate) {
+//	    try {
+//	        LocalDate from = LocalDate.parse(fromDate);
+//	        LocalDate to = LocalDate.parse(toDate);
+//
+//	        YearMonth fromMonth = YearMonth.from(from);
+//	        YearMonth toMonth = YearMonth.from(to);
+//
+//	        int fromDays = fromMonth.lengthOfMonth();
+//	        int toDays = toMonth.lengthOfMonth();
+//
+//	        YearMonth selectedMonth = (fromDays >= toDays) ? fromMonth : toMonth;
+//
+//	        return selectedMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+//	    } catch (DateTimeParseException e) {
+//	        return "Unknown";
+//	    }
+//	}
 
 	
 //	@Override
@@ -1613,7 +1615,7 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 				map.put("checkOutTime", record[4] != null ? record[4].toString() : "0");
 				map.put("grossHours", record[5] != null ? record[5].toString() : " ");
 				map.put("effectiveHours", record[6] != null ? record[6].toString() : " ");
-				map.put("otHours", 0);
+				map.put("otHours",  record[7] != null ? record[7].toString() : " ");
 
 
 				detailsList.add(map);

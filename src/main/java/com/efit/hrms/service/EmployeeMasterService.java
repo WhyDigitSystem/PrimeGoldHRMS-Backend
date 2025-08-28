@@ -61,13 +61,13 @@ public interface EmployeeMasterService {
 
 	List<Map<String, Object>> getSalaryStructureForSalaryProcess(Long orgId, String employeeCode);
 
-	List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch);
+	List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year, String department, String branch, String type, String contractor);
 
 //	List<Map<String, Object>> getNetPayForSalaryProcess( BigDecimal grossPay,
 //			BigDecimal sumOfDetection);
 
 	List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			Long empSalaryDays, BigDecimal sumOfDetection);
+			Long empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	//ApprovedSalaryProcess Report
 	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year);
@@ -93,6 +93,8 @@ public interface EmployeeMasterService {
 
 	List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode,
 			BigDecimal sumOfEarnings);
+
+	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
 
 
 

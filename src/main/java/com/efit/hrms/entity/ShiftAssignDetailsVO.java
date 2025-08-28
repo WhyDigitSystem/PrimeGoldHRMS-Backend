@@ -14,6 +14,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonGetter;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -64,7 +65,15 @@ public class ShiftAssignDetailsVO {
 	private LocalDate effectiveFrom;
 	@Column(name = "effectiveto")
 	private LocalDate effectiveTo;
+	
+	@Column(name = "active")
+	private boolean active;
 
+	@JsonGetter("active")
+	public String getActive() {
+		return active ? "Active" : "In-Active";
+	}
+	
 	@ManyToOne
 	@JoinColumn(name = "shiftassignid")
 	@JsonBackReference

@@ -348,31 +348,31 @@ public class LeaveProcessController extends BaseController {
 		return ResponseEntity.ok().body(responseDTO);
 	}
 
-	@GetMapping("/getLeaveDetailsForLeaveProcess")
-	public ResponseEntity<ResponseDTO> getLeaveDetailsForLeaveProcess(@RequestParam String fromDate,
-			@RequestParam String toDate, @RequestParam Long orgId,@RequestParam String department,@RequestParam String branch) {
-
-		String methodName = "getLeaveDetailsForLeaveProcess()";
-		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-
-		Map<String, Object> responseObjectsMap = new HashMap<>();
-		ResponseDTO responseDTO;
-		List<Map<String, Object>> leaveDetailsList;
-
-		try {
-			leaveDetailsList = leaveProcessService.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId,department,branch);
-			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Leave details retrieved successfully");
-			responseObjectsMap.put("leaveProcessVO", leaveDetailsList); // ✅ Correct key name
-			responseDTO = createServiceResponse(responseObjectsMap);
-		} catch (Exception e) {
-			String errorMsg = e.getMessage();
-			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
-			responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve leave details", errorMsg);
-		}
-
-		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
-		return ResponseEntity.ok().body(responseDTO);
-	}
+//	@GetMapping("/getLeaveDetailsForLeaveProcess")
+//	public ResponseEntity<ResponseDTO> getLeaveDetailsForLeaveProcess(@RequestParam String fromDate,
+//			@RequestParam String toDate, @RequestParam Long orgId,@RequestParam String department,@RequestParam String branch) {
+//
+//		String methodName = "getLeaveDetailsForLeaveProcess()";
+//		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+//
+//		Map<String, Object> responseObjectsMap = new HashMap<>();
+//		ResponseDTO responseDTO;
+//		List<Map<String, Object>> leaveDetailsList;
+//
+//		try {
+//			leaveDetailsList = leaveProcessService.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId,department,branch);
+//			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Leave details retrieved successfully");
+//			responseObjectsMap.put("leaveProcessVO", leaveDetailsList); // ✅ Correct key name
+//			responseDTO = createServiceResponse(responseObjectsMap);
+//		} catch (Exception e) {
+//			String errorMsg = e.getMessage();
+//			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+//			responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve leave details", errorMsg);
+//		}
+//
+//		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+//		return ResponseEntity.ok().body(responseDTO);
+//	}
 
 	@GetMapping("/getCheckInAndOutDaysForLeaveProcess")
 	public ResponseEntity<ResponseDTO> getCheckInAndOutDaysForLeaveProcess(@RequestParam String fromDate,

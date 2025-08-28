@@ -480,6 +480,34 @@ public class EmployeeMasterController extends BaseController{
 	    return ResponseEntity.ok(responseDTO);
 	}
 
+	@PutMapping("/createApprovalSalaryProcess")
+	public ResponseEntity<ResponseDTO> createApprovalSalaryProcess(@RequestParam Long orgId, @RequestParam List<Long> id,@RequestParam String action, @RequestParam String actionBy) {
+		String methodName = "createApprovalSalaryProcess()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		try {
+			Map<String, Object> salaryProcessVO = employeeMasterService.createApprovalSalaryProcess(
+	                orgId, id, action, actionBy);
+
+	        // ✅ Unwrap values
+	        Object salaryProcessVOs = salaryProcessVO.get("salaryProcessVO");
+	        String message = (String) salaryProcessVO.getOrDefault("message", "SalaryProcess Approved Successfully");
+
+	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO);
+	        responseObjectsMap.put("message", message);
+
+	        responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
 	@GetMapping("/getAllSalaryProcessByOrgId")
 	public ResponseEntity<ResponseDTO> getAllSalaryProcessByOrgId(@RequestParam Long orgId) {
 	    String methodName = "getAllSalaryProcessByOrgId()";
@@ -572,7 +600,7 @@ public class EmployeeMasterController extends BaseController{
 
 	@GetMapping("/getLeaveDetailsforSalaryProcess")
 	public ResponseEntity<ResponseDTO> getLeaveDetailsforSalaryProcess(@RequestParam Long orgId,
-			@RequestParam Long month, @RequestParam String year,@RequestParam String department,@RequestParam String branch) {
+			@RequestParam Long month, @RequestParam String year,@RequestParam String department,@RequestParam String branch,@RequestParam String type,@RequestParam(required=false)  String contractor) {
 
 		String methodName = "getLeaveDetailsforSalaryProcess()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -582,7 +610,7 @@ public class EmployeeMasterController extends BaseController{
 		List<Map<String, Object>> salaryProcessVO;
 
 		try {
-			salaryProcessVO = employeeMasterService.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch);
+			salaryProcessVO = employeeMasterService.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch,type,contractor);
 			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "salaryProcess details retrieved successfully");
 			responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
 			responseDTO = createServiceResponse(responseObjectsMap);
@@ -657,7 +685,7 @@ public class EmployeeMasterController extends BaseController{
 	
 	@GetMapping("/getPayOnHandsForSalaryProcess")
 	public ResponseEntity<ResponseDTO> getPayOnHandsForSalaryProcess(
-	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection) {
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
 
 	    String methodName = "getPayOnHandsForSalaryProcess()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -667,7 +695,7 @@ public class EmployeeMasterController extends BaseController{
 	    List<Map<String, Object>> salaryProcessVO;
 
 	    try {
-	    	salaryProcessVO = employeeMasterService.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays,grossPay,empSalaryDays,sumOfDetection);
+	    	salaryProcessVO = employeeMasterService.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays,grossPay,empSalaryDays,sumOfDetection, otAmount);
 	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "NetPay details retrieved successfully");
 	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
 	        responseDTO = createServiceResponse(responseObjectsMap);
