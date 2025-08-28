@@ -715,7 +715,7 @@ public class EmployeeMasterController extends BaseController{
 	
 	@GetMapping("/getPayOnHandsForSalaryProcess")
 	public ResponseEntity<ResponseDTO> getPayOnHandsForSalaryProcess(
-	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam BigDecimal empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
 
 	    String methodName = "getPayOnHandsForSalaryProcess()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);

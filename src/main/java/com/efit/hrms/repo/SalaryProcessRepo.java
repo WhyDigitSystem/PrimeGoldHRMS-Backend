@@ -51,7 +51,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 	@Query(value = "SELECT ROUND(((CAST(?2 AS DECIMAL) - CAST(?4 AS DECIMAL)) / CAST(?1 AS DECIMAL)) * CAST(?3 AS DECIMAL) + CAST(?5 AS DECIMAL), 2) AS payonhand\r\n"
 			+ "", 
 		       nativeQuery = true)
-	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, Long empSalaryDays,
+	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, BigDecimal empSalaryDays,
 			BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	

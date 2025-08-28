@@ -719,11 +719,11 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //	
 	@Override
 	public List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			Long empSalaryDays,BigDecimal sumOfDetection,BigDecimal otAmount) {
+			BigDecimal empSalaryDays,BigDecimal sumOfDetection,BigDecimal otAmount) {
 		
 		Set<Object[]> result;
 		
-	    if (empSalaryDays != null && empSalaryDays > 0) {
+		if (empSalaryDays != null && empSalaryDays.compareTo(BigDecimal.ZERO) > 0) {
 		 result = salaryProcessRepo.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays, grossPay,
 				empSalaryDays,sumOfDetection, otAmount);
 		}else {

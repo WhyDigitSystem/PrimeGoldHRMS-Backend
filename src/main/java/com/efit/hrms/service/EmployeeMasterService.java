@@ -67,7 +67,7 @@ public interface EmployeeMasterService {
 //			BigDecimal sumOfDetection);
 
 	List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			Long empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
+			BigDecimal empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	//ApprovedSalaryProcess Report
 	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year);
