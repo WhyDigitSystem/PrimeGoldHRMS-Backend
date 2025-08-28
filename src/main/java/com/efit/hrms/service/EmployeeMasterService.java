@@ -94,6 +94,8 @@ public interface EmployeeMasterService {
 	List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode,
 			BigDecimal sumOfEarnings);
 
+	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
+
 
 
 

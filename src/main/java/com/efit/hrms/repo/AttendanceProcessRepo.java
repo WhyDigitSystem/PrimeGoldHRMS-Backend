@@ -17,7 +17,11 @@ import com.efit.hrms.entity.AttendanceProcessVO;
 @Repository
 public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO, Long>{
 
+<<<<<<< HEAD
 //	
+=======
+	
+>>>>>>> 681a162c36295c0e11bf1313d40e0cd0e3b97baa
 //	@Query(nativeQuery = true, value = 
 //		    "WITH RECURSIVE date_series AS (\r\n"
 //		    + "    SELECT DATE(?1) AS dt\r\n"
@@ -304,7 +308,17 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "      UNION ALL\r\n"
 		    + "      SELECT empcode, 0.5 AS abs_value FROM att_data WHERE present_value = 0.5\r\n"
 		    + "      UNION ALL\r\n"
+<<<<<<< HEAD
 		    + "      SELECT employeecode, 1 FROM normal_missing_days\r\n"
+=======
+		    + "      -- only count missing days depending on shift type\r\n"
+		    + "      SELECT nm.employeecode, 1 AS abs_value\r\n"
+		    + "      FROM normal_missing_days nm\r\n"
+		    + "      JOIN shiftassigndetails s ON s.employeecode = nm.employeecode\r\n"
+		    + "      JOIN shiftmaster sm ON sm.shiftcode = s.shiftcode AND sm.nightshift = 0\r\n"
+		    + "      WHERE DATE(s.effectivefrom) <= nm.checkindate AND DATE(s.effectiveto) >= nm.checkindate\r\n"
+		    + "      \r\n"
+>>>>>>> 681a162c36295c0e11bf1313d40e0cd0e3b97baa
 		    + "      UNION ALL\r\n"
 		    + "      SELECT employeecode, 1 FROM night_missing_days\r\n"
 		    + "  ) all_abs\r\n"
@@ -323,7 +337,16 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "      UNION ALL\r\n"
 		    + "      SELECT empcode, 0.5 FROM att_data WHERE present_value = 0.5\r\n"
 		    + "      UNION ALL\r\n"
+<<<<<<< HEAD
 		    + "      SELECT employeecode, 1 FROM normal_missing_days\r\n"
+=======
+		    + "      SELECT nm.employeecode, 1\r\n"
+		    + "      FROM normal_missing_days nm\r\n"
+		    + "      JOIN shiftassigndetails s ON s.employeecode = nm.employeecode\r\n"
+		    + "      JOIN shiftmaster sm ON sm.shiftcode = s.shiftcode AND sm.nightshift = 0\r\n"
+		    + "      WHERE DATE(s.effectivefrom) <= nm.checkindate AND DATE(s.effectiveto) >= nm.checkindate\r\n"
+		    + "\r\n"
+>>>>>>> 681a162c36295c0e11bf1313d40e0cd0e3b97baa
 		    + "      UNION ALL\r\n"
 		    + "      SELECT employeecode, 1 FROM night_missing_days\r\n"
 		    + "  ) all_lop\r\n"
@@ -389,216 +412,303 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		)
 	Set<Object[]> getLeaveDetailsForAttendanceProcess(String fromDate, String toDate, Long orgId, String department,
 			String branch, String type,String contractor);
+	
 
 	
-	
-	
-	@Query(nativeQuery = true, value = 
-		    "WITH RECURSIVE date_series AS (\r\n"
-		    + "    SELECT DATE(CONCAT(?2, '-', LPAD(?1, 2, '0'), '-01')) AS dt\r\n"
-		    + "    UNION ALL\r\n"
-		    + "    SELECT DATE_ADD(dt, INTERVAL 1 DAY)\r\n"
-		    + "    FROM date_series\r\n"
-		    + "    WHERE MONTH(dt) = ?1 AND YEAR(dt) = ?2\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "company_attendance_mode AS (\r\n"
-		    + "    SELECT attendancemode \r\n"
-		    + "    FROM company \r\n"
-		    + "    WHERE companyid = ?3\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "paired_attendance AS (\r\n"
-		    + "    SELECT \r\n"
-		    + "        ap.empcode,\r\n"
-		    + "        ap.empname,\r\n"
-		    + "        ap.branch,\r\n"
-		    + "        e.department,\r\n"
-		    + "        s.shifttype,\r\n"
-		    + "        ap.checkindate,\r\n"
-		    + "        ap.entrytime,\r\n"
-		    + "        ap.status,\r\n"
-		    + "        s.intime,\r\n"
-		    + "        s.outtime,\r\n"
-		    + "        CASE WHEN LOWER(s.shifttype) = 'night' THEN 1 ELSE 0 END AS nightShift,\r\n"
-		    + "        sa.orgid,\r\n"
-		    + "        ROW_NUMBER() OVER (\r\n"
-		    + "            PARTITION BY ap.empcode, ap.checkindate, ap.status \r\n"
-		    + "            ORDER BY ap.entrytime\r\n"
-		    + "        ) AS rn\r\n"
-		    + "    FROM attendanceprocess ap\r\n"
-		    + "    JOIN company_attendance_mode cam \r\n"
-		    + "        ON FIND_IN_SET(ap.attendancemode, cam.attendancemode) > 0\r\n"
-		    + "    JOIN employee e \r\n"
-		    + "        ON e.employeecode = ap.empcode AND e.orgid = ap.orgid\r\n"
-		    + "    JOIN shiftassigndetails s \r\n"
-		    + "        ON s.employeecode = ap.empcode \r\n"
-		    + "        AND ap.checkindate BETWEEN s.effectivefrom AND s.effectiveto\r\n"
-		    + "    JOIN shiftassign sa \r\n"
-		    + "        ON sa.shiftassignid = s.shiftassignid AND sa.orgid = ap.orgid\r\n"
-		    + "    WHERE ap.orgid = ?3\r\n"
-		    + "      AND (?4 = 'ALL' OR e.branch = ?4)\r\n"
-		    + "  AND (?5 = 'ALL' OR e.department = ?5)\r\n"
-		    + "  AND (\r\n"
-		    + "      ?6 = 'ALL'\r\n"
-		    + "      OR (?6 = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
-		    + "      OR (?6 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND e.contractor = ?7)\r\n"
-		    + "  )\r\n"
-		    + ""
-		    + "),\r\n"
-		    + "\r\n"
-		    + "matched_attendance AS (\r\n"
-		    + "    SELECT\r\n"
-		    + "        in_rec.empcode,\r\n"
-		    + "        in_rec.empname,\r\n"
-		    + "        in_rec.branch,\r\n"
-		    + "        in_rec.department,\r\n"
-		    + "        in_rec.shifttype AS shift_type,\r\n"
-		    + "        in_rec.checkindate AS in_date,\r\n"
-		    + "        in_rec.entrytime AS in_time,\r\n"
-		    + "        out_rec.checkindate AS out_date,\r\n"
-		    + "        out_rec.entrytime AS out_time,\r\n"
-		    + "        in_rec.nightShift\r\n"
-		    + "    FROM paired_attendance in_rec\r\n"
-		    + "    JOIN paired_attendance out_rec \r\n"
-		    + "        ON in_rec.empcode = out_rec.empcode\r\n"
-		    + "        AND in_rec.rn = out_rec.rn\r\n"
-		    + "        AND in_rec.status = 'IN'\r\n"
-		    + "        AND out_rec.status = 'OUT'\r\n"
-		    + "        AND (\r\n"
-		    + "            (in_rec.nightShift = 0 AND in_rec.checkindate = out_rec.checkindate)\r\n"
-		    + "            OR (in_rec.nightShift = 1 AND DATE_ADD(in_rec.checkindate, INTERVAL 1 DAY) = out_rec.checkindate)\r\n"
-		    + "        )\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "worked_hours AS (\r\n"
-		    + "    SELECT\r\n"
-		    + "        empcode,\r\n"
-		    + "        empname,\r\n"
-		    + "        branch,\r\n"
-		    + "        department,\r\n"
-		    + "        shift_type,\r\n"
-		    + "        in_date AS actual_date,\r\n"
-		    + "           GREATEST(FLOOR(TIMESTAMPDIFF(SECOND,\r\n"
-		    + "            STR_TO_DATE(CONCAT(in_date, ' ', in_time), '%Y-%m-%d %H:%i:%s'),\r\n"
-		    + "            STR_TO_DATE(CONCAT(out_date, ' ', out_time), '%Y-%m-%d %H:%i:%s')\r\n"
-		    + "        ) / 3600), 0) AS work_hours\r\n"
-		    + "    FROM matched_attendance\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "leave_data AS (\r\n"
-		    + "    SELECT \r\n"
-		    + "        employeecode AS empcode,\r\n"
-		    + "        DATE(leavedate) AS leavedate\r\n"
-		    + "    FROM approvalleaves\r\n"
-		    + "    WHERE orgid = ?3\r\n"
-		    + "      AND approvestatus = 'APPROVED'\r\n"
-		    + "      AND leavedate BETWEEN DATE(CONCAT(?2, '-', LPAD(?1, 2, '0'), '-01'))\r\n"
-		    + "                      AND LAST_DAY(DATE(CONCAT(?2, '-', LPAD(?1, 2, '0'), '-01')))\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "all_emp_dates AS (\r\n"
-		    + "    SELECT \r\n"
-		    + "        DISTINCT e.employeecode AS empcode,\r\n"
-		    + "        e.employee AS empname,\r\n"
-		    + "        e.branch,\r\n"
-		    + "        e.department,\r\n"
-		    + "        s.shifttype AS shift_type,\r\n"
-		    + "        ds.dt AS actual_date\r\n"
-		    + "    FROM date_series ds\r\n"
-		    + "    JOIN employee e ON e.orgid = ?3\r\n"
-		    + "    JOIN shiftassigndetails s \r\n"
-		    + "        ON s.employeecode = e.employeecode \r\n"
-		    + "        AND ds.dt BETWEEN s.effectivefrom AND s.effectiveto\r\n"
-		    + "    JOIN shiftassign sa \r\n"
-		    + "        ON sa.shiftassignid = s.shiftassignid \r\n"
-		    + "        AND sa.orgid = ?3\r\n"
-		    + "    WHERE (?4 = 'ALL' OR e.branch = ?4)\r\n"
-		    + "  AND (?5 = 'ALL' OR e.department = ?5)\r\n"
-		    + "  AND (\r\n"
-		    + "      ?6 = 'ALL'\r\n"
-		    + "      OR (?6 = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
-		    + "      OR (?6 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND e.contractor = ?7)\r\n"
-		    + "  )\r\n"
-		    + "\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "pivot_data AS (\r\n"
-		    + "    SELECT \r\n"
-		    + "        a.empcode,\r\n"
-		    + "        a.empname,\r\n"
-		    + "        a.branch,\r\n"
-		    + "        a.department,\r\n"
-		    + "        a.shift_type,\r\n"
-		    + "        a.actual_date,\r\n"
-		    + "        CASE \r\n"
-		    + "            WHEN l.empcode IS NOT NULL THEN 'L'\r\n"
-		    + "            WHEN w.work_hours IS NOT NULL THEN CAST(w.work_hours AS CHAR)\r\n"
-		    + "            ELSE '0'\r\n"
-		    + "        END AS worked_value\r\n"
-		    + "    FROM all_emp_dates a\r\n"
-		    + "    LEFT JOIN worked_hours w \r\n"
-		    + "        ON a.empcode = w.empcode AND a.actual_date = w.actual_date\r\n"
-		    + "    LEFT JOIN leave_data l \r\n"
-		    + "        ON a.empcode = l.empcode AND a.actual_date = l.leavedate\r\n"
-		    + "),\r\n"
-		    + "\r\n"
-		    + "final_output AS (\r\n"
-		    + "    SELECT \r\n"
-		    + "        empcode AS code,\r\n"
-		    + "        empname AS name,\r\n"
-		    + "        branch,\r\n"
-		    + "        department,\r\n"
-		    + "        shift_type AS shifttype,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 1 THEN worked_value END) AS day_1,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 2 THEN worked_value END) AS day_2,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 3 THEN worked_value END) AS day_3,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 4 THEN worked_value END) AS day_4,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 5 THEN worked_value END) AS day_5,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 6 THEN worked_value END) AS day_6,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 7 THEN worked_value END) AS day_7,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 8 THEN worked_value END) AS day_8,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 9 THEN worked_value END) AS day_9,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 10 THEN worked_value END) AS day_10,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 11 THEN worked_value END) AS day_11,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 12 THEN worked_value END) AS day_12,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 13 THEN worked_value END) AS day_13,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 14 THEN worked_value END) AS day_14,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 15 THEN worked_value END) AS day_15,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 16 THEN worked_value END) AS day_16,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 17 THEN worked_value END) AS day_17,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 18 THEN worked_value END) AS day_18,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 19 THEN worked_value END) AS day_19,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 20 THEN worked_value END) AS day_20,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 21 THEN worked_value END) AS day_21,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 22 THEN worked_value END) AS day_22,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 23 THEN worked_value END) AS day_23,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 24 THEN worked_value END) AS day_24,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 25 THEN worked_value END) AS day_25,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 26 THEN worked_value END) AS day_26,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 27 THEN worked_value END) AS day_27,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 28 THEN worked_value END) AS day_28,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 29 THEN worked_value END) AS day_29,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 30 THEN worked_value END) AS day_30,\r\n"
-		    + "        MAX(CASE WHEN DAY(actual_date) = 31 THEN worked_value END) AS day_31\r\n"
-		    + "    FROM pivot_data\r\n"
-		    + "    GROUP BY empcode, empname, branch, department, shift_type\r\n"
-		    + "    ORDER BY empname\r\n"
-		    + ")\r\n"
-		    + "\r\n"
-		    + "SELECT * FROM final_output \r\n"
-		    + ""
+//MONTH REPORT
+//	@Query(nativeQuery = true, value = 
+//		    "WITH RECURSIVE date_series AS (\r\n"
+//		    + "    SELECT DATE(CONCAT(?2, '-', LPAD(?1, 2, '0'), '-01')) AS dt\r\n"
+//		    + "    UNION ALL\r\n"
+//		    + "    SELECT DATE_ADD(dt, INTERVAL 1 DAY)\r\n"
+//		    + "    FROM date_series\r\n"
+//		    + "    WHERE MONTH(dt) = ?1 AND YEAR(dt) = ?2\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "company_attendance_mode AS (\r\n"
+//		    + "    SELECT attendancemode \r\n"
+//		    + "    FROM company \r\n"
+//		    + "    WHERE companyid = ?3\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "paired_attendance AS (\r\n"
+//		    + "    SELECT \r\n"
+//		    + "        ap.empcode,\r\n"
+//		    + "        ap.empname,\r\n"
+//		    + "        ap.branch,\r\n"
+//		    + "        e.department,\r\n"
+//		    + "        s.shifttype,\r\n"
+//		    + "        ap.checkindate,\r\n"
+//		    + "        ap.entrytime,\r\n"
+//		    + "        ap.status,\r\n"
+//		    + "        s.intime,\r\n"
+//		    + "        s.outtime,\r\n"
+//		    + "        CASE WHEN LOWER(s.shifttype) = 'night' THEN 1 ELSE 0 END AS nightShift,\r\n"
+//		    + "        sa.orgid,\r\n"
+//		    + "        ROW_NUMBER() OVER (\r\n"
+//		    + "            PARTITION BY ap.empcode, ap.checkindate, ap.status \r\n"
+//		    + "            ORDER BY ap.entrytime\r\n"
+//		    + "        ) AS rn\r\n"
+//		    + "    FROM attendanceprocess ap\r\n"
+//		    + "    JOIN company_attendance_mode cam \r\n"
+//		    + "        ON FIND_IN_SET(ap.attendancemode, cam.attendancemode) > 0\r\n"
+//		    + "    JOIN employee e \r\n"
+//		    + "        ON e.employeecode = ap.empcode AND e.orgid = ap.orgid\r\n"
+//		    + "    JOIN shiftassigndetails s \r\n"
+//		    + "        ON s.employeecode = ap.empcode \r\n"
+//		    + "        AND ap.checkindate BETWEEN s.effectivefrom AND s.effectiveto\r\n"
+//		    + "    JOIN shiftassign sa \r\n"
+//		    + "        ON sa.shiftassignid = s.shiftassignid AND sa.orgid = ap.orgid\r\n"
+//		    + "    WHERE ap.orgid = ?3\r\n"
+//		    + "      AND (?4 = 'ALL' OR e.branch = ?4)\r\n"
+//		    + "  AND (?5 = 'ALL' OR e.department = ?5)\r\n"
+//		    + "  AND (\r\n"
+//		    + "      ?6 = 'ALL'\r\n"
+//		    + "      OR (?6 = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
+//		    + "      OR (?6 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND e.contractor = ?7)\r\n"
+//		    + "  )\r\n"
+//		    + ""
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "matched_attendance AS (\r\n"
+//		    + "    SELECT\r\n"
+//		    + "        in_rec.empcode,\r\n"
+//		    + "        in_rec.empname,\r\n"
+//		    + "        in_rec.branch,\r\n"
+//		    + "        in_rec.department,\r\n"
+//		    + "        in_rec.shifttype AS shift_type,\r\n"
+//		    + "        in_rec.checkindate AS in_date,\r\n"
+//		    + "        in_rec.entrytime AS in_time,\r\n"
+//		    + "        out_rec.checkindate AS out_date,\r\n"
+//		    + "        out_rec.entrytime AS out_time,\r\n"
+//		    + "        in_rec.nightShift\r\n"
+//		    + "    FROM paired_attendance in_rec\r\n"
+//		    + "    JOIN paired_attendance out_rec \r\n"
+//		    + "        ON in_rec.empcode = out_rec.empcode\r\n"
+//		    + "        AND in_rec.rn = out_rec.rn\r\n"
+//		    + "        AND in_rec.status = 'IN'\r\n"
+//		    + "        AND out_rec.status = 'OUT'\r\n"
+//		    + "        AND (\r\n"
+//		    + "            (in_rec.nightShift = 0 AND in_rec.checkindate = out_rec.checkindate)\r\n"
+//		    + "            OR (in_rec.nightShift = 1 AND DATE_ADD(in_rec.checkindate, INTERVAL 1 DAY) = out_rec.checkindate)\r\n"
+//		    + "        )\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "worked_hours AS (\r\n"
+//		    + "    SELECT\r\n"
+//		    + "        empcode,\r\n"
+//		    + "        empname,\r\n"
+//		    + "        branch,\r\n"
+//		    + "        department,\r\n"
+//		    + "        shift_type,\r\n"
+//		    + "        in_date AS actual_date,\r\n"
+//		    + "           GREATEST(FLOOR(TIMESTAMPDIFF(SECOND,\r\n"
+//		    + "            STR_TO_DATE(CONCAT(in_date, ' ', in_time), '%Y-%m-%d %H:%i:%s'),\r\n"
+//		    + "            STR_TO_DATE(CONCAT(out_date, ' ', out_time), '%Y-%m-%d %H:%i:%s')\r\n"
+//		    + "        ) / 3600), 0) AS work_hours\r\n"
+//		    + "    FROM matched_attendance\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "leave_data AS (\r\n"
+//		    + "    SELECT \r\n"
+//		    + "        employeecode AS empcode,\r\n"
+//		    + "        DATE(leavedate) AS leavedate\r\n"
+//		    + "    FROM approvalleaves\r\n"
+//		    + "    WHERE orgid = ?3\r\n"
+//		    + "      AND approvestatus = 'APPROVED'\r\n"
+//		    + "      AND leavedate BETWEEN DATE(CONCAT(?2, '-', LPAD(?1, 2, '0'), '-01'))\r\n"
+//		    + "                      AND LAST_DAY(DATE(CONCAT(?2, '-', LPAD(?1, 2, '0'), '-01')))\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "all_emp_dates AS (\r\n"
+//		    + "    SELECT \r\n"
+//		    + "        DISTINCT e.employeecode AS empcode,\r\n"
+//		    + "        e.employee AS empname,\r\n"
+//		    + "        e.branch,\r\n"
+//		    + "        e.department,\r\n"
+//		    + "        s.shifttype AS shift_type,\r\n"
+//		    + "        ds.dt AS actual_date\r\n"
+//		    + "    FROM date_series ds\r\n"
+//		    + "    JOIN employee e ON e.orgid = ?3\r\n"
+//		    + "    JOIN shiftassigndetails s \r\n"
+//		    + "        ON s.employeecode = e.employeecode \r\n"
+//		    + "        AND ds.dt BETWEEN s.effectivefrom AND s.effectiveto\r\n"
+//		    + "    JOIN shiftassign sa \r\n"
+//		    + "        ON sa.shiftassignid = s.shiftassignid \r\n"
+//		    + "        AND sa.orgid = ?3\r\n"
+//		    + "    WHERE (?4 = 'ALL' OR e.branch = ?4)\r\n"
+//		    + "  AND (?5 = 'ALL' OR e.department = ?5)\r\n"
+//		    + "  AND (\r\n"
+//		    + "      ?6 = 'ALL'\r\n"
+//		    + "      OR (?6 = 'EMPLOYEE' AND e.type = 'EMPLOYEE')\r\n"
+//		    + "      OR (?6 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND e.contractor = ?7)\r\n"
+//		    + "  )\r\n"
+//		    + "\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "pivot_data AS (\r\n"
+//		    + "    SELECT \r\n"
+//		    + "        a.empcode,\r\n"
+//		    + "        a.empname,\r\n"
+//		    + "        a.branch,\r\n"
+//		    + "        a.department,\r\n"
+//		    + "        a.shift_type,\r\n"
+//		    + "        a.actual_date,\r\n"
+//		    + "        CASE \r\n"
+//		    + "            WHEN l.empcode IS NOT NULL THEN 'L'\r\n"
+//		    + "            WHEN w.work_hours IS NOT NULL THEN CAST(w.work_hours AS CHAR)\r\n"
+//		    + "            ELSE '0'\r\n"
+//		    + "        END AS worked_value\r\n"
+//		    + "    FROM all_emp_dates a\r\n"
+//		    + "    LEFT JOIN worked_hours w \r\n"
+//		    + "        ON a.empcode = w.empcode AND a.actual_date = w.actual_date\r\n"
+//		    + "    LEFT JOIN leave_data l \r\n"
+//		    + "        ON a.empcode = l.empcode AND a.actual_date = l.leavedate\r\n"
+//		    + "),\r\n"
+//		    + "\r\n"
+//		    + "final_output AS (\r\n"
+//		    + "    SELECT \r\n"
+//		    + "        empcode AS code,\r\n"
+//		    + "        empname AS name,\r\n"
+//		    + "        branch,\r\n"
+//		    + "        department,\r\n"
+//		    + "        shift_type AS shifttype,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 1 THEN worked_value END) AS day_1,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 2 THEN worked_value END) AS day_2,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 3 THEN worked_value END) AS day_3,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 4 THEN worked_value END) AS day_4,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 5 THEN worked_value END) AS day_5,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 6 THEN worked_value END) AS day_6,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 7 THEN worked_value END) AS day_7,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 8 THEN worked_value END) AS day_8,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 9 THEN worked_value END) AS day_9,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 10 THEN worked_value END) AS day_10,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 11 THEN worked_value END) AS day_11,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 12 THEN worked_value END) AS day_12,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 13 THEN worked_value END) AS day_13,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 14 THEN worked_value END) AS day_14,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 15 THEN worked_value END) AS day_15,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 16 THEN worked_value END) AS day_16,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 17 THEN worked_value END) AS day_17,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 18 THEN worked_value END) AS day_18,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 19 THEN worked_value END) AS day_19,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 20 THEN worked_value END) AS day_20,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 21 THEN worked_value END) AS day_21,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 22 THEN worked_value END) AS day_22,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 23 THEN worked_value END) AS day_23,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 24 THEN worked_value END) AS day_24,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 25 THEN worked_value END) AS day_25,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 26 THEN worked_value END) AS day_26,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 27 THEN worked_value END) AS day_27,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 28 THEN worked_value END) AS day_28,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 29 THEN worked_value END) AS day_29,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 30 THEN worked_value END) AS day_30,\r\n"
+//		    + "        MAX(CASE WHEN DAY(actual_date) = 31 THEN worked_value END) AS day_31\r\n"
+//		    + "    FROM pivot_data\r\n"
+//		    + "    GROUP BY empcode, empname, branch, department, shift_type\r\n"
+//		    + "    ORDER BY empname\r\n"
+//		    + ")\r\n"
+//		    + "\r\n"
+//		    + "SELECT * FROM final_output \r\n"
+//		    + ""
+//		)
+//	List<Map<String, Object>> findMonthlyProcess(
+//		    int month,
+//		    int year,
+//		    Long orgId,
+//		    String branch,
+//		    String department,
+//		    String type,
+//		    String contractor);
+
+//night shift almost crt
+
+	@Query(nativeQuery = true, value =
+		    "WITH filtered_employees AS (\n" +
+		    "    SELECT e.employeecode, e.employee AS empname, e.branch, e.department, e.type, e.contractor\n" +
+		    "    FROM employee e\n" +
+		    "    WHERE e.orgid = ?3\n" +
+		    "      AND (?4 = 'ALL' OR e.branch = ?4)\n" +
+		    "      AND (?5 = 'ALL' OR e.department = ?5)\n" +
+		    "      AND (?6 = 'ALL'\n" +
+		    "           OR (?6 = 'EMPLOYEE' AND e.type='EMPLOYEE')\n" +
+		    "           OR (?6 = 'CONTRACTOR' AND e.type='CONTRACTOR' AND e.contractor=?7))\n" +
+		    "),\n" +
+		    "shift_assignments AS (\n" +
+		    "    SELECT s.employeecode, s.shifttype, s.intime, s.outtime, s.effectivefrom, s.effectiveto\n" +
+		    "    FROM shiftassigndetails s\n" +
+		    "    JOIN shiftassign sa ON sa.shiftassignid = s.shiftassignid AND sa.orgid = ?3\n" +
+		    "),\n" +
+		    "date_series AS (\n" +
+		    "    SELECT DATE(CONCAT(?2,'-',LPAD(?1,2,'0'),'-01')) + INTERVAL n DAY AS checkindate\n" +
+		    "    FROM (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL\n" +
+		    "          SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL\n" +
+		    "          SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL\n" +
+		    "          SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL\n" +
+		    "          SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL\n" +
+		    "          SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL\n" +
+		    "          SELECT 24 UNION ALL SELECT 25 UNION ALL SELECT 26 UNION ALL SELECT 27 UNION ALL\n" +
+		    "          SELECT 28 UNION ALL SELECT 29 UNION ALL SELECT 30) numbers\n" +
+		    "    WHERE DATE(CONCAT(?2,'-',LPAD(?1,2,'0'),'-01')) + INTERVAL n DAY <= LAST_DAY(DATE(CONCAT(?2,'-',LPAD(?1,2,'0'),'-01')))\n" +
+		    "),\n" +
+		    "emp_dates AS (\n" +
+		    "    SELECT fe.employeecode, fe.empname, fe.branch, fe.department, d.checkindate\n" +
+		    "    FROM filtered_employees fe\n" +
+		    "    CROSS JOIN date_series d\n" +
+		    "),\n" +
+		    "attendance_filtered AS (\n" +
+		    "    SELECT ad.empcode, ad.checkindate, ad.effectivehours AS work_hours, ad.attendancemode,\n" +
+		    "           CASE WHEN LOWER(sa.shifttype)='night' THEN 1 ELSE 0 END AS nightShift\n" +
+		    "    FROM attendancedaily ad\n" +
+		    "    LEFT JOIN shift_assignments sa ON sa.employeecode = ad.empcode AND ad.checkindate BETWEEN sa.effectivefrom AND sa.effectiveto\n" +
+		    "    JOIN company c ON c.companyid = ?3 AND FIND_IN_SET(ad.attendancemode, c.attendancemode)>0\n" +
+		    "),\n" +
+		    "leave_data AS (\n" +
+		    "    SELECT employeecode AS empcode, DATE(leavedate) AS leavedate\n" +
+		    "    FROM approvalleaves\n" +
+		    "    WHERE orgid=?3 AND approvestatus='APPROVED'\n" +
+		    "      AND leavedate BETWEEN DATE(CONCAT(?2,'-',LPAD(?1,2,'0'),'-01')) AND LAST_DAY(DATE(CONCAT(?2,'-',LPAD(?1,2,'0'),'-01')))\n" +
+		    ")\n" +
+		    "SELECT ed.employeecode AS code, ed.empname AS name, ed.branch, ed.department, sa.shifttype,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=1 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_1,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=2 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_2,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=3 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_3,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=4 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_4,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=5 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_5,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=6 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_6,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=7 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_7,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=8 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_8,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=9 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_9,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=10 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_10,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=11 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_11,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=12 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_12,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=13 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_13,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=14 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_14,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=15 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_15,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=16 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_16,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=17 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_17,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=18 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_18,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=19 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_19,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=20 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_20,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=21 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_21,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=22 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_22,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=23 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_23,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=24 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_24,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=25 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_25,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=26 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_26,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=27 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_27,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=28 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_28,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=29 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_29,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=30 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_30,\n" +
+		    "      MAX(CASE WHEN DAY(ed.checkindate)=31 THEN COALESCE(CAST(af.work_hours AS CHAR), 'L') END) AS day_31\n" +
+		    "FROM emp_dates ed\n" +
+		    "LEFT JOIN shift_assignments sa ON sa.employeecode = ed.employeecode\n" +
+		    "LEFT JOIN attendance_filtered af ON af.empcode = ed.employeecode AND af.checkindate = ed.checkindate\n" +
+		    "LEFT JOIN leave_data ld ON ld.empcode = ed.employeecode AND ld.leavedate = ed.checkindate\n" +
+		    "GROUP BY ed.employeecode, ed.empname, ed.branch, ed.department, sa.shifttype\n" +
+		    "ORDER BY ed.empname;"
 		)
-	List<Map<String, Object>> findMonthlyProcess(
-		    int month,
-		    int year,
-		    Long orgId,
-		    String branch,
-		    String department,
-		    String type,
-		    String contractor);
-
-
+		List<Map<String,Object>> findMonthlyProcess(int month,int year,Long orgId,String branch,String department,String type,String contractor);
 
 
 	@Query("SELECT a FROM AttendanceProcessVO a WHERE a.empCode = :empCode AND a.orgId = :orgId AND a.branch = :branch AND a.checkInDate BETWEEN :fromDate AND :toDate ORDER BY a.checkInDate, a.entryTime")
