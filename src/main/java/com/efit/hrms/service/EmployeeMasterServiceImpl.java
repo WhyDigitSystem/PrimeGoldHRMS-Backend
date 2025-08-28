@@ -574,6 +574,11 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		return response;
 	}
 
+	@Override
+	public List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch) {
+		// TODO Auto-generated method stub
+		return salaryProcessRepo.getPendingSalaryProcessByOrgId(orgId, branch);
+	}
 	
 	@Override
 	public Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> ids, String action,

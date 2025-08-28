@@ -96,6 +96,8 @@ public interface EmployeeMasterService {
 
 	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
 
+	List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
+
 
 
 

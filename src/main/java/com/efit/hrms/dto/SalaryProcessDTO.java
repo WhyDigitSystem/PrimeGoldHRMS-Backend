@@ -27,7 +27,7 @@ public class SalaryProcessDTO {
 	private BigDecimal grossPay;
 	private BigDecimal netPay;
 	private BigDecimal payOnHand;
-	private String approvedStatus;
+//	private String approvedStatus;
 	private BigDecimal otHours;
 	private BigDecimal otAmount;
 	
