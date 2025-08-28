@@ -63,6 +63,10 @@ public class SalaryProcessVO {
 	private BigDecimal payOnHand;
 	@Column(name = "approvedstatus")
 	private String approvedStatus;
+	@Column(name = "approveby")
+	private String approveBy;
+	@Column(name = "approveon")
+	private String approveOn;
 	
 	@Column(name = "createdby")
 	private String createdBy;

@@ -30,6 +30,7 @@ import com.efit.hrms.dto.SalaryEarningDetailsDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
+import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.LeaveProcessVO;
 import com.efit.hrms.entity.PermissionRequestNotifyVO;
@@ -427,6 +428,80 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 
 	}
 
+//	@Override
+//	@Transactional
+//	public Map<String, Object> createUpdateSalaryProcess(List<SalaryProcessDTO> salaryProcessDTOList)
+//			throws ApplicationException {
+//		List<SalaryProcessVO> savedSalaryProcessVOs = new ArrayList<>();
+//		Map<String, Object> response = new LinkedHashMap<>(); // Preserve order
+//		String message = null;
+//		for (SalaryProcessDTO salaryProcessDTO : salaryProcessDTOList) {
+//			final SalaryProcessVO salaryProcessVO; // Declare final reference
+//
+//			if (salaryProcessDTO.getId() != null) {
+//				// If ID is provided, check if it exists
+//				salaryProcessVO = salaryProcessRepo.findById(salaryProcessDTO.getId())
+//						.orElseThrow(() -> new ApplicationException(
+//								"Error: SalaryProcess ID " + salaryProcessDTO.getId() + " not found!"));
+//
+//				// Updating existing record
+//				salaryProcessVO.setUpdatedBy(salaryProcessDTO.getCreatedBy());
+//				message = "Salary Process updated Successfully";
+//			} else {
+//				// Creating new record
+//				salaryProcessVO = new SalaryProcessVO();
+//				salaryProcessVO.setCreatedBy(salaryProcessDTO.getCreatedBy());
+//				salaryProcessVO.setUpdatedBy(salaryProcessDTO.getCreatedBy());
+//				message = "Salary Process Created Successfully";
+//
+//			}
+//
+//			// Set other fields
+//			if ("APPROVED".equalsIgnoreCase(salaryProcessDTO.getApprovedStatus())) {
+//				salaryProcessVO.setMonth(salaryProcessDTO.getMonth());
+//				salaryProcessVO.setYear(salaryProcessDTO.getYear());
+//				salaryProcessVO.setEmployeeName(salaryProcessDTO.getEmployeeName());
+//				salaryProcessVO.setEmployeeCode(salaryProcessDTO.getEmployeeCode());
+//				salaryProcessVO.setTotalCompanyWorkingDays(salaryProcessDTO.getTotalCompanyWorkingDays());
+//				salaryProcessVO.setTotalLeave(salaryProcessDTO.getTotalLeave());
+//				salaryProcessVO.setLopLeave(salaryProcessDTO.getLopLeave());
+//				salaryProcessVO.setEmpTotalWorkingDays(salaryProcessDTO.getEmpTotalWorkingDays());
+//				salaryProcessVO.setEmpSalaryDays(salaryProcessDTO.getEmpSalaryDays());
+//				salaryProcessVO.setApprovedStatus(salaryProcessDTO.getApprovedStatus());
+//
+//				salaryProcessVO.setGrossPay(salaryProcessDTO.getGrossPay());
+//				salaryProcessVO.setNetPay(salaryProcessDTO.getNetPay());
+//				salaryProcessVO.setPayOnHand(salaryProcessDTO.getPayOnHand());
+//				salaryProcessVO.setOtHours(salaryProcessDTO.getOtHours());
+//				salaryProcessVO.setOtAmount(salaryProcessDTO.getOtAmount());
+//				salaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
+//				salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
+//				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
+//
+//				List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
+//						salaryProcessDTO.getEmployeeCode(), salaryProcessDTO.getOrgId(), salaryProcessDTO.getMonth(),
+//						salaryProcessDTO.getYear());
+//
+//				for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
+//					leaveProcessVO.setApprovedStatus("APPROVED");
+//				}
+//				leaveProcessRepo.saveAll(leaveProcessVOList);
+//
+//				// Save Parent Record
+//				SalaryProcessVO savedSalaryProcessVO = salaryProcessRepo.save(salaryProcessVO);
+//				savedSalaryProcessVOs.add(savedSalaryProcessVO);
+//			}
+//		}
+//
+//		// Response map
+//		response.put("message", message);
+//		response.put("salaryProcessVOs", savedSalaryProcessVOs);
+////	    response.put("approvedSalaryProcessVOs", approvedSalaryProcessVOs);
+//
+//		return response;
+//	}
+
+	
 	@Override
 	@Transactional
 	public Map<String, Object> createUpdateSalaryProcess(List<SalaryProcessDTO> salaryProcessDTOList)
@@ -456,7 +531,6 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			}
 
 			// Set other fields
-			if ("APPROVED".equalsIgnoreCase(salaryProcessDTO.getApprovedStatus())) {
 				salaryProcessVO.setMonth(salaryProcessDTO.getMonth());
 				salaryProcessVO.setYear(salaryProcessDTO.getYear());
 				salaryProcessVO.setEmployeeName(salaryProcessDTO.getEmployeeName());
@@ -466,23 +540,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setLopLeave(salaryProcessDTO.getLopLeave());
 				salaryProcessVO.setEmpTotalWorkingDays(salaryProcessDTO.getEmpTotalWorkingDays());
 				salaryProcessVO.setEmpSalaryDays(salaryProcessDTO.getEmpSalaryDays());
-				salaryProcessVO.setApprovedStatus(salaryProcessDTO.getApprovedStatus());
-
-				// Per-day salary calculation
-//	        BigDecimal grossPay = salaryProcessDTO.getGrossPay();
-//	        Long totalCompanyWorkingDays = salaryProcessDTO.getTotalCompanyWorkingDays();
-//	        Long empSalaryDays = salaryProcessDTO.getEmpSalaryDays();
-//
-//	        BigDecimal perDaySalary = BigDecimal.ZERO;
-//	        BigDecimal netPay = BigDecimal.ZERO;
-//
-//	        if (grossPay != null && totalCompanyWorkingDays != null && totalCompanyWorkingDays > 0) {
-//	            perDaySalary = grossPay.divide(BigDecimal.valueOf(totalCompanyWorkingDays), 2, RoundingMode.HALF_UP);
-//
-//	            if (empSalaryDays != null) {
-//	                netPay = perDaySalary.multiply(BigDecimal.valueOf(empSalaryDays));
-//	            }
-//	        }
+				salaryProcessVO.setApprovedStatus("PENDING");
 
 				salaryProcessVO.setGrossPay(salaryProcessDTO.getGrossPay());
 				salaryProcessVO.setNetPay(salaryProcessDTO.getNetPay());
@@ -493,60 +551,19 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
 
-				List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
-						salaryProcessDTO.getEmployeeCode(), salaryProcessDTO.getOrgId(), salaryProcessDTO.getMonth(),
-						salaryProcessDTO.getYear());
-
-				for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
-					leaveProcessVO.setApprovedStatus("APPROVED");
-				}
-				leaveProcessRepo.saveAll(leaveProcessVOList);
+//				List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
+//						salaryProcessDTO.getEmployeeCode(), salaryProcessDTO.getOrgId(), salaryProcessDTO.getMonth(),
+//						salaryProcessDTO.getYear());
+//
+//				for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
+//					leaveProcessVO.setApprovedStatus("APPROVED");
+//				}
+//				leaveProcessRepo.saveAll(leaveProcessVOList);
 
 				// Save Parent Record
 				SalaryProcessVO savedSalaryProcessVO = salaryProcessRepo.save(salaryProcessVO);
 				savedSalaryProcessVOs.add(savedSalaryProcessVO);
-			}
-			// Handle approved status
-//	        if ("APPROVED".equalsIgnoreCase(salaryProcessDTO.getApprovedStatus())) {
-//	            ApprovedSalaryProcessVO approvedSalaryProcessVO = new ApprovedSalaryProcessVO();
-//	            approvedSalaryProcessVO.setMonth(salaryProcessDTO.getMonth());
-////	            approvedSalaryProcessVO.setYear(salaryProcessDTO.getYear());
-//	            approvedSalaryProcessVO.setEmployeeName(salaryProcessDTO.getEmployeeName());
-//	            approvedSalaryProcessVO.setEmployeeCode(salaryProcessDTO.getEmployeeCode());
-//	            approvedSalaryProcessVO.setTotalCompanyWorkingDays(salaryProcessDTO.getTotalCompanyWorkingDays());
-//	            approvedSalaryProcessVO.setTotalLeave(salaryProcessDTO.getTotalLeave());
-//	            approvedSalaryProcessVO.setLopLeave(salaryProcessDTO.getLopLeave());
-//	            approvedSalaryProcessVO.setEmpTotalWorkingDays(salaryProcessDTO.getEmpTotalWorkingDays());
-//	            approvedSalaryProcessVO.setEmpSalaryDays(salaryProcessDTO.getEmpSalaryDays());
-//	            approvedSalaryProcessVO.setApprovedStatus(salaryProcessDTO.getApprovedStatus());
-//	            approvedSalaryProcessVO.setGrossPay(salaryProcessDTO.getGrossPay());
-//	            approvedSalaryProcessVO.setNetPay(salaryProcessDTO.getNetPay());
-//
-//	            if (salaryProcessDTO.getId() != null) {
-//	                approvedSalaryProcessVO.setUpdatedBy(salaryProcessDTO.getCreatedBy());
-//	            } else {
-//	                approvedSalaryProcessVO.setCreatedBy(salaryProcessDTO.getCreatedBy());
-//	                approvedSalaryProcessVO.setUpdatedBy(salaryProcessDTO.getCreatedBy());
-//	            }
-//	            approvedSalaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
-//	            approvedSalaryProcessVO.setBranch(salaryProcessDTO.getBranch());
-//	            approvedSalaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
-//	            
-//	            
-//	            List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(salaryProcessDTO.getEmployeeCode(),salaryProcessDTO.getOrgId(),salaryProcessDTO.getMonth(),salaryProcessDTO.getYear());
-//
-//	            for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
-//	                leaveProcessVO.setApprovedStatus("APPROVED");
-//	            }
-//
-//	            // If you need to save the updated entities back to the database
-//	            leaveProcessRepo.saveAll(leaveProcessVOList);
-//
-//	            
-//	            
-//	            approvedSalaryProcessRepo.save(approvedSalaryProcessVO);
-//	            approvedSalaryProcessVOs.add(approvedSalaryProcessVO);
-//	        }
+			
 		}
 
 		// Response map
@@ -557,6 +574,64 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		return response;
 	}
 
+	
+	@Override
+	public Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> ids, String action,
+			String actionBy) throws ApplicationException {
+		List<SalaryProcessVO> updatedList = new ArrayList<>();
+		String message = "";
+
+		for (Long id : ids) {
+			SalaryProcessVO salaryProcessVO = salaryProcessRepo.findById(id)
+					.orElseThrow(() -> new ApplicationException("Invalid SalaryProcess ID: " + id));
+
+			String currentStatus = salaryProcessVO.getApprovedStatus();
+
+			if (currentStatus == null
+					|| (!currentStatus.equalsIgnoreCase("APPROVED") && !currentStatus.equalsIgnoreCase("REJECTED"))) {
+
+				if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
+					salaryProcessVO.setApprovedStatus(action.toUpperCase());
+					salaryProcessVO.setApproveBy(actionBy);
+
+					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+					salaryProcessVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
+
+					List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
+							salaryProcessVO.getEmployeeCode(), salaryProcessVO.getOrgId(), salaryProcessVO.getMonth(),
+							salaryProcessVO.getYear());
+
+					for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
+						leaveProcessVO.setApprovedStatus("APPROVED");
+					}
+					leaveProcessRepo.saveAll(leaveProcessVOList);
+					
+					updatedList.add(salaryProcessVO);
+				}
+			} else if ("APPROVED".equalsIgnoreCase(currentStatus)) {
+				throw new ApplicationException(
+						"AttendanceSummary already approved for employee: " + salaryProcessVO.getEmployeeCode());
+			} else if ("REJECTED".equalsIgnoreCase(currentStatus)) {
+				throw new ApplicationException(
+						"AttendanceSummary already rejected for employee: " + salaryProcessVO.getEmployeeCode());
+			}
+		}
+
+		salaryProcessRepo.saveAll(updatedList);
+
+		if ("APPROVED".equalsIgnoreCase(action)) {
+			message = "SalaryProcess Approved Successfully";
+		} else if ("REJECTED".equalsIgnoreCase(action)) {
+			message = "SalaryProcess Rejected Successfully";
+		}
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("salaryProcessVO", updatedList);
+		response.put("message", message);
+		return response;
+	}
+
+	
 	@Override
 	public List<SalaryProcessVO> getAllSalaryProcessByOrgId(Long orgId) {
 		return Optional.ofNullable(salaryProcessRepo.getAllSalaryProcessByOrgId(orgId))

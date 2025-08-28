@@ -480,6 +480,34 @@ public class EmployeeMasterController extends BaseController{
 	    return ResponseEntity.ok(responseDTO);
 	}
 
+	@PutMapping("/createApprovalSalaryProcess")
+	public ResponseEntity<ResponseDTO> createApprovalSalaryProcess(@RequestParam Long orgId, @RequestParam List<Long> id,@RequestParam String action, @RequestParam String actionBy) {
+		String methodName = "createApprovalSalaryProcess()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		try {
+			Map<String, Object> salaryProcessVO = employeeMasterService.createApprovalSalaryProcess(
+	                orgId, id, action, actionBy);
+
+	        // ✅ Unwrap values
+	        Object salaryProcessVOs = salaryProcessVO.get("salaryProcessVO");
+	        String message = (String) salaryProcessVO.getOrDefault("message", "SalaryProcess Approved Successfully");
+
+	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO);
+	        responseObjectsMap.put("message", message);
+
+	        responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
 	@GetMapping("/getAllSalaryProcessByOrgId")
 	public ResponseEntity<ResponseDTO> getAllSalaryProcessByOrgId(@RequestParam Long orgId) {
 	    String methodName = "getAllSalaryProcessByOrgId()";
