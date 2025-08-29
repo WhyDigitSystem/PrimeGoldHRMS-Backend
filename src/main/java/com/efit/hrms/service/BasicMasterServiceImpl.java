@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -2366,38 +2364,39 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 		values.put("seq", paddedSeq);
 
 		// Step 4: Replace pattern dynamically
-		String code = resolvePatternWithSmartSkipping(config.getCodePattern(), values);
+//		String code = resolvePatternWithSmartSkipping(config.getCodePattern(), values);
+		String code =null;
 		System.out.println("EmployeeCode: " + code);
 		return code;
 	}
 
-	private String resolvePatternWithSmartSkipping(String pattern, Map<String, Object> values) {
-		Pattern regex = Pattern.compile("\\$\\{(.*?)}");
-		Matcher matcher = regex.matcher(pattern);
-
-		StringBuilder result = new StringBuilder();
-		int lastIndex = 0;
-		while (matcher.find()) {
-			String placeholder = matcher.group(1); // e.g., companyCode
-			Object value = values.get(placeholder);
-
-			// Extract separator text before placeholder
-			String separator = pattern.substring(lastIndex, matcher.start());
-
-			// Include only if value is not zero
-			if (value != null && !(value instanceof Integer && (Integer) value == 0)) {
-				result.append(separator).append(value);
-			}
-
-			lastIndex = matcher.end();
-		}
-
-		// Append trailing part after last placeholder
-		result.append(pattern.substring(lastIndex));
-
-		// Optional cleanup
-		return result.toString().replaceAll("[-_/\\.]{2,}", "-") // prevent multiple symbols
-				.replaceAll("^[-_/\\.]+|[-_/\\.]+$", ""); // trim ends
-	}
+//	private String resolvePatternWithSmartSkipping(String pattern, Map<String, Object> values) {
+//		Pattern regex = Pattern.compile("\\$\\{(.*?)}");
+//		Matcher matcher = regex.matcher(pattern);
+//
+//		StringBuilder result = new StringBuilder();
+//		int lastIndex = 0;
+//		while (matcher.find()) {
+//			String placeholder = matcher.group(1); // e.g., companyCode
+//			Object value = values.get(placeholder);
+//
+//			// Extract separator text before placeholder
+//			String separator = pattern.substring(lastIndex, matcher.start());
+//
+//			// Include only if value is not zero
+//			if (value != null && !(value instanceof Integer && (Integer) value == 0)) {
+//				result.append(separator).append(value);
+//			}
+//
+//			lastIndex = matcher.end();
+//		}
+//
+//		// Append trailing part after last placeholder
+//		result.append(pattern.substring(lastIndex));
+//
+//		// Optional cleanup
+//		return result.toString().replaceAll("[-_/\\.]{2,}", "-") // prevent multiple symbols
+//				.replaceAll("^[-_/\\.]+|[-_/\\.]+$", ""); // trim ends
+//	}
 
 }
