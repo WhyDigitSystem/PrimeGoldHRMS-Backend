@@ -167,6 +167,9 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		shiftMasterVO.setBranchCode(shiftMasterDTO.getBranchCode());
 		shiftMasterVO.setBranch(shiftMasterDTO.getBranch());
 		shiftMasterVO.setFinYear(shiftMasterDTO.getFinYear());
+		shiftMasterVO.setHalfDayHours(shiftMasterDTO.getHalfDayHours());
+		shiftMasterVO.setFullDayHours(shiftMasterDTO.getFullDayHours());
+
 
 		shiftMasterVO.setActive(shiftMasterDTO.isActive());
 
