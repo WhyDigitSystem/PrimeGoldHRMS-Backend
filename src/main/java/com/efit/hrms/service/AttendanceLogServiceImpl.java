@@ -95,6 +95,7 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 		}
 		return attendance;
 	}
+
 	
 	
 	

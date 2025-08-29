@@ -48,11 +48,17 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //		Set<Object[]> getNetPayForSalaryProcess(BigDecimal grossPay, BigDecimal sumOfDetection);
 
 
-	@Query(value = "SELECT ROUND(((CAST(?2 AS DECIMAL) / CAST(?1 AS DECIMAL)) * CAST(?3 AS DECIMAL) - CAST(?4 AS DECIMAL)) + CAST(?5 AS DECIMAL), 2) AS payonhand", 
+	@Query(value = "	SELECT ROUND(((CAST(?2 AS DECIMAL(10,2)) - CAST(?4 AS DECIMAL(10,2)))\r\n"
+			+ "            / CAST(?1 AS DECIMAL(10,2))\r\n"
+			+ "        ) * CAST(?3 AS DECIMAL(10,2))\r\n"
+			+ "        + CAST(?5 AS DECIMAL(10,2)),\r\n"
+			+ "        2\r\n"
+			+ "    ) AS payOnHand "
+			+ "", 
 		       nativeQuery = true)
-	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, Long empSalaryDays,
+	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, BigDecimal empSalaryDays,
 			BigDecimal sumOfDetection, BigDecimal otAmount);
-	
+
 	
 
 	@Query(nativeQuery = true, value = "SELECT * \r\n"
@@ -385,6 +391,16 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 		               "WHERE s.orgid = ?1 AND s.employeecode = ?2 AND s.month = ?3 AND s.year = ?4",
 		       nativeQuery = true)
 		Set<BigDecimal> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long month, String year);
+
+			
+			@Query(nativeQuery = true, value = 
+				    "SELECT * " +
+				    "FROM salaryprocess a " +
+				    "WHERE a.orgid = ?1 " +
+				    "  AND (UPPER(?2) = 'ALL' OR UPPER(a.branch) = UPPER(?2)) " +
+				    "AND a.approvedstatus = 'PENDING'"
+				)
+			List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
 
 
 

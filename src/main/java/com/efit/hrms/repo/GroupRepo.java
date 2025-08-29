@@ -22,4 +22,17 @@ public interface GroupRepo extends JpaRepository<GroupVO, Long> {
 
 	List<GroupVO> findByGroupNameAndOrgIdAndBranchCode(String groupName, Long orgId, String branchCode);
 
+	
+	@Query(value = "SELECT e.employeecode, e.employee,e.department" +
+            " FROM employee e " +
+            "WHERE e.orgid = ?1 " +
+            "  AND (?2 = 'ALL' OR e.branch = ?2) " +
+            "  AND (?3 = 'ALL' OR e.department = ?3) " +
+            "  AND ( ?4 = 'ALL' " +
+            "        OR (?4 = 'EMPLOYEE' AND e.type = 'EMPLOYEE') " +
+            "        OR (?4 = 'CONTRACTOR' AND e.type = 'CONTRACTOR' AND (?5 IS NULL OR e.contractor = ?5)) " +
+            "      )", nativeQuery = true)
+	List<Object[]> getEmployeeNameForGroupMaster(Long orgId, String branch, String department, String type,
+			String contractor);
+
 }

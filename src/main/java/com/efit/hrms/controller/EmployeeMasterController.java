@@ -30,6 +30,7 @@ import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
+import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.PermissionRequestVO;
 import com.efit.hrms.entity.SalaryHeadsVO;
@@ -508,6 +509,35 @@ public class EmployeeMasterController extends BaseController{
 		return ResponseEntity.ok().body(responseDTO);
 	}
 	
+	
+	@GetMapping("getPendingSalaryProcessByOrgId")
+	public ResponseEntity<ResponseDTO> getPendingSalaryProcessByOrgId(@RequestParam Long orgId,@RequestParam String branch) {
+		String methodName = "getPendingSalaryProcessByOrgId()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<SalaryProcessVO> salaryProcessVO = null;
+		try {
+			salaryProcessVO = employeeMasterService.getPendingSalaryProcessByOrgId(  orgId,   branch);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isEmpty(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Pending SalaryProcess found by ORGID");
+			responseObjectsMap.put("salaryProcessVO", salaryProcessVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			errorMsg = "SalaryProcess not found for orgID: " + orgId;
+			responseDTO = createServiceResponseError(responseObjectsMap, "Pending SalaryProcess not found", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+ 
+ 
+	
 	@GetMapping("/getAllSalaryProcessByOrgId")
 	public ResponseEntity<ResponseDTO> getAllSalaryProcessByOrgId(@RequestParam Long orgId) {
 	    String methodName = "getAllSalaryProcessByOrgId()";
@@ -685,7 +715,7 @@ public class EmployeeMasterController extends BaseController{
 	
 	@GetMapping("/getPayOnHandsForSalaryProcess")
 	public ResponseEntity<ResponseDTO> getPayOnHandsForSalaryProcess(
-	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam BigDecimal empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
 
 	    String methodName = "getPayOnHandsForSalaryProcess()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);

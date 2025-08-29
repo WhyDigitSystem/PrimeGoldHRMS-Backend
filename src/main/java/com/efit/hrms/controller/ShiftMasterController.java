@@ -506,6 +506,30 @@ public class ShiftMasterController extends BaseController{
 		return ResponseEntity.ok().body(responseDTO);
 	}
 	
+	@GetMapping("/getEmployeeNameForGroupMaster")
+	public ResponseEntity<ResponseDTO> getEmployeeNameForGroupMaster(@RequestParam Long orgId,@RequestParam String department,@RequestParam String branch,@RequestParam String type,@RequestParam(required=false) String contractor) {
+
+		String methodName = "getEmployeeNameForGroupMaster()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO;
+		List<Map<String, Object>> groupMaster;
+
+		try {
+			groupMaster = shiftMasterService.getEmployeeNameForGroupMaster( orgId,department,branch,type,contractor);
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Employee Details details retrieved successfully");
+			responseObjectsMap.put("employeeVO", groupMaster); // ✅ Correct key name
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			String errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve Employee Details details", errorMsg);
+		}
+
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
 	
 	//groupsalarystructure
 	

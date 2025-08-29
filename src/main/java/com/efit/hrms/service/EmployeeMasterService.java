@@ -67,7 +67,7 @@ public interface EmployeeMasterService {
 //			BigDecimal sumOfDetection);
 
 	List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			Long empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
+			BigDecimal empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	//ApprovedSalaryProcess Report
 	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year);
@@ -95,6 +95,8 @@ public interface EmployeeMasterService {
 			BigDecimal sumOfEarnings);
 
 	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
+
+	List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
 
 
 
