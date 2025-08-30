@@ -63,7 +63,7 @@ public interface ShiftMasterService {
 
 	Optional<GroupVO> getPreGroupById(Long id);
 	
-	List<Map<String, Object>> getEmployeeNameForGroupMaster(Long orgId, String department, String branch, String type,
+	List<Map<String, Object>> getEmployeeNameForGroupMaster(Long orgId, String branch, String department, String type,
 			String contractor);
 	
 	//GroupSalaryStructure

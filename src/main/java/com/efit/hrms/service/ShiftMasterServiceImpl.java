@@ -516,6 +516,9 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 	private GroupVO getGroupDTOFormGroupDTO(GroupVO groupVO, GroupDTO groupDTO) throws ApplicationException {
 
 		groupVO.setGroupName(groupDTO.getGroupName());
+		groupVO.setDepartment(groupDTO.getDepartment());
+		groupVO.setType(groupDTO.getType());
+		groupVO.setContractor(groupDTO.getContractor());
 		groupVO.setCancelRemark(groupDTO.getCancelRemark());
 		groupVO.setFinYear(groupDTO.getFinYear());
 		groupVO.setOrgId(groupDTO.getOrgId());
@@ -566,9 +569,9 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 
 		for (Object[] record : result) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("employeeName", record[0] != null ? record[0].toString() : "");
-			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
-			map.put("department", record[1] != null ? record[1].toString() : "");
+			map.put("employeeName", record[1] != null ? record[1].toString() : "");
+			map.put("employeeCode", record[0] != null ? record[0].toString() : "");
+			map.put("department", record[2] != null ? record[2].toString() : "");
 
 			detailsList.add(map);
 		}
