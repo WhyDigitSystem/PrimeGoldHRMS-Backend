@@ -290,25 +290,35 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	    }
 
 	    // Save Salary Earning Details
-	    List<SalaryEarningDetailsVO> salaryEarningDetailsVOs = salaryStructureDTO.getSalaryEarningDetailsDTO().stream()
-	            .map(dto -> {
-	                SalaryEarningDetailsVO vo = new SalaryEarningDetailsVO();
-	                vo.setHeading(dto.getHeading());
-	                vo.setAmount(dto.getAmount());
-	                vo.setSalaryStructureVO(savedSalaryStructureVO);
-	                return vo;
-	            }).collect(Collectors.toList());
+	    List<SalaryEarningDetailsVO> salaryEarningDetailsVOs =
+	            salaryStructureDTO.getSalaryEarningDetailsDTO().stream()
+	                .filter(dto -> dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0)
+	                .map(dto -> {
+	                    SalaryEarningDetailsVO vo = new SalaryEarningDetailsVO();
+	                    vo.setHeading(dto.getHeading());
+	                    vo.setAmount(dto.getAmount());
+	                    vo.setSalaryStructureVO(savedSalaryStructureVO);
+	                    return vo;
+	                })
+	                .collect(Collectors.toList());
+
+	    salaryEarningDetailsRepo.saveAll(salaryEarningDetailsVOs);
+
 	    salaryEarningDetailsRepo.saveAll(salaryEarningDetailsVOs);
 
 	    // Save Salary Deduction Details
-	    List<SalaryDetectionDetailsVO> salaryDetectionDetailsVOs = salaryStructureDTO.getSalaryDetectionDetailsDTO().stream()
-	            .map(dto -> {
-	                SalaryDetectionDetailsVO vo = new SalaryDetectionDetailsVO();
-	                vo.setHeading(dto.getHeading());
-	                vo.setAmount(dto.getAmount());
-	                vo.setSalaryStructureVO(savedSalaryStructureVO);
-	                return vo;
-	            }).collect(Collectors.toList());
+	    List<SalaryDetectionDetailsVO> salaryDetectionDetailsVOs =
+	            salaryStructureDTO.getSalaryDetectionDetailsDTO().stream()
+	                .filter(dto -> dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0)
+	                .map(dto -> {
+	                    SalaryDetectionDetailsVO vo = new SalaryDetectionDetailsVO();
+	                    vo.setHeading(dto.getHeading());
+	                    vo.setAmount(dto.getAmount());
+	                    vo.setSalaryStructureVO(savedSalaryStructureVO);
+	                    return vo;
+	                })
+	                .collect(Collectors.toList());
+
 	    salaryDetectionDetailsRepo.saveAll(salaryDetectionDetailsVOs);
 
 	    // Attach Parent and Child Data in Response
