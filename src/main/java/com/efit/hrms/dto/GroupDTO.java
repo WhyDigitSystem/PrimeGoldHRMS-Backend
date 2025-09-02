@@ -16,6 +16,11 @@ public class GroupDTO {
 	private Long id;
 
 	private String groupName;
+	
+	private String department;
+	private String type;
+	private String contractor;
+	
 	private String createdBy;
 	private Long orgId;
 	private String cancelRemark;

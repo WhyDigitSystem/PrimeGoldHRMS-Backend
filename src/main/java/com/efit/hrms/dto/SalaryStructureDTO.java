@@ -28,7 +28,7 @@ public class SalaryStructureDTO {
 	private BigDecimal amount;
 	private BigDecimal sumOfEarning;
 	private BigDecimal sumOfDetection;
-//	private LocalDate date;
+
 
 
 	private String createdBy;

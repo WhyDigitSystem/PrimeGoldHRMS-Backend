@@ -37,6 +37,13 @@ public class GroupVO {
 	@Column(name = "groupname")
 	private String groupName;
 	
+	@Column(name = "department")
+	private String department;
+	@Column(name = "type")
+	private String type;
+	@Column(name = "contractor")
+	private String contractor;
+	
 	@Column(name = "createdby",length = 30)
 	private String createdBy;
 	@Column(name = "modifiedby",length = 30)

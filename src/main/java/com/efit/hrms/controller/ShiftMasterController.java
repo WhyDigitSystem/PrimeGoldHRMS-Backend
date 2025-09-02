@@ -507,7 +507,7 @@ public class ShiftMasterController extends BaseController{
 	}
 	
 	@GetMapping("/getEmployeeNameForGroupMaster")
-	public ResponseEntity<ResponseDTO> getEmployeeNameForGroupMaster(@RequestParam Long orgId,@RequestParam String department,@RequestParam String branch,@RequestParam String type,@RequestParam(required=false) String contractor) {
+	public ResponseEntity<ResponseDTO> getEmployeeNameForGroupMaster(@RequestParam Long orgId,@RequestParam String branch,@RequestParam String department,@RequestParam String type,@RequestParam(required=false) String contractor) {
 
 		String methodName = "getEmployeeNameForGroupMaster()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -517,7 +517,7 @@ public class ShiftMasterController extends BaseController{
 		List<Map<String, Object>> groupMaster;
 
 		try {
-			groupMaster = shiftMasterService.getEmployeeNameForGroupMaster( orgId,department,branch,type,contractor);
+			groupMaster = shiftMasterService.getEmployeeNameForGroupMaster( orgId,branch,department,type,contractor);
 			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Employee Details details retrieved successfully");
 			responseObjectsMap.put("employeeVO", groupMaster); // ✅ Correct key name
 			responseDTO = createServiceResponse(responseObjectsMap);
