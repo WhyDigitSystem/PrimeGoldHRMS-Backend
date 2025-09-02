@@ -4,69 +4,74 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.efit.hrms.entity.AttendanceLogVO;
 
 public interface AttendanceLogRepo extends JpaRepository<AttendanceLogVO, Long> {
 
-	@Query(nativeQuery = true, value = "SELECT \r\n"
-			+ "    employeecode,\r\n"
-			+ "    employeename,\r\n"
-			+ "    departmentname,\r\n"
-			+ "    designation,\r\n"
-			+ "    attendancestatus,\r\n"
+	@Query(nativeQuery = true, value = "SELECT\r\n"
+			+ "    a.employeecode,\r\n"
+			+ "    a.employeename,\r\n"
+			+ "    b.SubDepartment,\r\n"
+			+ "    a.designation,\r\n"
+			+ "    a.attendancestatus,\r\n"
 			+ "    CASE \r\n"
-			+ "        WHEN outdevice = 'SE' THEN 'Yes' \r\n"
+			+ "        WHEN a.outdevice = 'SE' THEN 'Yes' \r\n"
 			+ "        ELSE 'No' \r\n"
 			+ "    END AS misspunch,\r\n"
-			+ "    DATE_FORMAT(intime, '%H:%i') AS intime,\r\n"
+			+ "    DATE_FORMAT(a.intime, '%H:%i') AS intime,\r\n"
 			+ "    CASE \r\n"
-			+ "        WHEN outdevice = 'SE' THEN '00:00'\r\n"
-			+ "        ELSE DATE_FORMAT(outtime, '%H:%i')\r\n"
+			+ "        WHEN a.outdevice = 'SE' THEN '00:00'\r\n"
+			+ "        ELSE DATE_FORMAT(a.outtime, '%H:%i')\r\n"
 			+ "    END AS outtime\r\n"
-			+ "FROM attendancelog \r\n"
-			+ "WHERE attendancedate = ?1\r\n"
-			+ "  AND departmentname = ?2\r\n"
+			+ "FROM attendancelog a,employeemaster b\r\n"
+			+ "WHERE a.employeecode=b.employeecode and a.attendancedate = ?1\r\n"
+			+ "  AND b.SubDepartment=?2\r\n"
 			+ "  AND (\r\n"
-			+ "        (?3 = 'Employee' AND employeecode LIKE 'PGH%')\r\n"
-			+ "     OR (?3 = 'Contract' AND employeecode LIKE 'CPGH%')\r\n"
+			+ "        (?3 = 'Employee' AND a.employeecode LIKE 'PGH%')\r\n"
+			+ "     OR (?3 = 'Contract' AND a.employeecode LIKE 'CPGH%')\r\n"
 			+ "  )\r\n"
-			+ "  AND (attendancestatus = ?4 OR ?4 = 'ALL')\r\n"
-			+ "  AND ( (CASE WHEN outdevice = 'SE' THEN 'Yes' ELSE 'No' END) = ?5 OR ?5 = 'ALL')\r\n"
-			+ "ORDER BY employeecode ASC")
+			+ "  AND (a.attendancestatus = ?4 OR ?4 = 'ALL')\r\n"
+			+ "  AND ((CASE WHEN a.outdevice = 'SE' THEN 'Yes' ELSE 'No' END) = ?5 OR ?5 = 'ALL')\r\n"
+			+ "ORDER BY a.employeecode, DATE_FORMAT(a.intime, '%H:%i') ASC")
 	Set<Object[]> getEmployeeAttendance(String date, String department, String employeeType, String status,
 			String missPunch);
 
-	@Query(value = "\r\n" + "	        WITH departmentmapping AS (\r\n"
-			+ "	            SELECT a.departmentname AS maindepartmentname,\r\n"
-			+ "	                   b.departmentname AS subdepartmentname\r\n"
-			+ "	            FROM maindepartment a\r\n"
-			+ "	            JOIN subdepartment b ON a.maindepartmentid = b.maindepartmentid\r\n" + "	        )\r\n"
-			+ "	        SELECT m.maindepartmentname, \r\n"
-			+ "	               SUM(CASE WHEN a.attendancestatus = 'Present ' THEN 1 ELSE 0 END) AS present_count,\r\n"
-			+ "	               SUM(CASE WHEN a.attendancestatus = 'Absent' THEN 1 ELSE 0 END) AS absent_count,\r\n"
-			+ "	               SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count\r\n"
-			+ "	        FROM attendancelog a\r\n"
-			+ "	        JOIN departmentmapping m ON a.departmentname = m.subdepartmentname\r\n"
-			+ "	        WHERE a.attendancedate = :date\r\n" + "	          AND (\r\n"
-			+ "	                (:empType = 'Employee' AND a.employeecode LIKE 'PGH%')\r\n"
-			+ "	             OR (:empType = 'Contract' AND a.employeecode LIKE 'CPGH%')\r\n" + "	          )\r\n"
-			+ "	        GROUP BY m.maindepartmentname\r\n" + "	        ", nativeQuery = true)
+	@Query(value = "SELECT m.Department, \r\n"
+			+ "       SUM(CASE WHEN a.attendancestatus = 'Present' THEN 1 ELSE 0 END) AS present_count,\r\n"
+			+ "       SUM(CASE WHEN a.attendancestatus = 'Absent' THEN 1 ELSE 0 END) AS absent_count,\r\n"
+			+ "       SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count\r\n"
+			+ "FROM  attendancelog a ,employeemaster m where a.employeecode=m.employeecode\r\n"
+			+ "      AND a.attendancedate = ?1\r\n"
+			+ "      AND (\r\n"
+			+ "            (?2 = 'Employee' AND a.employeecode LIKE 'PGH%')\r\n"
+			+ "         OR (?2 = 'Contract' AND a.employeecode LIKE 'CPGH%')\r\n"
+			+ "      )\r\n"
+			+ "GROUP BY m.Department", nativeQuery = true)
 	List<Object[]> getMainDepartments(@Param("date") String date, @Param("empType") String empType);
 
-	@Query(value = "SELECT departmentname, \r\n"
-			+ "               SUM(CASE WHEN attendancestatus = 'Present ' THEN 1 ELSE 0 END) AS present_count,\r\n"
-			+ "               SUM(CASE WHEN attendancestatus = 'Absent' THEN 1 ELSE 0 END) AS absent_count,\r\n"
-			+ "               SUM(CASE WHEN outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count\r\n"
-			+ "        FROM attendancelog\r\n"
-			+ "        WHERE attendancedate = :date\r\n"
-			+ "          AND (\r\n"
-			+ "                (:empType = 'Employee' AND employeecode LIKE 'PGH%')\r\n"
-			+ "             OR (:empType = 'Contract' AND employeecode LIKE 'CPGH%')\r\n"
-			+ "          )\r\n"
-			+ "        GROUP BY departmentname", nativeQuery = true)
+	@Query(value = "SELECT b.SubDepartment,\r\n"
+			+ "       SUM(CASE WHEN a.attendancestatus = 'Present' THEN 1 ELSE 0 END) AS present_count,\r\n"
+			+ "       SUM(CASE WHEN a.attendancestatus = 'Absent' THEN 1 ELSE 0 END) AS absent_count,\r\n"
+			+ "       SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count\r\n"
+			+ "FROM attendancelog a\r\n"
+			+ "JOIN employeemaster b ON a.employeecode = b.Employeecode\r\n"
+			+ "WHERE a.attendancedate = ?1\r\n"
+			+ "  AND (\r\n"
+			+ "        (?2 = 'Employee' AND a.employeecode LIKE 'PGH%')\r\n"
+			+ "     OR (?2 = 'Contract' AND a.employeecode LIKE 'CPGH%')\r\n"
+			+ "      )\r\n"
+			+ "GROUP BY b.SubDepartment", nativeQuery = true)
 	List<Object[]> getSubDepartments(@Param("date") String date, @Param("empType") String empType);
+
+	@Modifying
+    @Transactional
+    @Query(value = "DELETE FROM attendancelog " +
+                   "WHERE attendancedate=?1", nativeQuery = true)
+	void deleteByAttendanceDate(String date);
 
 }

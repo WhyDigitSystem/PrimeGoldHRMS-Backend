@@ -50,9 +50,10 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 	            new TypeReference<List<AttendanceLogVO>>() {}
 	        );
 
+	        attendanceLogRepo.deleteByAttendanceDate(startDate);
+	        
 	        // Step 3: Save each log into DB
 	        for (AttendanceLogVO log : logs) {
-	            if (log.getAttendanceLogId() != null) {
 	            	
 	            	if(log.getInTime().equals("1900-01-01 00:00:00")) {log.setInTime(null);}
 	            	if(log.getOutTime().equals("1900-01-01 00:00:00")) {log.setOutTime(null);}
@@ -61,9 +62,6 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 	            	if(log.getPunchRecords().equals("")) {log.setPunchRecords(null);}
 	            	log.setAttendanceStatus(log.getAttendanceStatus() != null ? log.getAttendanceStatus().trim() : null);
 	                savedLogs.add(attendanceLogRepo.save(log));
-	            } else {
-	                System.out.println("Skipping log with null ID: " + log);
-	            }
 	        }
 
 		} catch (Exception e) {
@@ -145,10 +143,10 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 
     private String findMainDepartmentFor(String subDept) {
         // 🔥 You can map from DB or config file
-        if ( subDept.equals("WORK SHOP") || subDept.equals("BILLET YARD") || subDept.equals("PRODUCTION")) {
+        if ( subDept.equals("WORK SHOP") || subDept.equals("MILL") || subDept.equals("PRODUCTION")||subDept.equals("MECHANICAL RM") ||subDept.equals("ELECTRICAL RM")) {
             return "ROLLING MILL";
         }
-        if (subDept.equals("SCRAP YARD") || subDept.equals("SMS LAB") || subDept.equals("ELECTRICAL") || subDept.equals("MECHANICAL")) {
+        if (subDept.equals("SCRAP YARD") || subDept.equals("SMS LAB") || subDept.equals("ELECTRICAL") || subDept.equals("MECHANICAL")||subDept.equals("SMS")) {
             return "SMS";
         }
         return "ADMIN";

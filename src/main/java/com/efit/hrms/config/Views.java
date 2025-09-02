@@ -99,6 +99,34 @@ public class Views {
     			+ "\r\n"
     			+ "GROUP BY in_entry.empcode, emp.empname, DATE(in_entry.createdon)\r\n"
     			+ "ORDER BY MAX(in_entry.createdon) DESC");
+    	
+    	jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS EmployeeMaster (\r\n"
+    			+ "    EmployeeCode        VARCHAR(50) PRIMARY KEY,\r\n"
+    			+ "    EmployeeName        VARCHAR(100),\r\n"
+    			+ "    DeviceCode          VARCHAR(50),\r\n"
+    			+ "    Company             VARCHAR(100),\r\n"
+    			+ "    Department          VARCHAR(100),\r\n"
+    			+ "    SubDepartment       VARCHAR(100),\r\n"
+    			+ "    Division            VARCHAR(100),\r\n"
+    			+ "    Location            VARCHAR(100),\r\n"
+    			+ "    Designation         VARCHAR(100),\r\n"
+    			+ "    Grade               VARCHAR(50),\r\n"
+    			+ "    Team                VARCHAR(100),\r\n"
+    			+ "    Category            VARCHAR(100),\r\n"
+    			+ "    EmploymentType      VARCHAR(50),\r\n"
+    			+ "    Gender              VARCHAR(20),\r\n"
+    			+ "    DOJ                 DATE,\r\n"
+    			+ "    DOC                 DATE,\r\n"
+    			+ "    CardNumber          VARCHAR(50),\r\n"
+    			+ "    ShiftRoaster        VARCHAR(50),\r\n"
+    			+ "    Status              VARCHAR(50),\r\n"
+    			+ "    DOR                 DATE,\r\n"
+    			+ "    ApplyDeviceExpiryRule INT,\r\n"
+    			+ "    ExpiryStartDate     DATE,\r\n"
+    			+ "    ExpiryEndDate       DATE\r\n"
+    			+ ")");
     }
+    
+    
 
 }
