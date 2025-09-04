@@ -1,6 +1,7 @@
 package com.efit.hrms.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -239,259 +240,495 @@ public class MasterServiceImpl implements MasterService {
 		}
 		return details;
 	}
-
+	
+	
 	@Override
 	@Transactional
 	public Map<String, Object> createEmployee(EmployeeDTO employeeDTO) throws ApplicationException {
-		EmployeeVO employeeVO;
-		String message = null;
+	    EmployeeVO employeeVO;
+	    String message;
 
-		if (ObjectUtils.isEmpty(employeeDTO.getId())) {
-			// GETEMPLOYEE SEQUENCE API
+	    if (ObjectUtils.isEmpty(employeeDTO.getId())) {
+	        // CREATE
+	        if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+	            throw new ApplicationException(
+	                String.format("This EmployeeCode: %s Already Exists in This Organization", employeeDTO.getEmployeeCode()));
+	        }
+	        employeeVO = new EmployeeVO();
+	        employeeVO.setCreatedBy(employeeDTO.getCreatedBy());
+	        employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
+	        message = "Employee Creation Successfully";
+	    } else {
+	        // UPDATE
+	        employeeVO = employeeRepo.findById(employeeDTO.getId())
+	            .orElseThrow(() -> new ApplicationException("ID is Not Found Any Information: " + employeeDTO.getId()));
+	        employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
 
-			// Check for existing employee by employee code within the organization
-			if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
-				String errorMessage = String.format("This EmployeeCode: %s Already Exists in This Organization",
-						employeeDTO.getEmployeeCode());
-				throw new ApplicationException(errorMessage);
-			}
-			// Create new employee
-			employeeVO = new EmployeeVO();
-			// Generate auto-incremented Employee Code
-//		        String docId = employeeRepo.getEmployeeDocId(employeeDTO.getOrgId());
+	        if (!employeeVO.getEmployeeCode().equalsIgnoreCase(employeeDTO.getEmployeeCode())) {
+	            if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+	                throw new ApplicationException(
+	                    String.format("This EmployeeCode: %s Already Exists in This Organization", employeeDTO.getEmployeeCode()));
+	            }
+	            employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+	        }
+	        message = "Employee Update Successfully";
+	    }
 
-//		        if (docId == null) {
-//		            throw new ApplicationException("Failed to generate Employee Document ID.");
-//		        }
+	    // 1) Map basic fields only
+	    mapEmployeeBasics(employeeVO, employeeDTO);
 
-			// Update sequence_tracker to increment last_number
-//		        employeeRepo.updateLastNumber(employeeDTO.getOrgId());
+	    // 2) Save Employee FIRST to make it persistent (so children can reference it)
+	    employeeVO = employeeRepo.save(employeeVO);
 
-			employeeVO.setCreatedBy(employeeDTO.getCreatedBy());
-			employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
-			message = "Employee Creation Successfully";
-		} else {
-			// Update existing employee
-			employeeVO = employeeRepo.findById(employeeDTO.getId()).orElseThrow(
-					() -> new ApplicationException("ID is Not Found Any Information: " + employeeDTO.getId()));
+	    // 3) Process & save employee leaves and leave balances (after employee has ID)
+	    List<EmployeeLeaveVO> savedLeaves = processAndSaveEmployeeLeaves(employeeVO, employeeDTO);
 
-			employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
+	    // 4) Mirror to Aemployee (if needed)
+	    if (!employeeDTO.isFlag()) {
+	        syncAEmployee(employeeVO, savedLeaves);
+	    }
 
-			if (!employeeVO.getEmployeeCode().equalsIgnoreCase(employeeDTO.getEmployeeCode())) {
-				if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
-					String errorMessage = String.format("This EmployeeCode: %s Already Exists in This Organization",
-							employeeDTO.getEmployeeCode());
-					throw new ApplicationException(errorMessage);
-				}
-				employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-			}
-			message = "Employee Update Successfully";
-		}
-
-		// Map the remaining fields
-		getEmployeeVOFromEmployeeDTO(employeeVO, employeeDTO);
-
-		// Save the entity
-		employeeRepo.save(employeeVO);
-
-		// Prepare the response
-		Map<String, Object> response = new HashMap<>();
-		response.put("message", message);
-		response.put("createdEmployeeVO", employeeVO);
-
-		return response;
+	    // Response
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("message", message);
+	    response.put("createdEmployeeVO", employeeVO);
+	    return response;
 	}
 
-	private EmployeeVO getEmployeeVOFromEmployeeDTO(EmployeeVO employeeVO, EmployeeDTO employeeDTO)
-			throws ApplicationException {
-		employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-		employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
-		employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
-		employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
-		employeeVO.setGender(employeeDTO.getGender());
-		employeeVO.setBranch(employeeDTO.getBranch());
-		employeeVO.setBranchCode(employeeDTO.getBranchCode());
-		employeeVO.setFlagValue(employeeDTO.getFlagValue());
-		employeeVO.setFlag(employeeDTO.isFlag());
-		employeeVO.setOtFlag(employeeDTO.getOtFlag());	
-		employeeVO.setBioId(employeeDTO.getBioId());
-		employeeVO.setPayslipEffectiveDate(employeeDTO.getPayslipEffectiveDate());
+	/** Maps ONLY simple fields. NO save calls, NO child handling here. */
+	private void mapEmployeeBasics(EmployeeVO employeeVO, EmployeeDTO employeeDTO) throws ApplicationException {
+	    employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+	    employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
+	    employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
+	    employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
+	    employeeVO.setGender(employeeDTO.getGender());
+	    employeeVO.setBranch(employeeDTO.getBranch());
+	    employeeVO.setBranchCode(employeeDTO.getBranchCode());
+	    employeeVO.setFlagValue(employeeDTO.getFlagValue());
+	    employeeVO.setFlag(employeeDTO.isFlag());
+	    employeeVO.setOtFlag(employeeDTO.getOtFlag());
+	    employeeVO.setBioId(employeeDTO.getBioId());
+	    employeeVO.setPayslipEffectiveDate(employeeDTO.getPayslipEffectiveDate());
 
+	    UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+	    if (userVO != null) {
+	        userVO.setDepartment(employeeDTO.getDepartment());
+	        userVO.setDesignation(employeeDTO.getDesignation());
+	        userRepo.save(userVO);
+	    }
 
-		
-		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+	    employeeVO.setDepartment(employeeDTO.getDepartment());
+	    employeeVO.setDesignation(employeeDTO.getDesignation());
+	    employeeVO.setDateOfBirth(employeeDTO.getDateOfBirth());
+	    employeeVO.setJoiningDate(employeeDTO.getJoiningDate());
+	    employeeVO.setEmail(employeeDTO.getEmail());
+	    employeeVO.setBloodGroup(employeeDTO.getBloodGroup());
+	    employeeVO.setMobileNo(employeeDTO.getMobileNo());
+	    employeeVO.setAlternativeMobileNo(employeeDTO.getAlternativeMobileNo());
+	    employeeVO.setAadharNo(employeeDTO.getAadharNo());
+	    employeeVO.setPanNo(employeeDTO.getPanNo());
+	    employeeVO.setAccountNo(employeeDTO.getAccountNo());
+	    employeeVO.setBankName(employeeDTO.getBankName());
+	    employeeVO.setIfscCode(employeeDTO.getIfscCode());
+	    employeeVO.setGrade(employeeDTO.getGrade());
+	    employeeVO.setTeam(employeeDTO.getTeam());
+	    employeeVO.setReportingPerson(employeeDTO.getReportingPerson());
+	    employeeVO.setReportingPersonEmail(employeeDTO.getReportingPersonEmail());
+	    employeeVO.setReportingPersonCode(employeeDTO.getReportingPersonCode());
+	    employeeVO.setReportingRole(employeeDTO.getReportingRole());
+	    employeeVO.setResignDate(employeeDTO.getResignDate());
+	    employeeVO.setPfFlag(employeeDTO.isPfFlag());
+	    employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
+	    employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
+	    employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
+	    employeeVO.setContractor(employeeDTO.getContractor());
+	    employeeVO.setContactPerson(employeeDTO.getContactPerson());
+	    employeeVO.setContactNumber(employeeDTO.getContactNumber());
+	    employeeVO.setContactEmail(employeeDTO.getContactEmail());
 
-		if (userVO != null) {
-			userVO.setDepartment(employeeDTO.getDepartment());
-			userVO.setDesignation(employeeDTO.getDesignation());
-			userRepo.save(userVO);
-		}
+	    UserLoginRolesVO userLoginRolesVO =
+	        userLoginRolesRepo.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+	    if (userLoginRolesVO != null) {
+	        userLoginRolesVO.setEndDate(employeeDTO.getResignDate());
+	        userLoginRolesRepo.save(userLoginRolesVO);
+	    }
 
-		employeeVO.setDepartment(employeeDTO.getDepartment());
-		employeeVO.setDesignation(employeeDTO.getDesignation());
-		employeeVO.setDateOfBirth(employeeDTO.getDateOfBirth());
-		employeeVO.setJoiningDate(employeeDTO.getJoiningDate());
-		employeeVO.setEmail(employeeDTO.getEmail());
-		employeeVO.setBloodGroup(employeeDTO.getBloodGroup());
-		employeeVO.setMobileNo(employeeDTO.getMobileNo());
-		employeeVO.setAlternativeMobileNo(employeeDTO.getAlternativeMobileNo());
-		employeeVO.setAadharNo(employeeDTO.getAadharNo());
-		employeeVO.setPanNo(employeeDTO.getPanNo());
-		employeeVO.setAccountNo(employeeDTO.getAccountNo());
-		employeeVO.setBankName(employeeDTO.getBankName());
-		employeeVO.setIfscCode(employeeDTO.getIfscCode());
-		employeeVO.setGrade(employeeDTO.getGrade());
-		employeeVO.setTeam(employeeDTO.getTeam());
-		employeeVO.setReportingPerson(employeeDTO.getReportingPerson());
-		employeeVO.setReportingPersonEmail(employeeDTO.getReportingPersonEmail());
-		employeeVO.setReportingPersonCode(employeeDTO.getReportingPersonCode());
-		employeeVO.setReportingRole(employeeDTO.getReportingRole());
-		employeeVO.setResignDate(employeeDTO.getResignDate());
-		employeeVO.setPfFlag(employeeDTO.isPfFlag());
-		employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
-		employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
-		employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
-		employeeVO.setContractor(employeeDTO.getContractor());
-		employeeVO.setContactPerson(employeeDTO.getContactPerson());
-		employeeVO.setContactNumber(employeeDTO.getContactNumber());
-		employeeVO.setContactEmail(employeeDTO.getContactEmail());
-		
-
-
-		UserLoginRolesVO userLoginRolesVO = userLoginRolesRepo
-				.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
-
-		if (userLoginRolesVO != null) {
-			userLoginRolesVO.setEndDate(employeeDTO.getResignDate());
-			userLoginRolesRepo.save(userLoginRolesVO);
-		}
-
-		employeeVO.setOrgId(employeeDTO.getOrgId());
-		employeeVO.setActive(employeeDTO.isActive());
-		employeeVO.setUanNo(employeeDTO.getUanNo());
-
-		// 1. Fetch existing leave records for this employee (if updating or checking
-		// duplicates)
-		List<EmployeeLeaveVO> existingLeaves = employeeLeaveRepo.findByEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
-				employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
-
-		// 2. Store existing leave codes
-		Set<String> existingLeaveCodes = existingLeaves.stream().map(EmployeeLeaveVO::getLeaveCode)
-				.collect(Collectors.toSet());
-
-		// 3. Validate new leave records to prevent duplicates in the request
-		Set<String> newLeaveCodes = new HashSet<>();
-		for (EmployeeLeaveDTO leaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
-			String leaveCode = leaveDTO.getLeaveCode();
-
-			// Check for duplicate leaveCode in the same request
-			if (newLeaveCodes.contains(leaveCode)) {
-				throw new ApplicationException("Duplicate Leave Entry Found in Request: " + leaveCode);
-			}
-			newLeaveCodes.add(leaveCode);
-
-			// Check if leaveCode already exists for the same employee in DB
-			if (!existingLeaveCodes.contains(leaveCode)
-					&& employeeLeaveRepo.existsByLeaveCodeAndEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(leaveCode,
-							employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
-				throw new ApplicationException(
-						"Duplicate Leave Entry Found: " + leaveCode + " already exists for this employee.");
-			}
-		}
-
-		// 4. If updating, delete existing leave & balance records before inserting new
-		// ones
-		if (employeeDTO.getId() != null) {
-			employeeLeaveRepo.deleteAll(existingLeaves);
-
-//			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
-//					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
-//			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
-		}
-
-		List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
-		List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
-		
-		  List<LeaveBalanceVO> existingBalances =
-		            leaveBalanceRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
-
-		    Set<String> existingBalanceCodes = existingBalances.stream()
-		            .map(LeaveBalanceVO::getLeaveCode)
-		            .collect(Collectors.toSet());
-
-		// 5. Process validated leave records
-		for (EmployeeLeaveDTO employeeLeaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
-			String leaveCode = employeeLeaveDTO.getLeaveCode();
-
-			// Create EmployeeLeaveVO object
-			EmployeeLeaveVO employeeLeaveVO = new EmployeeLeaveVO();
-			employeeLeaveVO.setLeaveCode(leaveCode);
-			employeeLeaveVO.setLeaveType(employeeLeaveDTO.getLeaveType());
-			employeeLeaveVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
-			employeeLeaveVO.setEffectiveFrom(employeeLeaveDTO.getEffectiveFrom());
-			employeeLeaveVO.setEmployeeVO(employeeVO);
-			employeeLeaveVOs.add(employeeLeaveVO);
-
-			// Create LeaveBalanceVO object
-			  if (employeeDTO.getId() == null || !existingBalanceCodes.contains(leaveCode)) {
-
-		        	LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
-		        leaveBalanceVO.setLeaveCode(leaveCode);
-		        leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
-		        leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
-		        leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
-		        leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
-		        leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
-		        leaveBalanceVO.setBranch(employeeDTO.getBranch());
-		        leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
-		        leaveBalanceVO.setLeaveStatus("Assigned");
-		        leaveBalanceVOs.add(leaveBalanceVO);
-		        
-		        } 
-		}
-
-		// 6. Save new leave records
-	    employeeLeaveRepo.saveAll(employeeLeaveVOs);
-		leaveBalanceRepo.saveAll(leaveBalanceVOs);
-		employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
-
-		if (!employeeDTO.isFlag()) {
-			// Check if AemployeeVO already exists
-			AemployeeVO aemployeeVO = aEmployeeRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(),
-					employeeDTO.getOrgId());
-
-			if (aemployeeVO == null) {
-				aemployeeVO = new AemployeeVO();
-				BeanUtils.copyProperties(employeeVO, aemployeeVO);
-				aemployeeVO.setId(null);
-			} else {
-				BeanUtils.copyProperties(employeeVO, aemployeeVO, "id", "aEmployeeLeaveVO");
-			}
-
-			// Remove old leave records for this Aemployee (if any)
-			List<AemployeeLeaveVO> existingALeaves = aEmployeeLeaveRepo
-					.findByAemployeeVO_EmployeeCodeAndAemployeeVO_OrgId(employeeDTO.getEmployeeCode(),
-							employeeDTO.getOrgId());
-
-			aEmployeeLeaveRepo.deleteAll(existingALeaves);
-
-			// Create fresh leave records
-			List<AemployeeLeaveVO> aemployeeLeaves = new ArrayList<>();
-			for (EmployeeLeaveVO empLeave : employeeVO.getEmployeeLeaveVO()) {
-				AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
-				BeanUtils.copyProperties(empLeave, aLeave);
-				aLeave.setId(null);
-				aLeave.setAemployeeVO(aemployeeVO); // Now allowed
-				aemployeeLeaves.add(aLeave);
-			}
-
-			aemployeeVO.setAemployeeLeaveVO(aemployeeLeaves);
-			aEmployeeRepo.save(aemployeeVO);
-		}
-
-		return employeeVO;
+	    employeeVO.setOrgId(employeeDTO.getOrgId());
+	    employeeVO.setActive(employeeDTO.isActive());
+	    employeeVO.setUanNo(employeeDTO.getUanNo());
 	}
-	
+
+	/** Validates, (optionally) clears old, then saves leaves & balances AFTER employee is saved. */
+	private List<EmployeeLeaveVO> processAndSaveEmployeeLeaves(EmployeeVO employeeVO, EmployeeDTO employeeDTO)
+	        throws ApplicationException {
+
+	    List<EmployeeLeaveDTO> leaveDTOs = Optional.ofNullable(employeeDTO.getEmployeeLeaveDTO())
+	                                               .orElse(Collections.emptyList());
+
+	    // Existing leaves for validation & update scenario
+	    List<EmployeeLeaveVO> existingLeaves = employeeLeaveRepo
+	        .findByEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+	    Set<String> existingLeaveCodes = existingLeaves.stream()
+	        .map(EmployeeLeaveVO::getLeaveCode)
+	        .collect(Collectors.toSet());
+
+	    // Validate duplicates inside request
+	    Set<String> newLeaveCodesInRequest = new HashSet<>();
+	    for (EmployeeLeaveDTO ld : leaveDTOs) {
+	        String code = ld.getLeaveCode();
+	        if (newLeaveCodesInRequest.contains(code)) {
+	            throw new ApplicationException("Duplicate Leave Entry Found in Request: " + code);
+	        }
+	        newLeaveCodesInRequest.add(code);
+
+	        // Prevent duplicate in DB for same emp (only matters for create or adding new codes)
+	        if (!existingLeaveCodes.contains(code)
+	                && employeeLeaveRepo.existsByLeaveCodeAndEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
+	                        code, employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+	            throw new ApplicationException("Duplicate Leave Entry Found: " + code + " already exists for this employee.");
+	        }
+	    }
+
+	    // If UPDATE, clear existing leaves to replace with new (as per your original code)
+	    if (employeeDTO.getId() != null) {
+	        employeeLeaveRepo.deleteAll(existingLeaves);
+	    }
+
+	    // Compute existing balances (to avoid duplicates when updating)
+	    List<LeaveBalanceVO> existingBalances =
+	        leaveBalanceRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+	    Set<String> existingBalanceCodes = existingBalances.stream()
+	        .map(LeaveBalanceVO::getLeaveCode)
+	        .collect(Collectors.toSet());
+
+	    // Build new leaves & balances
+	    List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+	    List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+
+	    for (EmployeeLeaveDTO ld : leaveDTOs) {
+	        String code = ld.getLeaveCode();
+
+	        EmployeeLeaveVO el = new EmployeeLeaveVO();
+	        el.setLeaveCode(code);
+	        el.setLeaveType(ld.getLeaveType());
+	        el.setTotalLeave(ld.getTotalLeave());
+	        el.setEffectiveFrom(ld.getEffectiveFrom());
+	        el.setEmployeeVO(employeeVO); // Employee is now persisted
+	        employeeLeaveVOs.add(el);
+
+	        // Add balance only if creating or the code is new for balances
+	        if (employeeDTO.getId() == null || !existingBalanceCodes.contains(code)) {
+	            LeaveBalanceVO lb = new LeaveBalanceVO();
+	            lb.setLeaveCode(code);
+	            lb.setLeaveType(ld.getLeaveType());
+	            lb.setTotalLeave(ld.getTotalLeave());
+	            lb.setEmployeeName(employeeDTO.getEmployeeName());
+	            lb.setEmployeeCode(employeeDTO.getEmployeeCode());
+	            lb.setOrgId(employeeDTO.getOrgId());
+	            lb.setBranch(employeeDTO.getBranch());
+	            lb.setBranchCode(employeeDTO.getBranchCode());
+	            lb.setLeaveStatus("Assigned");
+	            leaveBalanceVOs.add(lb);
+	        }
+	    }
+
+	    // Persist children AFTER parent
+	    if (!employeeLeaveVOs.isEmpty()) {
+	        employeeLeaveRepo.saveAll(employeeLeaveVOs);
+	    }
+	    if (!leaveBalanceVOs.isEmpty()) {
+	        leaveBalanceRepo.saveAll(leaveBalanceVOs);
+	    }
+
+	    // Attach to parent in memory (optional, for returning/using)
+	    employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+	    return employeeLeaveVOs;
+	}
+
+	/** Mirrors Employee + Leaves into Aemployee tables (your original logic), AFTER employee + leaves are saved */
+	private void syncAEmployee(EmployeeVO employeeVO, List<EmployeeLeaveVO> leaves) {
+	    AemployeeVO aemployeeVO = aEmployeeRepo.findByEmployeeCodeAndOrgId(employeeVO.getEmployeeCode(), employeeVO.getOrgId());
+	    if (aemployeeVO == null) {
+	        aemployeeVO = new AemployeeVO();
+	        BeanUtils.copyProperties(employeeVO, aemployeeVO);
+	        aemployeeVO.setId(null);
+	    } else {
+	        BeanUtils.copyProperties(employeeVO, aemployeeVO, "id", "aEmployeeLeaveVO");
+	    }
+
+	    // Remove old
+	    List<AemployeeLeaveVO> existingALeaves = aEmployeeLeaveRepo
+	        .findByAemployeeVO_EmployeeCodeAndAemployeeVO_OrgId(employeeVO.getEmployeeCode(), employeeVO.getOrgId());
+	    aEmployeeLeaveRepo.deleteAll(existingALeaves);
+
+	    // Create fresh
+	    List<AemployeeLeaveVO> aemployeeLeaves = new ArrayList<>();
+	    for (EmployeeLeaveVO empLeave : leaves) {
+	        AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
+	        BeanUtils.copyProperties(empLeave, aLeave);
+	        aLeave.setId(null);
+	        aLeave.setAemployeeVO(aemployeeVO);
+	        aemployeeLeaves.add(aLeave);
+	    }
+
+	    aemployeeVO.setAemployeeLeaveVO(aemployeeLeaves);
+	    aEmployeeRepo.save(aemployeeVO);
+	}
+
+
+//	ALMOST CRT
+//	@Override
+//	@Transactional
+//	public Map<String, Object> createEmployee(EmployeeDTO employeeDTO) throws ApplicationException {
+//		EmployeeVO employeeVO;
+//		String message = null;
+//
+//		if (ObjectUtils.isEmpty(employeeDTO.getId())) {
+//			// GETEMPLOYEE SEQUENCE API
+//
+//			// Check for existing employee by employee code within the organization
+//			if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+//				String errorMessage = String.format("This EmployeeCode: %s Already Exists in This Organization",
+//						employeeDTO.getEmployeeCode());
+//				throw new ApplicationException(errorMessage);
+//			}
+//			// Create new employee
+//			employeeVO = new EmployeeVO();
+//			// Generate auto-incremented Employee Code
+////		        String docId = employeeRepo.getEmployeeDocId(employeeDTO.getOrgId());
+//
+////		        if (docId == null) {
+////		            throw new ApplicationException("Failed to generate Employee Document ID.");
+////		        }
+//
+//			// Update sequence_tracker to increment last_number
+////		        employeeRepo.updateLastNumber(employeeDTO.getOrgId());
+//
+//			employeeVO.setCreatedBy(employeeDTO.getCreatedBy());
+//			employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
+//			message = "Employee Creation Successfully";
+//		} else {
+//			// Update existing employee
+//			employeeVO = employeeRepo.findById(employeeDTO.getId()).orElseThrow(
+//					() -> new ApplicationException("ID is Not Found Any Information: " + employeeDTO.getId()));
+//
+//			employeeVO.setUpdatedBy(employeeDTO.getCreatedBy());
+//
+//			if (!employeeVO.getEmployeeCode().equalsIgnoreCase(employeeDTO.getEmployeeCode())) {
+//				if (employeeRepo.existsByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+//					String errorMessage = String.format("This EmployeeCode: %s Already Exists in This Organization",
+//							employeeDTO.getEmployeeCode());
+//					throw new ApplicationException(errorMessage);
+//				}
+//				employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+//			}
+//			message = "Employee Update Successfully";
+//		}
+//
+//		// Map the remaining fields
+//		getEmployeeVOFromEmployeeDTO(employeeVO, employeeDTO);
+//
+//		// Save the entity
+//		employeeRepo.save(employeeVO);
+//
+//		// Prepare the response
+//		Map<String, Object> response = new HashMap<>();
+//		response.put("message", message);
+//		response.put("createdEmployeeVO", employeeVO);
+//
+//		return response;
+//	}
+//
+//	private EmployeeVO getEmployeeVOFromEmployeeDTO(EmployeeVO employeeVO, EmployeeDTO employeeDTO)
+//			throws ApplicationException {
+//		employeeVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+//		employeeVO.setEmployeeName(employeeDTO.getEmployeeName());
+//		employeeVO.setEmployeeType(employeeDTO.getEmployeeType());
+//		employeeVO.setEmployeeAddress(employeeDTO.getEmployeeAddress());
+//		employeeVO.setGender(employeeDTO.getGender());
+//		employeeVO.setBranch(employeeDTO.getBranch());
+//		employeeVO.setBranchCode(employeeDTO.getBranchCode());
+//		employeeVO.setFlagValue(employeeDTO.getFlagValue());
+//		employeeVO.setFlag(employeeDTO.isFlag());
+//		employeeVO.setOtFlag(employeeDTO.getOtFlag());	
+//		employeeVO.setBioId(employeeDTO.getBioId());
+//		employeeVO.setPayslipEffectiveDate(employeeDTO.getPayslipEffectiveDate());
+//
+//
+//		
+//		UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//
+//		if (userVO != null) {
+//			userVO.setDepartment(employeeDTO.getDepartment());
+//			userVO.setDesignation(employeeDTO.getDesignation());
+//			userRepo.save(userVO);
+//		}
+//
+//		employeeVO.setDepartment(employeeDTO.getDepartment());
+//		employeeVO.setDesignation(employeeDTO.getDesignation());
+//		employeeVO.setDateOfBirth(employeeDTO.getDateOfBirth());
+//		employeeVO.setJoiningDate(employeeDTO.getJoiningDate());
+//		employeeVO.setEmail(employeeDTO.getEmail());
+//		employeeVO.setBloodGroup(employeeDTO.getBloodGroup());
+//		employeeVO.setMobileNo(employeeDTO.getMobileNo());
+//		employeeVO.setAlternativeMobileNo(employeeDTO.getAlternativeMobileNo());
+//		employeeVO.setAadharNo(employeeDTO.getAadharNo());
+//		employeeVO.setPanNo(employeeDTO.getPanNo());
+//		employeeVO.setAccountNo(employeeDTO.getAccountNo());
+//		employeeVO.setBankName(employeeDTO.getBankName());
+//		employeeVO.setIfscCode(employeeDTO.getIfscCode());
+//		employeeVO.setGrade(employeeDTO.getGrade());
+//		employeeVO.setTeam(employeeDTO.getTeam());
+//		employeeVO.setReportingPerson(employeeDTO.getReportingPerson());
+//		employeeVO.setReportingPersonEmail(employeeDTO.getReportingPersonEmail());
+//		employeeVO.setReportingPersonCode(employeeDTO.getReportingPersonCode());
+//		employeeVO.setReportingRole(employeeDTO.getReportingRole());
+//		employeeVO.setResignDate(employeeDTO.getResignDate());
+//		employeeVO.setPfFlag(employeeDTO.isPfFlag());
+//		employeeVO.setEsiFlag(employeeDTO.isEsiFlag());
+//		employeeVO.setPfPercentage(employeeDTO.getPfPercentage());
+//		employeeVO.setEsiPercentage(employeeDTO.getEsiPercentage());
+//		employeeVO.setContractor(employeeDTO.getContractor());
+//		employeeVO.setContactPerson(employeeDTO.getContactPerson());
+//		employeeVO.setContactNumber(employeeDTO.getContactNumber());
+//		employeeVO.setContactEmail(employeeDTO.getContactEmail());
+//		
+//
+//
+//		UserLoginRolesVO userLoginRolesVO = userLoginRolesRepo
+//				.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//
+//		if (userLoginRolesVO != null) {
+//			userLoginRolesVO.setEndDate(employeeDTO.getResignDate());
+//			userLoginRolesRepo.save(userLoginRolesVO);
+//		}
+//
+//		employeeVO.setOrgId(employeeDTO.getOrgId());
+//		employeeVO.setActive(employeeDTO.isActive());
+//		employeeVO.setUanNo(employeeDTO.getUanNo());
+//
+//		// 1. Fetch existing leave records for this employee (if updating or checking
+//		// duplicates)
+//		List<EmployeeLeaveVO> existingLeaves = employeeLeaveRepo.findByEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(
+//				employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//
+//		// 2. Store existing leave codes
+//		Set<String> existingLeaveCodes = existingLeaves.stream().map(EmployeeLeaveVO::getLeaveCode)
+//				.collect(Collectors.toSet());
+//
+//		// 3. Validate new leave records to prevent duplicates in the request
+//		Set<String> newLeaveCodes = new HashSet<>();
+//		for (EmployeeLeaveDTO leaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
+//			String leaveCode = leaveDTO.getLeaveCode();
+//
+//			// Check for duplicate leaveCode in the same request
+//			if (newLeaveCodes.contains(leaveCode)) {
+//				throw new ApplicationException("Duplicate Leave Entry Found in Request: " + leaveCode);
+//			}
+//			newLeaveCodes.add(leaveCode);
+//
+//			// Check if leaveCode already exists for the same employee in DB
+//			if (!existingLeaveCodes.contains(leaveCode)
+//					&& employeeLeaveRepo.existsByLeaveCodeAndEmployeeVO_EmployeeCodeAndEmployeeVO_OrgId(leaveCode,
+//							employeeDTO.getEmployeeCode(), employeeDTO.getOrgId())) {
+//				throw new ApplicationException(
+//						"Duplicate Leave Entry Found: " + leaveCode + " already exists for this employee.");
+//			}
+//		}
+//
+//		// 4. If updating, delete existing leave & balance records before inserting new
+//		// ones
+//		if (employeeDTO.getId() != null) {
+//			employeeLeaveRepo.deleteAll(existingLeaves);
+//
+////			List<LeaveBalanceVO> leaveBalanceVOs = leaveBalanceRepo
+////					.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+////			leaveBalanceRepo.deleteAll(leaveBalanceVOs);
+//		}
+//
+//		List<LeaveBalanceVO> leaveBalanceVOs = new ArrayList<>();
+//		List<EmployeeLeaveVO> employeeLeaveVOs = new ArrayList<>();
+//		
+//		  List<LeaveBalanceVO> existingBalances =
+//		            leaveBalanceRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
+//
+//		    Set<String> existingBalanceCodes = existingBalances.stream()
+//		            .map(LeaveBalanceVO::getLeaveCode)
+//		            .collect(Collectors.toSet());
+//
+//		// 5. Process validated leave records
+//		for (EmployeeLeaveDTO employeeLeaveDTO : employeeDTO.getEmployeeLeaveDTO()) {
+//			String leaveCode = employeeLeaveDTO.getLeaveCode();
+//
+//			// Create EmployeeLeaveVO object
+//			EmployeeLeaveVO employeeLeaveVO = new EmployeeLeaveVO();
+//			employeeLeaveVO.setLeaveCode(leaveCode);
+//			employeeLeaveVO.setLeaveType(employeeLeaveDTO.getLeaveType());
+//			employeeLeaveVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
+//			employeeLeaveVO.setEffectiveFrom(employeeLeaveDTO.getEffectiveFrom());
+//			employeeLeaveVO.setEmployeeVO(employeeVO);
+//			employeeLeaveVOs.add(employeeLeaveVO);
+//
+//			// Create LeaveBalanceVO object
+//			  if (employeeDTO.getId() == null || !existingBalanceCodes.contains(leaveCode)) {
+//
+//		        	LeaveBalanceVO leaveBalanceVO = new LeaveBalanceVO();
+//		        leaveBalanceVO.setLeaveCode(leaveCode);
+//		        leaveBalanceVO.setLeaveType(employeeLeaveDTO.getLeaveType());
+//		        leaveBalanceVO.setTotalLeave(employeeLeaveDTO.getTotalLeave());
+//		        leaveBalanceVO.setEmployeeName(employeeDTO.getEmployeeName());
+//		        leaveBalanceVO.setEmployeeCode(employeeDTO.getEmployeeCode());
+//		        leaveBalanceVO.setOrgId(employeeDTO.getOrgId());
+//		        leaveBalanceVO.setBranch(employeeDTO.getBranch());
+//		        leaveBalanceVO.setBranchCode(employeeDTO.getBranchCode());
+//		        leaveBalanceVO.setLeaveStatus("Assigned");
+//		        leaveBalanceVOs.add(leaveBalanceVO);
+//		        
+//		        } 
+//		}
+//
+//		// 6. Save new leave records
+//	    employeeLeaveRepo.saveAll(employeeLeaveVOs);
+//		leaveBalanceRepo.saveAll(leaveBalanceVOs);
+//		employeeVO.setEmployeeLeaveVO(employeeLeaveVOs);
+//
+//		if (!employeeDTO.isFlag()) {
+//			// Check if AemployeeVO already exists
+//			AemployeeVO aemployeeVO = aEmployeeRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(),
+//					employeeDTO.getOrgId());
+//
+//			if (aemployeeVO == null) {
+//				aemployeeVO = new AemployeeVO();
+//				BeanUtils.copyProperties(employeeVO, aemployeeVO);
+//				aemployeeVO.setId(null);
+//			} else {
+//				BeanUtils.copyProperties(employeeVO, aemployeeVO, "id", "aEmployeeLeaveVO");
+//			}
+//
+//			// Remove old leave records for this Aemployee (if any)
+//			List<AemployeeLeaveVO> existingALeaves = aEmployeeLeaveRepo
+//					.findByAemployeeVO_EmployeeCodeAndAemployeeVO_OrgId(employeeDTO.getEmployeeCode(),
+//							employeeDTO.getOrgId());
+//
+//			aEmployeeLeaveRepo.deleteAll(existingALeaves);
+//
+//			// Create fresh leave records
+//			List<AemployeeLeaveVO> aemployeeLeaves = new ArrayList<>();
+//			for (EmployeeLeaveVO empLeave : employeeVO.getEmployeeLeaveVO()) {
+//				AemployeeLeaveVO aLeave = new AemployeeLeaveVO();
+//				BeanUtils.copyProperties(empLeave, aLeave);
+//				aLeave.setId(null);
+//				aLeave.setAemployeeVO(aemployeeVO); // Now allowed
+//				aemployeeLeaves.add(aLeave);
+//			}
+//
+//			aemployeeVO.setAemployeeLeaveVO(aemployeeLeaves);
+//			aEmployeeRepo.save(aemployeeVO);
+//		}
+//
+//		return employeeVO;
+//	}
+//	
 	
 //	@Override
 //	@Transactional
