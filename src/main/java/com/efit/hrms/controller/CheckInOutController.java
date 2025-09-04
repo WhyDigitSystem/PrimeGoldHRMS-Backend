@@ -32,6 +32,7 @@ import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.ShiftMasterVO;
 import com.efit.hrms.service.CheckInOutService;
 
 
@@ -206,6 +207,38 @@ public class CheckInOutController extends BaseController{
 			LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 			return ResponseEntity.ok().body(responseDTO);
 		}
+	    
+	    @GetMapping("getEmployeeShiftHoursForMonthlyReport")
+		 public ResponseEntity<ResponseDTO> getEmployeeShiftHoursForMonthlyReport(
+		     @RequestParam String empCode,
+		     @RequestParam Integer month,
+		     @RequestParam String year,
+		     @RequestParam Long orgId,
+		     @RequestParam String branchCode) {
+			 String methodName = "getEmployeeShiftHoursForMonthlyReport()";
+				LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+				String errorMsg = null;
+				Map<String, Object> responseObjectsMap = new HashMap<>();
+				ResponseDTO responseDTO = null;
+				List<Map<String, Object>> shiftMasterVO = null;
+				try {
+					shiftMasterVO = checkInOutService.getEmployeeShiftHoursForMonthlyReport(  empCode, month, year, orgId,  branchCode);
+				} catch (Exception e) {
+					errorMsg = e.getMessage();
+					LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+				}
+				if (StringUtils.isEmpty(errorMsg)) {
+					responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Approved ShiftMaster found by ORGID");
+					responseObjectsMap.put("shiftMasterVO", shiftMasterVO);
+					responseDTO = createServiceResponse(responseObjectsMap);
+				} else {
+					errorMsg = " ShiftMaster not found for orgID: " + orgId;
+					responseDTO = createServiceResponseError(responseObjectsMap, "Approved ShiftMaster not found", errorMsg);
+				}
+				LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+				return ResponseEntity.ok().body(responseDTO);
+			}
+
 	    
 	    
 	    @GetMapping("getAttendanceDailyByOrgId")

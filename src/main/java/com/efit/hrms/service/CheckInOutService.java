@@ -13,6 +13,7 @@ import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.ShiftMasterVO;
 import com.efit.hrms.exception.ApplicationException;
 
 @Service
@@ -55,6 +56,9 @@ public interface CheckInOutService {
 
 	List<Map<String, Object>> getEmployeeNameForApprovalOtProcess(Long orgId, String department, String branch,
 			String type, String contractor);
+
+	List<Map<String, Object>> getEmployeeShiftHoursForMonthlyReport(String empCode, Integer month, String finYear, Long orgId,
+			String branchCode);
 
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 

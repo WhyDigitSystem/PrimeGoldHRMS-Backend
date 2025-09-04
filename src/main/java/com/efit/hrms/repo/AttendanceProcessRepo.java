@@ -1027,7 +1027,9 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    "ORDER BY ed.empname;"
 		)
 		List<Map<String,Object>> findMonthlyProcess(int month,int year,Long orgId,String branch,String department,String type,String contractor);
-
+	
+	
+	
 
 	@Query("SELECT a FROM AttendanceProcessVO a WHERE a.empCode = :empCode AND a.orgId = :orgId AND a.branch = :branch AND a.checkInDate BETWEEN :fromDate AND :toDate ORDER BY a.checkInDate, a.entryTime")
 	List<AttendanceProcessVO> findByEmpCodeAndDateRange(
