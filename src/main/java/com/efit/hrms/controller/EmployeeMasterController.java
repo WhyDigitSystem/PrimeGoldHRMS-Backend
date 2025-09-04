@@ -16,11 +16,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
@@ -30,7 +32,6 @@ import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
-import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.PermissionRequestVO;
 import com.efit.hrms.entity.SalaryHeadsVO;
@@ -915,6 +916,22 @@ public class EmployeeMasterController extends BaseController{
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
 	    }
 	}
+	
+	
+	 @PostMapping("/upload-excel")
+	    public ResponseEntity<String> uploadExcel(
+	            @RequestParam("file") MultipartFile file,   // 👈 FIXED (was "files")
+	            @RequestParam("orgId") Long orgId,
+	            @RequestParam("createdBy") String createdBy) {
+	        try {
+	            String result = employeeMasterService.uploadSalaryStructureExcel(file, orgId, createdBy);
+	            return ResponseEntity.ok(result);
+	        } catch (Exception e) {
+	            e.printStackTrace(); // 👈 debug log
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                    .body("Upload failed: " + (e.getMessage() != null ? e.getMessage() : e.toString()));
+	        }
+	    }
 
 }
 

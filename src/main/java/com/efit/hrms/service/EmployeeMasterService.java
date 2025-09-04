@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.PermissionRequestDTO;
 import com.efit.hrms.dto.PfEsiAmountDTO;
@@ -97,6 +98,8 @@ public interface EmployeeMasterService {
 	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
 
 	List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
+
+	String uploadSalaryStructureExcel(MultipartFile file, Long orgId, String createdBy) throws Exception;
 
 
 

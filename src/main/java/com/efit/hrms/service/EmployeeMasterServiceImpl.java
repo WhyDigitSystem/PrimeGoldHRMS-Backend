@@ -17,10 +17,17 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.PermissionRequestDTO;
 import com.efit.hrms.dto.PermissionRequestNotifyDTO;
@@ -30,7 +37,6 @@ import com.efit.hrms.dto.SalaryEarningDetailsDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
-import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.LeaveProcessVO;
 import com.efit.hrms.entity.PermissionRequestNotifyVO;
@@ -948,5 +954,164 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		return List1;
 
 	}
+	
+	
+	
+	@Override
+	public String uploadSalaryStructureExcel(MultipartFile file, Long orgId, String createdBy) throws Exception {
+	    try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+
+	        Map<Long, SalaryStructureVO> structureMap = new HashMap<>();
+
+	        // -------- SHEET 1: SalaryStructure (Header) --------
+	        Sheet sheet1 = workbook.getSheetAt(0);
+	        for (int i = 1; i <= sheet1.getLastRowNum(); i++) {
+	            Row row = sheet1.getRow(i);
+	            if (row == null) continue;
+
+	            Long id = getLongCellValue(row.getCell(0));
+	            if (id == null) continue;
+
+	            String empCode = getStringCellValue(row.getCell(1));
+	            String empName = getStringCellValue(row.getCell(2));
+	            String department = getStringCellValue(row.getCell(3));
+	            String designation = getStringCellValue(row.getCell(4));
+	            BigDecimal amount = getBigDecimalCellValue(row.getCell(5));
+
+	            // Validate employee
+	            EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndEmployeeNameAndOrgId(empCode, empName, orgId);
+	            if (employeeVO == null) {
+	                throw new RuntimeException("Employee not found in master: Code=" + empCode + ", Name=" + empName);
+	            }
+
+	            SalaryStructureVO vo = new SalaryStructureVO();
+	            vo.setEmployeeCode(empCode);
+	            vo.setEmployeeName(empName);
+	            vo.setDateOfBirth(employeeVO.getDateOfBirth());
+	            vo.setGrade(employeeVO.getGrade());
+	            vo.setPanNo(employeeVO.getPanNo());
+	            vo.setBankAccountNo(employeeVO.getAccountNo());
+	            vo.setDateOfJoining(employeeVO.getJoiningDate());
+	            vo.setBranch(employeeVO.getBranch());
+	            vo.setBranchCode(employeeVO.getBranchCode());
+
+
+	            if (department.equals(employeeVO.getDepartment())) {
+	                vo.setDepartment(department);
+	            } else {
+	                throw new RuntimeException("Department not matched in EmployeeDetails : Code=" + empCode + ", Name=" + empName);
+	            }
+
+	            if (designation.equals(employeeVO.getDesignation())) {
+	                vo.setDesignation(designation);
+	            } else {
+	                throw new RuntimeException("Designation not matched in EmployeeDetails : Code=" + empCode + ", Name=" + empName);
+	            }
+
+	            vo.setAmount(amount);
+	            vo.setOrgId(orgId);
+	            vo.setCreatedBy(createdBy);
+
+	            vo.setSalaryEarningDetailsVO(new ArrayList<>());
+	            vo.setSalaryDetectionDetailsVO(new ArrayList<>());
+
+	            structureMap.put(id, vo);
+	        }
+
+	        // -------- SHEET 2: Earnings --------
+	        Sheet sheet2 = workbook.getSheetAt(1);
+	        for (int i = 1; i <= sheet2.getLastRowNum(); i++) {
+	            Row row = sheet2.getRow(i);
+	            if (row == null) continue;
+
+	            Long id = getLongCellValue(row.getCell(0));
+	            if (id == null) continue;
+
+	            String heading = getStringCellValue(row.getCell(1));
+	            BigDecimal amount = getBigDecimalCellValue(row.getCell(2));
+
+	            SalaryEarningDetailsVO earning = new SalaryEarningDetailsVO();
+	            earning.setHeading(heading);
+	            earning.setAmount(amount);
+
+	            SalaryStructureVO parent = structureMap.get(id);
+	            if (parent != null) {
+	                earning.setSalaryStructureVO(parent);
+	                parent.getSalaryEarningDetailsVO().add(earning);
+	            }
+	        }
+
+	        // -------- SHEET 3: Deductions --------
+	        Sheet sheet3 = workbook.getSheetAt(2);
+	        for (int i = 1; i <= sheet3.getLastRowNum(); i++) {
+	            Row row = sheet3.getRow(i);
+	            if (row == null) continue;
+
+	            Long id = getLongCellValue(row.getCell(0));
+	            if (id == null) continue;
+
+	            String heading = getStringCellValue(row.getCell(1));
+	            BigDecimal amount = getBigDecimalCellValue(row.getCell(2));
+
+	            SalaryDetectionDetailsVO deduction = new SalaryDetectionDetailsVO();
+	            deduction.setHeading(heading);
+	            deduction.setAmount(amount);
+
+	            SalaryStructureVO parent = structureMap.get(id);
+	            if (parent != null) {
+	                deduction.setSalaryStructureVO(parent);
+	                parent.getSalaryDetectionDetailsVO().add(deduction);
+	            }
+	        }
+
+	        // -------- CALCULATE TOTALS & SAVE --------
+	        for (SalaryStructureVO vo : structureMap.values()) {
+	            BigDecimal totalEarnings = vo.getSalaryEarningDetailsVO().stream()
+	                    .map(SalaryEarningDetailsVO::getAmount)
+	                    .filter(Objects::nonNull)
+	                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+	            BigDecimal totalDeductions = vo.getSalaryDetectionDetailsVO().stream()
+	                    .map(SalaryDetectionDetailsVO::getAmount)
+	                    .filter(Objects::nonNull)
+	                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+	            vo.setSumOfEarning(totalEarnings);
+	            vo.setSumOfDetection(totalDeductions);
+
+	            salaryStructureRepo.save(vo); // Cascade saves earnings & deductions
+	        }
+
+	        return "✅ Upload successful. Records saved: " + structureMap.size();
+	    }
+	}
+
+	// ---------- Helper Methods ----------
+	private String getStringCellValue(Cell cell) {
+	    if (cell == null) return "";
+	    cell.setCellType(CellType.STRING);
+	    return cell.getStringCellValue().trim();
+	}
+
+	private Long getLongCellValue(Cell cell) {
+	    if (cell == null) return null;
+	    if (cell.getCellType() == CellType.NUMERIC) {
+	        return (long) cell.getNumericCellValue();
+	    } else if (cell.getCellType() == CellType.STRING && !cell.getStringCellValue().isEmpty()) {
+	        return Long.parseLong(cell.getStringCellValue());
+	    }
+	    return null;
+	}
+
+	private BigDecimal getBigDecimalCellValue(Cell cell) {
+	    if (cell == null) return BigDecimal.ZERO;
+	    if (cell.getCellType() == CellType.NUMERIC) {
+	        return BigDecimal.valueOf(cell.getNumericCellValue());
+	    } else if (cell.getCellType() == CellType.STRING && !cell.getStringCellValue().isEmpty()) {
+	        return new BigDecimal(cell.getStringCellValue());
+	    }
+	    return BigDecimal.ZERO;
+	}
+
 
 }
