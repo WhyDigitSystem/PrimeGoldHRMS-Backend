@@ -59,7 +59,7 @@ public class AttendanceLogController extends BaseController {
 	}
 	
 	@GetMapping("/getEmployeeAttendanceDashboard")
-	public ResponseEntity<ResponseDTO> getEmployeeAttendanceDashboard(@RequestParam String date,@RequestParam String department,@RequestParam String employeeType,@RequestParam String status,@RequestParam String missPunch) {
+	public ResponseEntity<ResponseDTO> getEmployeeAttendanceDashboard(@RequestParam String date,@RequestParam String department,@RequestParam String employeeType,@RequestParam String status,@RequestParam String missPunch,@RequestParam(required = false) String mainDepartment) {
 		String methodName = "getEmployeeAttendanceDashboard()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 		String errorMsg = null;
@@ -67,7 +67,7 @@ public class AttendanceLogController extends BaseController {
 		ResponseDTO responseDTO = null;
 		List<Map<String, Object>> attendanceLogVO = new ArrayList<>();
 		try {
-			attendanceLogVO = attendanceLogService.getEmployeeAttendanceDetails(date, department, employeeType, status, missPunch);
+			attendanceLogVO = attendanceLogService.getEmployeeAttendanceDetails(date, department, employeeType, status, missPunch, mainDepartment);
 		} catch (Exception e) {
 			errorMsg = e.getMessage();
 			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
