@@ -76,6 +76,7 @@ import com.efit.hrms.repo.EmployeeRepo;
 import com.efit.hrms.repo.OtCalculationRepo;
 import com.efit.hrms.repo.OtMasterRepo;
 import com.efit.hrms.repo.ShiftAssignDetailsRepo;
+import com.efit.hrms.repo.ShiftMasterRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -114,6 +115,9 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	@Autowired
 	EmployeeRepo employeeRepo;
 
+	@Autowired
+	ShiftMasterRepo shiftMasterRepo;
+	
 //	@Autowired
 //	private SequenceRepo sequenceRepo;
 
@@ -2285,6 +2289,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 			orderedMap.put("branch", row.get("branch"));
 			orderedMap.put("department", row.get("department"));
 			orderedMap.put("shifttype", row.get("shifttype"));
+	        orderedMap.put("workStatus", row.get("work_status"));
 			for (int i = 1; i <= 31; i++) {
 				orderedMap.put("day_" + i, row.get("day_" + i));
 			}
@@ -2709,4 +2714,27 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		return detailsList;
 	}
 
+	
+	@Override
+	public List<Map<String, Object>> getEmployeeShiftHoursForMonthlyReport(String empCode, Integer month, String finYear, Long orgId,
+			String branchCode) {
+		List<Object[]> rawList = shiftMasterRepo.getEmployeeShiftHoursForMonthlyReport( empCode,  month,  finYear,  orgId,
+				 branchCode); // change to Object[]
+		return getEmployeeShiftHoursForMonthlyReport(rawList);
+	}
+
+	private List<Map<String, Object>> getEmployeeShiftHoursForMonthlyReport(List<Object[]> result) {
+		List<Map<String, Object>> detailsList = new ArrayList<>();
+
+		for (Object[] record : result) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("employeeCode", record[0] != null ? record[0].toString() : "");
+			map.put("employeeName", record[1] != null ? record[1].toString() : "");
+			map.put("shift", record[2] != null ? record[2].toString() : "");
+			map.put("hours", record[3] != null ? record[3].toString() : "");
+
+			detailsList.add(map);
+		}
+		return detailsList;
+	}
 }

@@ -19,4 +19,10 @@ public interface ShiftMasterRepo extends JpaRepository<ShiftMasterVO, Long>{
 
 	@Query( value = "SELECT * FROM shiftmaster WHERE orgid=?1 and shift=?2 and shiftcode=?3 and branchcode=?4",nativeQuery = true)
 	 List<ShiftMasterVO>  getAllShiftMasterByOrgIdAndShiftAndBranchCode(Long orgId, String shift,String shiftCode, String branchCode);
+
+	@Query( value = "select b.employeecode,b.employeename,a.shifttype,b.hours from shiftassign a join shiftassigndetails b on b.shiftassignid=a.shiftassignid where b.employeecode=?1 and   a.orgid=?4 and a.branchcode=?5 and b.effectivefrom <= STR_TO_DATE(CONCAT(?3, '-', LPAD(?2, 2, '0'), '-01'), '%Y-%m-%d') and b.effectiveto >= STR_TO_DATE(CONCAT(?3, '-', LPAD(?2, 2, '0'), '-01'), '%Y-%m-%d') ",nativeQuery = true)
+	List<Object[]> getEmployeeShiftHoursForMonthlyReport(String empCode, Integer month, String finYear, Long orgId,
+			String branchCode);
+
+	
 }
