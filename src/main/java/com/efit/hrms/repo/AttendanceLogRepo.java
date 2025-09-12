@@ -74,4 +74,64 @@ public interface AttendanceLogRepo extends JpaRepository<AttendanceLogVO, Long> 
                    "WHERE attendancedate=?1", nativeQuery = true)
 	void deleteByAttendanceDate(String date);
 
+	
+	@Query(nativeQuery = true, value = "SELECT \r\n"
+			+ "    m.team,\r\n"
+			+ "    SUM(CASE WHEN a.attendancestatus = 'Present' THEN 1 ELSE 0 END) AS present_count,\r\n"
+			+ "    SUM(CASE WHEN a.attendancestatus = 'Absent' THEN 1 ELSE 0 END) \r\n"
+			+ "        + SUM(CASE WHEN a.attendancestatus IS NULL THEN 1 ELSE 0 END) AS absent_count,\r\n"
+			+ "    SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count\r\n"
+			+ "FROM employeemaster m\r\n"
+			+ "LEFT JOIN attendancelog a \r\n"
+			+ "       ON a.employeecode = m.EmployeeCode\r\n"
+			+ "      AND a.attendancedate = ?1\r\n"
+			+ "WHERE m.team NOT IN ('Default', '')\r\n"
+			+ "  AND ?2 = 'Contract'       -- ✅ Instead of 'Contract' = 'Contract'\r\n"
+			+ "  AND m.EmployeeCode LIKE 'CPGH%'\r\n"
+			+ "GROUP BY m.team")
+	List<Object[]> getContractMainDepartments(String date, String empType);
+
+	@Query(nativeQuery = true, value = "SELECT b.SubDepartment,\r\n"
+			+ "       SUM(CASE WHEN a.attendancestatus = 'Present' THEN 1 ELSE 0 END) AS present_count,\r\n"
+			+ "       SUM(CASE WHEN a.attendancestatus = 'Absent' THEN 1 ELSE 0 END) AS absent_count,\r\n"
+			+ "       SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count,b.Team\r\n"
+			+ "FROM attendancelog a\r\n"
+			+ "JOIN employeemaster b ON a.employeecode = b.employeecode\r\n"
+			+ "WHERE a.attendancedate = ?1 and b.team=?2\r\n"
+			+ "  AND 'Contract' = 'Contract' AND a.employeecode LIKE 'CPGH%'\r\n"
+			+ "and  b.team not in('Default','')\r\n"
+			+ "GROUP BY b.SubDepartment,b.team")
+	List<Object[]> getContractorSubDepartments(String date, String mainDept);
+
+	@Query(nativeQuery = true, value = "SELECT \r\n"
+			+ "    b.employeecode,\r\n"
+			+ "    b.employeename,\r\n"
+			+ "    b.SubDepartment,\r\n"
+			+ "    b.designation,\r\n"
+			+ "    a.attendancestatus,\r\n"
+			+ "    CASE \r\n"
+			+ "        WHEN a.outdevice = 'SE' THEN 'Yes'\r\n"
+			+ "        ELSE 'No'\r\n"
+			+ "    END AS misspunch,\r\n"
+			+ "    DATE_FORMAT(a.intime, '%H:%i') AS intime,\r\n"
+			+ "    CASE \r\n"
+			+ "        WHEN a.outdevice = 'SE' THEN '00:00'\r\n"
+			+ "        ELSE DATE_FORMAT(a.outtime, '%H:%i')\r\n"
+			+ "    END AS outtime,\r\n"
+			+ "    b.team\r\n"
+			+ "FROM employeemaster b\r\n"
+			+ "LEFT JOIN attendancelog a \r\n"
+			+ "       ON a.employeecode = b.employeecode\r\n"
+			+ "      AND a.attendancedate = ?1\r\n"
+			+ "WHERE b.SubDepartment = ?2\r\n"
+			+ "  AND b.team = ?5\r\n"
+			+ "  AND b.employeecode LIKE 'CPGH%'\r\n"
+			+ "  AND (a.attendancestatus = ?3 OR ?3 = 'ALL')\r\n"
+			+ "  AND ((CASE WHEN a.outdevice = 'SE' THEN 'Yes' ELSE 'No' END) = ?4 OR ?4 = 'ALL')\r\n"
+			+ "ORDER BY b.employeecode, intime ASC")
+	Set<Object[]> getEmployeeAttendanceContractor(String date, String department, String status,
+			String missPunch, String mainDepartment);
+
+
+
 }

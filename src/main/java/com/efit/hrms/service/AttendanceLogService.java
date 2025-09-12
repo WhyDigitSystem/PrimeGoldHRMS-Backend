@@ -15,9 +15,10 @@ public interface AttendanceLogService {
 
 	List<AttendanceLogVO> getAllAttendanceLogDetails(String startDate, String endDate);
 
-	List<Map<String, Object>>getEmployeeAttendanceDetails(String date,String department,String employeeType,String status,String missPunch);
-
 	Map<String, DepartmentResponse> getDashboard(String date, String empType);
+
+	List<Map<String, Object>> getEmployeeAttendanceDetails(String date, String department, String employeeType,
+			String status, String missPunch, String mainDepartment);
 
 	
 	
