@@ -918,9 +918,9 @@ public class EmployeeMasterController extends BaseController{
 	}
 	
 	
-	 @PostMapping("/upload-excel")
+	 @PostMapping("/uploadExcelSalaryStructure")
 	    public ResponseEntity<String> uploadExcel(
-	            @RequestParam("file") MultipartFile file,   // 👈 FIXED (was "files")
+	            @RequestParam("files") MultipartFile file,   // 👈 FIXED (was "files")
 	            @RequestParam("orgId") Long orgId,
 	            @RequestParam("createdBy") String createdBy) {
 	        try {

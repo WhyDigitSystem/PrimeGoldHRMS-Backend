@@ -1,6 +1,7 @@
 
 package com.efit.hrms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -54,6 +55,10 @@ public class CompanyDTO {
 	private OverTime otFlag;
 	private String otType;
 	private String otPolicy;
+	private BigDecimal shiftHours;
+
+	private BigDecimal otEligibleHours;
+
 
 
 	private Double latitude;

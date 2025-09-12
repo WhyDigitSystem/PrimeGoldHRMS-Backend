@@ -1,5 +1,6 @@
 package com.efit.hrms.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -114,6 +115,12 @@ public class CompanyVO {
 	
 	@Column(name = "ottype")
 	private String otType;
+	
+	@Column(name = "shifthours")
+	private BigDecimal shiftHours;
+	
+	@Column(name = "oteligiblehours")
+	private BigDecimal otEligibleHours;
 	
 	@Column(name = "otpolicy")
 	private String otPolicy;

@@ -69,6 +69,28 @@ public class CheckInOutController extends BaseController{
 	}
 	
 	
+	@PutMapping("/createCheckInOutBiometricDevice")
+	public ResponseEntity<ResponseDTO> createCheckInOutBiometricDevice() {
+		String methodName = "createCheckInOutBiometric()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		Map<String, Object> responseObjectsMap = new HashMap<String, Object>();
+		String errorMsg = null;
+		ResponseDTO responseDTO = null;
+		try {
+			Map<String, Object> checkInBiometricVO = checkInOutService.createCheckInOutBiometricDevice();
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, checkInBiometricVO.get("message"));
+			responseObjectsMap.put("checkInBiometricVO", checkInBiometricVO.get("checkInBiometricVO"));
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	
 
 	    @PostMapping("/checkInOutUploadExcel")
 	    public ResponseEntity<String> checkInOutUploadExcel(@RequestParam("files") MultipartFile file,@RequestParam Long orgId,@RequestParam String createdBy) {

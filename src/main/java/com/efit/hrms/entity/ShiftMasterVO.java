@@ -44,6 +44,8 @@ public class ShiftMasterVO {
 	private String graceTime;
 	@Column(name = "nightshift")
 	private boolean nightShift;
+	@Column(name = "openshift")
+	private boolean openShift;
 
 	@Column(name = "orgid")
 	private long orgId;

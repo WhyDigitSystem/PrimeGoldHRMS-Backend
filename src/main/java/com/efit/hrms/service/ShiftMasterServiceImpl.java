@@ -162,6 +162,8 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		shiftMasterVO.setBreakTime(shiftMasterDTO.getBreakTime());
 		shiftMasterVO.setGraceTime(shiftMasterDTO.getGraceTime());
 		shiftMasterVO.setNightShift(shiftMasterDTO.isNightShift());
+		shiftMasterVO.setOpenShift(shiftMasterDTO.isOpenShift());
+
 
 		shiftMasterVO.setOrgId(shiftMasterDTO.getOrgId());
 		shiftMasterVO.setBranchCode(shiftMasterDTO.getBranchCode());

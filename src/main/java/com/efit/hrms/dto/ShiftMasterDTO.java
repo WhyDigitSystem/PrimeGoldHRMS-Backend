@@ -25,6 +25,7 @@ public class ShiftMasterDTO {
 	private String breakTime;
 	private String graceTime;
 	private boolean nightShift;
+	private boolean openShift;
 	private BigDecimal halfDayHours;
 	private BigDecimal fullDayHours;
 	

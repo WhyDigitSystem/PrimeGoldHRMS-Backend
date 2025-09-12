@@ -60,6 +60,8 @@ public interface CheckInOutService {
 	List<Map<String, Object>> getEmployeeShiftHoursForMonthlyReport(String empCode, Integer month, String finYear, Long orgId,
 			String branchCode);
 
+	Map<String, Object> createCheckInOutBiometricDevice() throws ApplicationException;
+
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 
 
