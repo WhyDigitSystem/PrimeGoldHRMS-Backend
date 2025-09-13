@@ -16,7 +16,6 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 
 	
 	
-	
 	//BEFORE SEP 9
 //	@Query(
 //		    value = "WITH company_cte AS (\r\n"
