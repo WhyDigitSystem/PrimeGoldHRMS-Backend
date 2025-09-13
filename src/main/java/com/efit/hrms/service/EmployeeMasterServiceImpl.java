@@ -1082,7 +1082,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	            salaryStructureRepo.save(vo); // Cascade saves earnings & deductions
 	        }
 
-	        return "✅ Upload successful. Records saved: " + structureMap.size();
+	        return " Upload successful. Records saved: " + structureMap.size();
 	    }
 	}
 

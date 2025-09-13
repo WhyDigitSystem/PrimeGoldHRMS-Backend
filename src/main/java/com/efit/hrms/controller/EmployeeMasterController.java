@@ -918,20 +918,40 @@ public class EmployeeMasterController extends BaseController{
 	}
 	
 	
-	 @PostMapping("/uploadExcelSalaryStructure")
-	    public ResponseEntity<String> uploadExcel(
-	            @RequestParam("files") MultipartFile file,   // 👈 FIXED (was "files")
-	            @RequestParam("orgId") Long orgId,
-	            @RequestParam("createdBy") String createdBy) {
-	        try {
-	            String result = employeeMasterService.uploadSalaryStructureExcel(file, orgId, createdBy);
-	            return ResponseEntity.ok(result);
-	        } catch (Exception e) {
-	            e.printStackTrace(); // 👈 debug log
-	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                    .body("Upload failed: " + (e.getMessage() != null ? e.getMessage() : e.toString()));
-	        }
+	@PostMapping("/uploadExcelSalaryStructure")
+	public ResponseEntity<ResponseDTO> uploadExcelSalaryStructure(
+	        @RequestParam("files") MultipartFile file,
+	        @RequestParam("orgId") Long orgId,
+	        @RequestParam("createdBy") String createdBy) {
+
+	    String methodName = "uploadExcelSalaryStructure()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+
+	    try {
+	        String result = employeeMasterService.uploadSalaryStructureExcel(file, orgId, createdBy);
+
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Salary Structure Excel uploaded successfully");
+	        responseObjectsMap.put("uploadResult", result);
+
+	        responseDTO = createServiceResponse(responseObjectsMap);
+
+	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	        return ResponseEntity.ok(responseDTO);
+
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+	        responseDTO = createServiceResponseError(responseObjectsMap,
+	                "Failed to upload Salary Structure Excel", errorMsg);
+
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
 	    }
+	}
+
 
 }
 

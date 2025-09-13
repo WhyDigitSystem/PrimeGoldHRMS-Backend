@@ -50,7 +50,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -963,7 +963,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    Queue<Map<String, Object>> failures = new ConcurrentLinkedQueue<>();
 	    AtomicInteger successCount = new AtomicInteger(0);
 
-	    try (InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
+	    try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
 
 	        Sheet sheet = workbook.getSheetAt(0);
 	        DataFormatter formatter = new DataFormatter();
@@ -1129,110 +1129,121 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	        // Calculate daily attendance (merged IN/OUT)
 	     // ------------------ Calculate daily attendance (merged IN/OUT) ------------------
 	     // Fetch AttendanceProcess records for current uploads
+	     // ------------------ build daily attendance (per employee, per work-day) ------------------
 	        List<AttendanceProcessVO> attendanceList = attendanceProcessRepo.findBySourceIdIn(currentUploadIds);
 
-	     // Group by employee + org + branch
-	     Map<String, List<AttendanceProcessVO>> groupedByEmp = attendanceList.stream()
-	             .collect(Collectors.groupingBy(a -> a.getEmpCode() + "_" + a.getOrgId() + "_" + a.getBranchCode()));
+	        // Group by employee + org + branch
+	        Map<String, List<AttendanceProcessVO>> groupedByEmp = attendanceList.stream()
+	                .collect(Collectors.groupingBy(a -> a.getEmpCode() + "_" + a.getOrgId() + "_" + a.getBranchCode()));
 
-	     Queue<AttendanceDailyVO> dailyListQueue = new ConcurrentLinkedQueue<>();
-	     ExecutorService dailyExecutor = Executors.newFixedThreadPool(numThreads);
-	     List<Future<?>> dailyFutures = new ArrayList<>();
+	        Queue<AttendanceDailyVO> dailyListQueue = new ConcurrentLinkedQueue<>();
+	        ExecutorService dailyExecutor = Executors.newFixedThreadPool(numThreads);
+	        List<Future<?>> dailyFutures = new ArrayList<>();
 
-	     for (List<AttendanceProcessVO> empRecords : groupedByEmp.values()) {
-	         dailyFutures.add(dailyExecutor.submit(() -> {
-	             // Sort records by date and time
-	             List<AttendanceProcessVO> recs = empRecords.stream()
-	                     .sorted(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-	                             .thenComparing(AttendanceProcessVO::getEntryTime))
-	                     .collect(Collectors.toList());
+	        for (List<AttendanceProcessVO> empRecords : groupedByEmp.values()) {
+	            dailyFutures.add(dailyExecutor.submit(() -> {
+	                // Sort all records for this employee by date & time
+	                List<AttendanceProcessVO> recs = empRecords.stream()
+	                        .sorted(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
+	                                .thenComparing(AttendanceProcessVO::getEntryTime))
+	                        .collect(Collectors.toList());
 
-	             // Group by workDate for per-day attendance
-	             Map<LocalDate, List<AttendanceProcessVO>> recordsByDay = new HashMap<>();
-	             for (AttendanceProcessVO rec : recs) {
-	                 LocalDate workDate = rec.getCheckInDate();
-	                 // Adjust for night shift where IN > OUT
-	                 if ("Out".equalsIgnoreCase(rec.getStatus()) && !recordsByDay.containsKey(workDate)) {
-	                     // Check previous IN
-	                     int idx = recs.indexOf(rec);
-	                     if (idx > 0) {
-	                         AttendanceProcessVO prev = recs.get(idx - 1);
-	                         if ("In".equalsIgnoreCase(prev.getStatus())
-	                                 && LocalTime.of(rec.getEntryTime().getHour(), rec.getEntryTime().getMinute())
-	                                     .isBefore(prev.getEntryTime())) {
-	                             workDate = prev.getCheckInDate(); // Night shift belongs to IN date
-	                         }
-	                     }
-	                 }
-	                 recordsByDay.computeIfAbsent(workDate, k -> new ArrayList<>()).add(rec);
-	             }
+	                // Group records by "work day" so night-shift OUTs map to the IN's date
+	                Map<LocalDate, List<AttendanceProcessVO>> recordsByDay = new LinkedHashMap<>();
+	                for (int i = 0; i < recs.size(); i++) {
+	                    AttendanceProcessVO rec = recs.get(i);
+	                    LocalDate workDate = rec.getCheckInDate();
 
-	             // Process each day's records
-	             for (Map.Entry<LocalDate, List<AttendanceProcessVO>> entry : recordsByDay.entrySet()) {
-	                 LocalDate day = entry.getKey();
-	                 List<AttendanceProcessVO> dayRecords = entry.getValue();
-	                 dayRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-	                         .thenComparing(AttendanceProcessVO::getEntryTime));
+	                    // If this is an OUT and looks like a night-out (time before previous IN), assign it to previous IN date
+	                    if ("Out".equalsIgnoreCase(rec.getStatus()) && i > 0) {
+	                        AttendanceProcessVO prev = recs.get(i - 1);
+	                        if ("In".equalsIgnoreCase(prev.getStatus()) && rec.getEntryTime().isBefore(prev.getEntryTime())) {
+	                            workDate = prev.getCheckInDate();
+	                        }
+	                    }
 
-	                 Deque<AttendanceProcessVO> inQueue = new ArrayDeque<>();
-	                 LocalDateTime mergedIn = null;
-	                 LocalDateTime mergedOut = null;
-	                 int totalGrossHours = 0;
+	                    recordsByDay.computeIfAbsent(workDate, k -> new ArrayList<>()).add(rec);
+	                }
 
-	                 for (AttendanceProcessVO rec : dayRecords) {
-	                     String status = rec.getStatus() == null ? "" : rec.getStatus().trim();
+	                // Process each day's records
+	                for (Map.Entry<LocalDate, List<AttendanceProcessVO>> entry : recordsByDay.entrySet()) {
+	                    LocalDate workDate = entry.getKey();
+	                    List<AttendanceProcessVO> dayRecords = entry.getValue();
+	                    dayRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
+	                            .thenComparing(AttendanceProcessVO::getEntryTime));
 
-	                     if ("In".equalsIgnoreCase(status)) {
-	                         if (mergedIn == null)
-	                             mergedIn = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
-	                         inQueue.addLast(rec);
-	                         continue;
-	                     }
+	                    Deque<AttendanceProcessVO> inQueue = new ArrayDeque<>();
+	                    LocalDateTime mergedIn = null;
+	                    LocalDateTime mergedOut = null;
+	                    int sumSessionHours = 0; // effective hours (sum of each IN->OUT)
+	                    // iterate and pair IN/OUT
+	                    for (AttendanceProcessVO rec : dayRecords) {
+	                        String status = rec.getStatus() == null ? "" : rec.getStatus().trim();
 
-	                     if ("Out".equalsIgnoreCase(status) && !inQueue.isEmpty()) {
-	                         AttendanceProcessVO firstIn = inQueue.removeFirst();
-	                         LocalDateTime inDT = LocalDateTime.of(firstIn.getCheckInDate(), firstIn.getEntryTime());
-	                         LocalDateTime outDT = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
+	                        if ("In".equalsIgnoreCase(status)) {
+	                            if (mergedIn == null) {
+	                                mergedIn = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
+	                            }
+	                            inQueue.addLast(rec);
+	                            continue;
+	                        }
 
-	                         // Night shift adjustment
-	                         if (outDT.isBefore(inDT)) outDT = outDT.plusDays(1);
+	                        if ("Out".equalsIgnoreCase(status) && !inQueue.isEmpty()) {
+	                            AttendanceProcessVO firstIn = inQueue.removeFirst();
+	                            LocalDateTime inDT = LocalDateTime.of(firstIn.getCheckInDate(), firstIn.getEntryTime());
+	                            LocalDateTime outDT = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
 
-	                         if (mergedIn == null || inDT.isBefore(mergedIn)) mergedIn = inDT;
-	                         if (mergedOut == null || outDT.isAfter(mergedOut)) mergedOut = outDT;
+	                            // if out is before in, it's next day -> add 1 day
+	                            if (outDT.isBefore(inDT)) outDT = outDT.plusDays(1);
 
-	                         totalGrossHours += (int) Duration.between(inDT, outDT).toHours();
-	                     }
-	                 }
+	                            // extend merged span
+	                            if (mergedIn == null || inDT.isBefore(mergedIn)) mergedIn = inDT;
+	                            if (mergedOut == null || outDT.isAfter(mergedOut)) mergedOut = outDT;
 
-	                 if (mergedIn != null && mergedOut != null) {
-	                     AttendanceDailyVO ad = new AttendanceDailyVO();
-	                     AttendanceProcessVO first = dayRecords.get(0);
-	                     ad.setEmpCode(first.getEmpCode());
-	                     ad.setEmpName(first.getEmpName());
-	                     ad.setOrgId(first.getOrgId());
-	                     ad.setBranch(first.getBranch());
-	                     ad.setBranchCode(first.getBranchCode());
-	                     ad.setCheckInDate(mergedIn.toLocalDate());
-	                     ad.setCheckOutDate(mergedOut.toLocalDate());
-	                     ad.setFinyear(first.getFinyear());
-	                     ad.setAttendanceMode("FILES");
-	                     ad.setInTime(mergedIn.toLocalTime());
-	                     ad.setOutTime(mergedOut.toLocalTime());
-	                     ad.setGrossHours(totalGrossHours);
-	                     ad.setEffectiveHours(totalGrossHours);
-	                     ad.setCreatedBy(createdBy);
+	                            // accumulate effective (session) hours
+	                            sumSessionHours += (int) Duration.between(inDT, outDT).toHours();
+	                        }
+	                    }
 
-	                     dailyListQueue.add(ad);
-	                 }
-	             }
-	         }));
-	     }
+	                    // only create a daily row if we got at least one IN/OUT pair
+	                    if (mergedIn != null && mergedOut != null) {
+	                        AttendanceDailyVO ad = new AttendanceDailyVO();
+	                        AttendanceProcessVO first = dayRecords.get(0);
 
-	     for (Future<?> f : dailyFutures) f.get();
-	     dailyExecutor.shutdown();
+	                        // gross = span from first IN to last OUT (this is the change you requested)
+	                        int grossSpanHours = (int) Duration.between(mergedIn, mergedOut).toHours();
 
-	     // Save all daily attendance
-	     attendanceDailyRepo.saveAll(dailyListQueue);
+	                        ad.setEmpCode(first.getEmpCode());
+	                        ad.setEmpName(first.getEmpName());
+	                        ad.setOrgId(first.getOrgId());
+	                        ad.setBranch(first.getBranch());
+	                        ad.setBranchCode(first.getBranchCode());
+	                        ad.setCheckInDate(mergedIn.toLocalDate());
+	                        ad.setCheckOutDate(mergedOut.toLocalDate());
+	                        ad.setFinyear(first.getFinyear());
+	                        ad.setAttendanceMode("FILES");
+	                        ad.setInTime(mergedIn.toLocalTime());
+	                        ad.setOutTime(mergedOut.toLocalTime());
+
+	                        // IMPORTANT:
+	                        // - grossHours = first IN -> last OUT (span)
+	                        // - effectiveHours = sum of actual session hours (IN->OUT pairs)
+	                        ad.setGrossHours(grossSpanHours);
+	                        ad.setEffectiveHours(sumSessionHours);
+
+	                        ad.setCreatedBy(createdBy);
+
+	                        dailyListQueue.add(ad);
+	                    }
+	                }
+	            }));
+	        }
+
+	        // wait for threads and save
+	        for (Future<?> f : dailyFutures) f.get();
+	        dailyExecutor.shutdown();
+
+	        attendanceDailyRepo.saveAll(dailyListQueue);
 
 	        result.put("message", "Attendance Uploaded successfully");
 	        return new ObjectMapper().writeValueAsString(result);

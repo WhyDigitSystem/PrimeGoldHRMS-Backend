@@ -368,7 +368,7 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 		    		+ "),\r\n"
 		    		+ "attendance_cte AS (\r\n"
 		    		+ "    SELECT ad.empcode, ad.empname, ad.branch, ad.branchcode, ad.checkindate,\r\n"
-		    		+ "           ad.intime, ad.outtime, ad.grosshours AS work_hrs\r\n"
+		    		+ "           ad.intime, ad.outtime, ad.effectivehours AS work_hrs\r\n"
 		    		+ "    FROM attendancedaily ad\r\n"
 		    		+ "    JOIN company_cte c ON ad.orgid = c.companyid\r\n"
 		    		+ "    JOIN employee e ON ad.empcode = e.employeecode\r\n"
