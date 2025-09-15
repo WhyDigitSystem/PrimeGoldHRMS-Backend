@@ -24,6 +24,8 @@ public class AdvanceDTO {
 	private boolean approve;
 	private boolean active;
 	private String createdBy;
+	private int dueMonth;
+
 	private Long orgId;
 	private boolean cancel;
 	private String branchCode;

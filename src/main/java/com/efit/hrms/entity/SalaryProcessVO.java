@@ -68,6 +68,11 @@ public class SalaryProcessVO {
 	@Column(name = "approveon")
 	private String approveOn;
 	
+	@Column(name = "advancededuction")
+	private BigDecimal advanceDeduction;
+	@Column(name = "salaryamount")
+	private BigDecimal salary;
+	
 	@Column(name = "createdby")
 	private String createdBy;
 	@Column(name = "modifiedby")

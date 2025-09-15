@@ -141,6 +141,9 @@ public class EmployeeVO {
 	@Column(name = "bioid")
 	private String bioId;
 	
+	@Column(name = "weekoffoteligible")
+	private boolean weekoffOtEligible;
+	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
 

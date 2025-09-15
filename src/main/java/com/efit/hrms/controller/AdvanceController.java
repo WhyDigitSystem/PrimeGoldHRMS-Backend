@@ -1,5 +1,6 @@
 package com.efit.hrms.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,6 +69,36 @@ public class AdvanceController extends BaseController {
 
 	}
 
+	
+	@GetMapping("/getEmployeeAdvanceSalary")
+	public ResponseEntity<ResponseDTO> getEmployeeAdvanceSalary(@RequestParam Long orgId,
+			@RequestParam String branchCode,@RequestParam String employeeCode,@RequestParam BigDecimal payOnHand,Long month, String year) {
+		String methodName = "getAllAdvanceByOrgId()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<Map<String, Object>>  advanceVO = new ArrayList<>();
+		try {
+			advanceVO = advanceService.getEmployeeAdvanceSalary(orgId, branchCode,employeeCode,payOnHand, month,  year);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Advance Salary information get successfully ByOrgId");
+			responseObjectsMap.put("advanceVO", advanceVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Advance Salary information receive failedByOrgId",
+					errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
+	}
+
+	
 	@GetMapping("/getAdvanceById")
 	public ResponseEntity<ResponseDTO> getAdvanceById(@RequestParam Long id) {
 		String methodName = "getAdvanceById()";

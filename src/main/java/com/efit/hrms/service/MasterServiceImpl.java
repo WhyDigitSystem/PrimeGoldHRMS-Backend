@@ -345,6 +345,7 @@ public class MasterServiceImpl implements MasterService {
 	    employeeVO.setContactPerson(employeeDTO.getContactPerson());
 	    employeeVO.setContactNumber(employeeDTO.getContactNumber());
 	    employeeVO.setContactEmail(employeeDTO.getContactEmail());
+	    employeeVO.setWeekoffOtEligible(employeeDTO.isWeekoffOtEligible());
 
 	    UserLoginRolesVO userLoginRolesVO =
 	        userLoginRolesRepo.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());

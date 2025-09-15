@@ -1,7 +1,8 @@
 package com.efit.hrms.service;
 
 import java.io.IOException;
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.AdvanceDTO;
 import com.efit.hrms.entity.AdvanceVO;
-import com.efit.hrms.entity.GroupVO;
 import com.efit.hrms.entity.ShiftAssignVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AdvanceRepo;
@@ -96,12 +96,14 @@ public class AdvanceServiceImpl implements AdvanceService {
 		advanceVO.setEmployeeCode(advanceDTO.getEmployeeCode());
 		advanceVO.setOrgId(advanceDTO.getOrgId());
 		advanceVO.setAdvanceAmount(advanceDTO.getAdvanceAmount());
-		advanceVO.setLoanBalance(advanceDTO.getLoanBalance());
+		advanceVO.setLoanBalance(advanceDTO.getAdvanceAmount());
 		advanceVO.setRemarks(advanceDTO.getRemarks());
 		advanceVO.setDepartment(advanceDTO.getDepartment());
 		advanceVO.setDesignation(advanceDTO.getDesignation());
 		advanceVO.setApprove(advanceDTO.isApprove());
 		advanceVO.setReasonForAdvance(advanceDTO.getReasonForAdvance());
+		advanceVO.setDueMonth(advanceDTO.getDueMonth());
+
 	}
 
 	@Override
@@ -152,4 +154,62 @@ public class AdvanceServiceImpl implements AdvanceService {
 		return shiftAssignRepo.getAllShiftDetails( orgId,shifttype, department,  effectiveFrom,
 				 effectiveTo, type, contractorName);
 	}
+	
+	
+	
+	@Override
+	public List<Map<String, Object>> getEmployeeAdvanceSalary(Long orgId, String branchCode, String employeeCode, BigDecimal payOnHand,Long month, String year) {
+		Set<Object[]> advanceVO = advanceRepo.getEmployeeAdvanceSalary( orgId,  branchCode,  employeeCode, month,  year);
+		return getEmployeeAdvanceSalary(advanceVO,payOnHand);
+	}
+
+	private List<Map<String, Object>> getEmployeeAdvanceSalary(Set<Object[]> advanceVO,BigDecimal payOnHand) {
+		List<Map<String, Object>> List1 = new ArrayList<>();
+		for (Object[] ch : advanceVO) {
+			Map<String, Object> map = new HashMap<>();
+
+			// employeeName
+			map.put("employeeName", ch[0] != null ? ch[0].toString() : "");
+
+			// employeeCode
+			map.put("employeeCode", ch[1] != null ? ch[1].toString() : "");
+
+			// advanceAmount
+			map.put("advanceAmount", ch[2] != null ? ch[2].toString() : "");
+			BigDecimal advanceAmount = (ch[2] != null) ? new BigDecimal(ch[2].toString()) : BigDecimal.ZERO;
+
+			// month (dynamic, assume month is in ch[3])
+			int month = (ch[3] != null) ? Integer.parseInt(ch[3].toString()) : 0;
+			map.put("deductionMonth", month); // optional: store in map
+
+			// calculate deductionAmount (safe BigDecimal division)
+			BigDecimal deductionAmount = BigDecimal.ZERO;
+			if (month > 0) {
+			    deductionAmount = advanceAmount.divide(BigDecimal.valueOf(month), 2, RoundingMode.HALF_UP);
+			}
+			map.put("deductionAmount", deductionAmount);
+
+			// salary calculation
+			BigDecimal salary = BigDecimal.ZERO;
+			if (payOnHand != null && payOnHand.compareTo(BigDecimal.ZERO) > 0) {
+			    salary = payOnHand.subtract(deductionAmount);
+			}
+			map.put("salary", salary);
+
+			map.put("requestDate", ch[4] != null ? ch[4].toString() : "");
+			
+			BigDecimal loanBalance = (ch[5] != null) ? new BigDecimal(ch[5].toString()) : BigDecimal.ZERO;
+			loanBalance = loanBalance.subtract(deductionAmount);
+
+			// Put in map safely
+			map.put("loanBalance", loanBalance != null ? loanBalance.toString() : "0");
+			List1.add(map);
+		}
+		return List1;
+
+	}
+	
+	
 }
+
+

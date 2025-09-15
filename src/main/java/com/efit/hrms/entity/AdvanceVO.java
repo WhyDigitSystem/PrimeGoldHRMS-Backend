@@ -76,6 +76,10 @@ public class AdvanceVO {
 	@Column(name = "finyear")
 	private String finYear;
 	
+	@Column(name = "duemonth")
+	private int dueMonth;
+	
+	
 	@Lob
 	@Column(name = "attachment", columnDefinition = "LONGBLOB")
 	private byte[] attachment;
