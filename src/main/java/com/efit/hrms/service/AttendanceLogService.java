@@ -20,6 +20,8 @@ public interface AttendanceLogService {
 	List<Map<String, Object>> getEmployeeAttendanceDetails(String date, String department, String employeeType,
 			String status, String missPunch, String mainDepartment);
 
+	Map<String, String> fetchAndSaveDeviceLog(String startDate, String endDate);
+
 	
 	
 

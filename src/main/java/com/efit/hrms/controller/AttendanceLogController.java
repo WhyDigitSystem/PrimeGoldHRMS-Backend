@@ -112,5 +112,32 @@ public class AttendanceLogController extends BaseController {
 		return ResponseEntity.ok().body(responseDTO);
 
 	}
+	
+	@GetMapping("/deviceLog")
+	public ResponseEntity<ResponseDTO> getDeviceLog(@RequestParam String startDate,
+            @RequestParam String endDate) {
+		String methodName = "getDeviceLog()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		Map<String, String> deviceLog= new HashMap<>();
+		try {
+			deviceLog = attendanceLogService.fetchAndSaveDeviceLog(startDate, endDate);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isBlank(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Device Log information get successfully");
+			responseObjectsMap.put("message", deviceLog.get("message"));
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			responseDTO = createServiceResponseError(responseObjectsMap, "Device Log information receive failed", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+
+	}
 
 }

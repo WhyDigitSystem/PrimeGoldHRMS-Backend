@@ -17,7 +17,9 @@ import org.springframework.web.client.RestTemplate;
 import com.efit.hrms.dto.DepartmentResponse;
 import com.efit.hrms.dto.SubDepartmentResponse;
 import com.efit.hrms.entity.AttendanceLogVO;
+import com.efit.hrms.entity.DeviceLogVO;
 import com.efit.hrms.repo.AttendanceLogRepo;
+import com.efit.hrms.repo.DeviceLogRepo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -29,6 +31,9 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 
 	@Autowired
 	AttendanceLogRepo attendanceLogRepo;
+
+	@Autowired
+	DeviceLogRepo deviceLogRepo;
 
 	@Override
 	public List<AttendanceLogVO> getAllAttendanceLogDetails(String startDate, String endDate) {
@@ -82,15 +87,14 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 
 	@Override
 	public List<Map<String, Object>> getEmployeeAttendanceDetails(String date, String department, String employeeType,
-			String status, String missPunch,String mainDepartment) {
+			String status, String missPunch, String mainDepartment) {
 		Set<Object[]> attendanceDetails = new HashSet<>();
-		if(employeeType.equals("Employee")) {
-		attendanceDetails = attendanceLogRepo.getEmployeeAttendance(date, department, employeeType,
-				status, missPunch);
-		}
-		else {
-			attendanceDetails = attendanceLogRepo.getEmployeeAttendanceContractor(date, department,
-					status, missPunch,mainDepartment);
+		if (employeeType.equals("Employee")) {
+			attendanceDetails = attendanceLogRepo.getEmployeeAttendance(date, department, employeeType, status,
+					missPunch);
+		} else {
+			attendanceDetails = attendanceLogRepo.getEmployeeAttendanceContractor(date, department, status, missPunch,
+					mainDepartment);
 		}
 
 		return employeeAttendance(attendanceDetails);
@@ -199,6 +203,41 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 			return "SMS";
 		}
 		return "ADMIN";
+	}
+
+	@Override
+	public Map<String, String> fetchAndSaveDeviceLog(String startDate, String endDate) {
+
+		RestTemplate restTemplate = new RestTemplate();
+		List<DeviceLogVO> savedLogs = new ArrayList<>();
+		String message=null;
+		try {
+			String url = "http://localhost:8082/api/WebAPI/GetAttendanceBetweenDates" + "?AppKey=2716110845479"
+					+ "&StartDate=" + startDate + "&EndDate=" + endDate;
+			String response = restTemplate.getForObject(url, String.class);
+			System.out.println("Raw JSON Response: " + response);
+
+			// Step 2: Convert JSON into list of AttendanceLogVO
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.registerModule(new JavaTimeModule()); // handle LocalDate & LocalDateTime
+
+			List<DeviceLogVO> logs = mapper.readValue(response, new TypeReference<List<DeviceLogVO>>() {
+			});
+
+			// Step 3: Save each log into DB
+			for (DeviceLogVO log : logs) {
+
+				savedLogs.add(deviceLogRepo.save(log));
+				message="Device Log Get SucessFully";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			message=e.getMessage();
+		}
+
+		Map<String,String>response= new HashMap<>();
+		response.put("message", message);
+		return response; // return saved data
 	}
 
 }
