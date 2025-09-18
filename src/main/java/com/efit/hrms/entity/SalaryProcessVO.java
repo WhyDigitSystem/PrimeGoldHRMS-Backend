@@ -73,6 +73,11 @@ public class SalaryProcessVO {
 	@Column(name = "salaryamount")
 	private BigDecimal salary;
 	
+	@Column(name = "requestdate")
+	private LocalDate requestDate;
+	@Column(name = "loanbalance")
+	private BigDecimal loanBalance;
+	
 	@Column(name = "createdby")
 	private String createdBy;
 	@Column(name = "modifiedby")
