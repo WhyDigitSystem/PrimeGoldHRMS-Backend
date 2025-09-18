@@ -34,7 +34,7 @@ public class SalaryProcessDTO {
 	
 	private BigDecimal advanceDeduction;
 	private BigDecimal salary;
-	
+
 	
 	//advance screen 
 	private LocalDate requestDate;

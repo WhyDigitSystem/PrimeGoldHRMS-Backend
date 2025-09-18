@@ -1,6 +1,7 @@
 package com.efit.hrms.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -573,22 +574,24 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
 				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
+				salaryProcessVO.setRequestDate(salaryProcessDTO.getRequestDate());
+				salaryProcessVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
 
 
-				AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
-				        salaryProcessDTO.getEmployeeCode(),
-				        salaryProcessDTO.getBranchCode(),
-				        salaryProcessDTO.getOrgId(),
-				        salaryProcessDTO.getRequestDate()
-				);
-
-				if (advanceVO != null) {
-				    // update the loan balance
-				    advanceVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
-
-				    // save back to DB
-				    advanceRepo.save(advanceVO);
-				}
+//				AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
+//				        salaryProcessDTO.getEmployeeCode(),
+//				        salaryProcessDTO.getBranchCode(),
+//				        salaryProcessDTO.getOrgId(),
+//				        salaryProcessDTO.getRequestDate()
+//				);
+//
+//				if (advanceVO != null) {
+//				    // update the loan balance
+//				    advanceVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
+//
+//				    // save back to DB
+//				    advanceRepo.save(advanceVO);
+//				}
 				
 				
 //				List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
@@ -621,8 +624,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	}
 	
 	@Override
-	public Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> ids, String action,
-			String actionBy) throws ApplicationException {
+	public Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> ids, String action ,
+			String actionBy ) throws ApplicationException {
 		List<SalaryProcessVO> updatedList = new ArrayList<>();
 		String message = "";
 
@@ -645,7 +648,25 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 					List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
 							salaryProcessVO.getEmployeeCode(), salaryProcessVO.getOrgId(), salaryProcessVO.getMonth(),
 							salaryProcessVO.getYear());
+					
+					if ("APPROVED".equalsIgnoreCase(action) ) {
 
+						AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
+							    salaryProcessVO.getEmployeeCode(),
+							     salaryProcessVO.getBranchCode(),
+							     salaryProcessVO.getOrgId(),
+							    salaryProcessVO.getRequestDate()
+							);
+
+
+					if (advanceVO != null) {
+					    // update the loan balance
+					    advanceVO.setLoanBalance(salaryProcessVO.getLoanBalance());
+
+					    // save back to DB
+					    advanceRepo.save(advanceVO);
+					}
+					}
 					for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
 						leaveProcessVO.setApprovedStatus("APPROVED");
 					}
