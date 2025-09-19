@@ -69,6 +69,19 @@ public class CheckInOutController extends BaseController{
 	}
 	
 	
+	 @PostMapping("/process")
+	    public ResponseEntity<String> processDeviceLogs(@RequestParam Long orgId,
+	                                                    @RequestParam String createdBy) {
+	        try {
+	            String response = checkInOutService.processDeviceLogs(orgId, createdBy);
+	            return ResponseEntity.ok(response);
+	        } catch (Exception e) {
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                    .body("Error: " + e.getMessage());
+	        }
+	    }
+	
+	
 	@PutMapping("/createCheckInOutBiometricDevice")
 	public ResponseEntity<ResponseDTO> createCheckInOutBiometricDevice() {
 		String methodName = "createCheckInOutBiometric()";

@@ -1,5 +1,7 @@
 package com.efit.hrms.service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +13,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -205,6 +208,21 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 		return "ADMIN";
 	}
 
+	@Scheduled(cron = "0 0 11 * * ?")
+	public void scheduledFetchAndSaveDeviceLog() {
+	    // Step 1: get current date
+	    LocalDate currentDate = LocalDate.now();
+
+	    // Step 2: subtract one day
+	    LocalDate previousDate = currentDate.minusDays(1);
+
+	    // Step 3: format as yyyy-MM-dd string
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	    String formattedDate = previousDate.format(formatter);
+
+	    // Step 4: call your service method with strings
+	    fetchAndSaveDeviceLog(formattedDate, formattedDate);
+	}
 	@Override
 	public Map<String, String> fetchAndSaveDeviceLog(String startDate, String endDate) {
 

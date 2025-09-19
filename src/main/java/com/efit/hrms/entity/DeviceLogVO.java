@@ -21,7 +21,7 @@ public class DeviceLogVO {
 	@Id
 	@Column(name = "devicelogid")
     @JsonProperty("DeviceLogId")
-    private Long deviceLogId;
+    private String deviceLogId;
 
     @Column(name = "deviceid")
     @JsonProperty("DeviceId")

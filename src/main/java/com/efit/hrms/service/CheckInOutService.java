@@ -62,6 +62,8 @@ public interface CheckInOutService {
 
 	Map<String, Object> createCheckInOutBiometricDevice() throws ApplicationException;
 
+	String processDeviceLogs(Long orgId, String createdBy) throws Exception;
+
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 
 

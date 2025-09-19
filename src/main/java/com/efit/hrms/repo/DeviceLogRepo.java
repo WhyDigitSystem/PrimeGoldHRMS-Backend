@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.efit.hrms.entity.DeviceLogVO;
 
-public interface DeviceLogRepo extends JpaRepository<DeviceLogVO, Long> {
+public interface DeviceLogRepo extends JpaRepository<DeviceLogVO, String> {
 
 }
 
