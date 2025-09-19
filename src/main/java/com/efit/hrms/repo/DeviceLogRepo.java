@@ -7,3 +7,6 @@ import com.efit.hrms.entity.DeviceLogVO;
 public interface DeviceLogRepo extends JpaRepository<DeviceLogVO, Long> {
 
 }
+
+
+
