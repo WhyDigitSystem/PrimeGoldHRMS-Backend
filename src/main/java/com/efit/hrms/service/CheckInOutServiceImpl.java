@@ -2326,69 +2326,73 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 
 	
-	
 	@Override
 	@Transactional
-	public Map<String, Object> createUpdateAdvanceExcel(AdvanceUploadDTO advanceUploadDTO) throws ApplicationException {
-		final AdvanceUploadVO advanceUploadVO; // Declare final reference
-		Map<String, Object> response = new LinkedHashMap<>(); // Preserve order
+	public Map<String, Object> createUpdateAdvanceExcel(AdvanceUploadDTO dto) throws ApplicationException {
+	    Map<String, Object> response = new LinkedHashMap<>();
+	    AdvanceUploadVO advance;
 
-		if (advanceUploadDTO.getId() != null) {
-			// If ID is provided, check if it exists
-			advanceUploadVO = advanceUploadRepo.findById(advanceUploadDTO.getId()).orElseThrow(
-					() -> new ApplicationException("Error: AdvanceUpload ID " + advanceUploadDTO.getId() + " not found!"));
+	    // Validate mandatory fields
+	    if (dto.getEmployeeCode() == null || dto.getEmployeeCode().isEmpty())
+	        throw new IllegalArgumentException("Employee code is empty");
+	    if (dto.getEmployeeName() == null || dto.getEmployeeName().isEmpty())
+	        throw new IllegalArgumentException("Employee name is empty");
+	    if (dto.getMonth() == null || dto.getYear() == null)
+	        throw new ApplicationException("Month or Year is missing");
 
-			// Updating existing record
-			advanceUploadVO.setUpdatedBy(advanceUploadDTO.getCreatedBy());
-			response.put("message", "AdvanceUpload Updated Successfully");
-		} else {
-			// Creating new record
-			advanceUploadVO = new AdvanceUploadVO();
+	    // Validate employee exists
+	    EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(
+	            dto.getEmployeeCode(), dto.getOrgId(), dto.getBranchCode());
+	    if (employeeVO == null) {
+	        throw new ApplicationException("Employee not Found: " + dto.getEmployeeCode());
+	    }
 
-			advanceUploadVO.setCreatedBy(advanceUploadDTO.getCreatedBy());
-			advanceUploadVO.setUpdatedBy(advanceUploadDTO.getCreatedBy());
-			response.put("message", "AdvanceUpload Created Successfully");
-		}
-		
-		
-		if (advanceUploadDTO.getEmployeeCode() == null || advanceUploadDTO.getEmployeeCode().isEmpty())
-		    throw new IllegalArgumentException("Employee code is empty");
-		if (advanceUploadDTO.getEmployeeName() == null || advanceUploadDTO.getEmployeeName().isEmpty())
-		    throw new IllegalArgumentException("Employee name is empty");
+	    // 1️⃣ If ID is provided → update by ID
+	    if (dto.getId() != null) {
+	        advance = advanceUploadRepo.findById(dto.getId())
+	                .orElseThrow(() -> new ApplicationException("Error: AdvanceUpload ID " + dto.getId() + " not found!"));
+	        response.put("message", "AdvanceUpload Updated Successfully");
+	    } else {
+	        // 2️⃣ Else → check existing by employeeCode + month + year + orgId
+	        Optional<AdvanceUploadVO> existingOpt = advanceUploadRepo
+	                .findByEmployeeCodeAndMonthAndYearAndOrgId(
+	                        dto.getEmployeeCode(), dto.getMonth(), dto.getYear(), dto.getOrgId());
 
+	        if (existingOpt.isPresent()) {
+	            advance = existingOpt.get();
+	            response.put("message", "AdvanceUpload Updated Successfully");
+	        } else {
+	            // New record
+	            advance = new AdvanceUploadVO();
+	            advance.setCreatedBy(dto.getCreatedBy());
+	            advance.setActive(true);
+	            response.put("message", "AdvanceUpload Created Successfully");
+	        }
+	    }
 
-          
-	     if (advanceUploadDTO.getMonth() == null || advanceUploadDTO.getYear() == null)
-	            throw new ApplicationException("Month or Year is missing");
-	     
-          // Check if employee exists
-          EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(advanceUploadDTO.getEmployeeCode(), advanceUploadDTO.getOrgId(), advanceUploadDTO.getBranchCode());
-          if (employeeVO == null) {
-              throw new ApplicationException("Employee not Found: " + advanceUploadDTO.getEmployeeCode());
-          }
-          
-		// Set other fields
-		advanceUploadVO.setEmployeeName(advanceUploadDTO.getEmployeeName());
-		advanceUploadVO.setEmployeeCode(advanceUploadDTO.getEmployeeCode());
-		advanceUploadVO.setBank(advanceUploadDTO.getBank());
-		advanceUploadVO.setCash(advanceUploadDTO.getCash());
-		advanceUploadVO.setActive(advanceUploadDTO.isActive());
-		advanceUploadVO.setOrgId(advanceUploadDTO.getOrgId());
-		advanceUploadVO.setBranch(advanceUploadDTO.getBranch());
-		advanceUploadVO.setBranchCode(advanceUploadDTO.getBranchCode());
-		advanceUploadVO.setMonth(advanceUploadDTO.getMonth());
-		advanceUploadVO.setYear(advanceUploadDTO.getYear());
+	    // Set/update common fields
+	    advance.setEmployeeCode(dto.getEmployeeCode());
+	    advance.setEmployeeName(dto.getEmployeeName());
+	    advance.setBank(dto.getBank());
+	    advance.setCash(dto.getCash());
+	    advance.setMonth(dto.getMonth());
+	    advance.setYear(dto.getYear());
+	    advance.setBranch(dto.getBranch());
+	    advance.setBranchCode(dto.getBranchCode());
+	    advance.setOrgId(dto.getOrgId());
+	    advance.setUpdatedBy(dto.getCreatedBy());
 
-		// Save Parent Record
-		final AdvanceUploadVO savedAdvanceUploadVO = advanceUploadRepo.save(advanceUploadVO); // Make final
+	    // Save record
+	    AdvanceUploadVO savedAdvance = advanceUploadRepo.save(advance);
 
-		// Attach parent details
-		Map<String, Object> paramObjectsMap = new LinkedHashMap<>();
-		paramObjectsMap.put("advanceUploadVO", savedAdvanceUploadVO);
-		response.put("paramObjectsMap", paramObjectsMap);
+	    // Build response
+	    Map<String, Object> paramObjectsMap = new LinkedHashMap<>();
+	    paramObjectsMap.put("advanceUploadVO", savedAdvance);
+	    response.put("paramObjectsMap", paramObjectsMap);
 
-		return response;
+	    return response;
 	}
+
 
 
 
