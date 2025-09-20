@@ -402,6 +402,51 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 				)
 			List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
 
+			
+			
+			@Query(nativeQuery = true, value = 
+				    "SELECT\r\n"
+				    + "    CASE \r\n"
+				    + "        WHEN e.category = 0 THEN \r\n"
+				    + "            ROUND((s.sumofearning / ?1 ) * ?2 - s.sumofdetection)\r\n"
+				    + "        ELSE \r\n"
+				    + "            ROUND((s.sumofearning / ?1 ) * ?2 - s.sumofdetection)\r\n"
+				    + "    END AS bankAmount,\r\n"
+				    + "    \r\n"
+				    + "    CASE \r\n"
+				    + "        WHEN e.category = 0 THEN 0\r\n"
+				    + "        ELSE \r\n"
+				    + "            ROUND((op.amount / ?1 ) * ?2 )\r\n"
+				    + "    END AS cashAmount\r\n"
+				    + "\r\n"
+				    + "FROM employee e\r\n"
+				    + "JOIN (\r\n"
+				    + "    SELECT ss.*\r\n"
+				    + "    FROM salarystructure ss\r\n"
+				    + "    WHERE STR_TO_DATE(ss.createdon, '%d-%m-%Y %h:%i:%s %p') = (\r\n"
+				    + "        SELECT MAX(STR_TO_DATE(s2.createdon, '%d-%m-%Y %h:%i:%s %p'))\r\n"
+				    + "        FROM salarystructure s2\r\n"
+				    + "        WHERE s2.employeeCode = ss.employeeCode\r\n"
+				    + "          AND s2.orgId = ss.orgId\r\n"
+				    + "    )\r\n"
+				    + ") s ON s.employeeCode = e.employeeCode AND s.orgId = e.orgId\r\n"
+				    + "LEFT JOIN (\r\n"
+				    + "    SELECT op1.*\r\n"
+				    + "    FROM otherpayments op1\r\n"
+				    + "    WHERE STR_TO_DATE(op1.createdon, '%d-%m-%Y %h:%i:%s %p') = (\r\n"
+				    + "        SELECT MAX(STR_TO_DATE(op2.createdon, '%d-%m-%Y %h:%i:%s %p'))\r\n"
+				    + "        FROM otherpayments op2\r\n"
+				    + "        WHERE op2.employeeCode = op1.employeeCode\r\n"
+				    + "          AND op2.orgId = op1.orgId\r\n"
+				    + "    )\r\n"
+				    + ") op ON op.employeeCode = e.employeeCode AND op.orgId = e.orgId\r\n"
+				    + "WHERE e.employeeCode = ?4\r\n"
+				    + "  AND e.orgId = ?3\r\n"
+				    + "  AND e.branchcode=?5 "
+				)
+			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
+					Long orgId, String employeeCode, String branchCode);
+
 
 
 

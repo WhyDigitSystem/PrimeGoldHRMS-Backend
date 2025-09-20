@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.efit.hrms.dto.AdvanceUploadDTO;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
@@ -63,6 +64,12 @@ public interface CheckInOutService {
 	Map<String, Object> createCheckInOutBiometricDevice() throws ApplicationException;
 
 	String processDeviceLogs(Long orgId, String createdBy) throws Exception;
+
+	String uploadAdvanceExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode, Long month, Long year) throws Exception;
+
+	String uploadOtherPaymentsExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode) throws Exception;
+
+	Map<String, Object> createUpdateAdvanceExcel(AdvanceUploadDTO advanceUploadDTO) throws ApplicationException;
 
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 

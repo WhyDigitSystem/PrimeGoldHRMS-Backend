@@ -574,8 +574,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
 				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
-				salaryProcessVO.setRequestDate(salaryProcessDTO.getRequestDate());
-				salaryProcessVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
+//				salaryProcessVO.setRequestDate(salaryProcessDTO.getRequestDate());
+//				salaryProcessVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
 
 
 //				AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
@@ -649,24 +649,25 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 							salaryProcessVO.getEmployeeCode(), salaryProcessVO.getOrgId(), salaryProcessVO.getMonth(),
 							salaryProcessVO.getYear());
 					
-					if ("APPROVED".equalsIgnoreCase(action) ) {
-
-						AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
-							    salaryProcessVO.getEmployeeCode(),
-							     salaryProcessVO.getBranchCode(),
-							     salaryProcessVO.getOrgId(),
-							    salaryProcessVO.getRequestDate()
-							);
-
-
-					if (advanceVO != null) {
-					    // update the loan balance
-					    advanceVO.setLoanBalance(salaryProcessVO.getLoanBalance());
-
-					    // save back to DB
-					    advanceRepo.save(advanceVO);
-					}
-					}
+//					if ("APPROVED".equalsIgnoreCase(action) ) {
+//
+//						AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
+//							    salaryProcessVO.getEmployeeCode(),
+//							     salaryProcessVO.getBranchCode(),
+//							     salaryProcessVO.getOrgId(),
+//							    salaryProcessVO.getRequestDate()
+//							);
+//
+//
+//					if (advanceVO != null) {
+//					    // update the loan balance
+//					    advanceVO.setLoanBalance(salaryProcessVO.getLoanBalance());
+//
+//					    // save back to DB
+//					    advanceRepo.save(advanceVO);
+//					}
+//					}
+					
 					for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
 						leaveProcessVO.setApprovedStatus("APPROVED");
 					}
@@ -1159,5 +1160,47 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	    return BigDecimal.ZERO;
 	}
 
+	
+	
+	
+	@Override
+	public List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays,
+	        BigDecimal empSalaryDays, Long orgId, String employeeCode, String branchCode) {
+
+	    List<Object[]> result;
+
+	    if (empSalaryDays != null && empSalaryDays.compareTo(BigDecimal.ZERO) > 0) {
+	        result = salaryProcessRepo.getBankAndCashAmtForSalaryProcess(
+	                totalCompanyWorkingDays, empSalaryDays, orgId, employeeCode, branchCode);
+	    } else {
+	        result = new ArrayList<>();
+	    }
+
+	    return buildBankAndCashAmtResponse(result);
+	}
+
+	private List<Map<String, Object>> buildBankAndCashAmtResponse(List<Object[]> result) {
+	    List<Map<String, Object>> detailsList = new ArrayList<>();
+
+	    if (result.isEmpty()) {
+	        // no records from DB → return default payOnHand = 0
+	        Map<String, Object> defaultMap = new HashMap<>();
+	        defaultMap.put("bankAmount", 0);
+	        defaultMap.put("cashAmount", 0);
+	        detailsList.add(defaultMap);
+	        return detailsList;
+	    }
+
+	    for (Object[] record : result) {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("bankAmount", record[0] != null ? record[0] : 0);
+	        map.put("cashAmount", record[1] != null ? record[1] : 0);
+	        detailsList.add(map);
+	    }
+
+	    return detailsList;
+	}
+
+	
 
 }

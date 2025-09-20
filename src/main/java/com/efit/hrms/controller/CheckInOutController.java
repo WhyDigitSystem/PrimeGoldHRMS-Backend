@@ -26,14 +26,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
+import com.efit.hrms.dto.AdvanceUploadDTO;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
 import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
-import com.efit.hrms.entity.ShiftMasterVO;
+import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.service.CheckInOutService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @CrossOrigin
@@ -69,7 +71,7 @@ public class CheckInOutController extends BaseController{
 	}
 	
 	
-	 @PostMapping("/process")
+	 @PostMapping("/DeviceLogData")
 	    public ResponseEntity<String> processDeviceLogs(@RequestParam Long orgId,
 	                                                    @RequestParam String createdBy) {
 	        try {
@@ -465,6 +467,210 @@ public class CheckInOutController extends BaseController{
 				LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 				return ResponseEntity.ok().body(responseDTO);
 			}
+		 
+		 
+//		 @PostMapping("/uploadAdvanceExcel")
+//		    public ResponseEntity<String> uploadAdvanceExcel(
+//		            @RequestParam("files") MultipartFile file,
+//		            @RequestParam("orgId") Long orgId,
+//		            @RequestParam("createdBy") String createdBy,
+//		            @RequestParam ("branch") String branch,
+//		            @RequestParam("branchCode") String branchCode) {
+//		        try {
+//		            String result = checkInOutService.uploadAdvanceExcel(file, orgId, createdBy,branch,branchCode);
+//		            return ResponseEntity.ok(result);
+//		        } catch (Exception e) {
+//		            e.printStackTrace();
+//		            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//		                    .body("{\"message\":\"Error: " + e.getMessage() + "\"}");
+//		        }
+//		    }
+//		 
+		 
+		 //AdvanceUpload
+		 @PostMapping("/uploadAdvanceExcel")
+		 public ResponseEntity<ResponseDTO> uploadAdvanceExcel(
+		         @RequestParam("files") MultipartFile file,
+		         @RequestParam("orgId") Long orgId,
+		         @RequestParam("createdBy") String createdBy,
+		         @RequestParam("branch") String branch,
+		         @RequestParam("branchCode") String branchCode,
+		         @RequestParam("month") Long month,
+		         @RequestParam("year") Long year) {
+
+		     String methodName = "uploadAdvanceExcel()";
+		     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+		     Map<String, Object> responseObjectsMap = new HashMap<>();
+		     ResponseDTO responseDTO;
+
+		     try {
+		         // Call service to upload Excel; returns JSON string with success/failure counts
+		         String resultJson = checkInOutService.uploadAdvanceExcel(file, orgId, createdBy, branch, branchCode,month,year);
+
+		         // Convert result JSON to Map to check failedCount
+		         ObjectMapper mapper = new ObjectMapper();
+		         Map<String, Object> resultMap = mapper.readValue(resultJson, Map.class);
+		         int failedCount = (int) resultMap.getOrDefault("failedCount", 0);
+
+		         responseObjectsMap.put("uploadResult", resultMap);
+
+		         // Set message and status based on failedCount
+		         if (failedCount > 0) {
+		             responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Some rows failed to upload");
+		             responseDTO = createServiceResponseError(responseObjectsMap,
+		                     "Advance Excel uploaded with failures",
+		                     "Check failed rows in uploadResult");
+		         } else {
+		             responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Advance Excel uploaded successfully");
+		             responseDTO = createServiceResponse(responseObjectsMap);
+		         }
+
+		         LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		         return ResponseEntity.ok(responseDTO);
+
+		     } catch (Exception e) {
+		         String errorMsg = e.getMessage();
+		         LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+		         responseDTO = createServiceResponseError(responseObjectsMap,
+		                 "Failed to upload Advance Excel", errorMsg);
+
+		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+		     }
+		 }
+
+		 
+		 //OtherPaymentUpload
+		 @PostMapping("/uploadOtherPaymentsExcel")
+		 public ResponseEntity<ResponseDTO> uploadOtherPaymentsExcel(
+		         @RequestParam("files") MultipartFile file,
+		         @RequestParam("orgId") Long orgId,
+		         @RequestParam("createdBy") String createdBy,
+		         @RequestParam("branch") String branch,
+		         @RequestParam("branchCode") String branchCode
+		         ) {
+
+		     String methodName = "uploadOtherPaymentsExcel()";
+		     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+		     Map<String, Object> responseObjectsMap = new HashMap<>();
+		     ResponseDTO responseDTO;
+
+		     try {
+		         // Call service to upload Excel; returns JSON string with success/failure counts
+		         String resultJson = checkInOutService.uploadOtherPaymentsExcel(file, orgId, createdBy, branch, branchCode);
+
+		         // Convert result JSON to Map to check failedCount
+		         ObjectMapper mapper = new ObjectMapper();
+		         Map<String, Object> resultMap = mapper.readValue(resultJson, Map.class);
+		         int failedCount = (int) resultMap.getOrDefault("failedCount", 0);
+
+		         responseObjectsMap.put("uploadResult", resultMap);
+
+		         // Set message and status based on failedCount
+		         if (failedCount > 0) {
+		             responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Some rows failed to upload");
+		             responseDTO = createServiceResponseError(responseObjectsMap,
+		                     "OtherPayments Excel uploaded with failures",
+		                     "Check failed rows in uploadResult");
+		         } else {
+		             responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "OtherPayments Excel uploaded successfully");
+		             responseDTO = createServiceResponse(responseObjectsMap);
+		         }
+
+		         LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		         return ResponseEntity.ok(responseDTO);
+
+		     } catch (Exception e) {
+		         String errorMsg = e.getMessage();
+		         LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+		         responseDTO = createServiceResponseError(responseObjectsMap,
+		                 "Failed to upload OtherPayments Excel", errorMsg);
+
+		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+		     }
+		 }
+
+		 
+		 @PutMapping("/createUpdateAdvanceExcel")
+		 public ResponseEntity<ResponseDTO> createUpdateAdvanceExcel(@RequestBody AdvanceUploadDTO advanceUploadDTO) {
+		     String methodName = "createUpdateAdvanceExcel()";
+		     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+		     Map<String, Object> responseObjectsMap = new HashMap<>();
+		     ResponseDTO responseDTO;
+
+		     try {
+		         // Call service method
+		         Map<String, Object> advanceUploadVO = checkInOutService.createUpdateAdvanceExcel(advanceUploadDTO);
+
+		         // Extract message and data
+		         Object advanceVO = advanceUploadVO.get("paramObjectsMap");
+		         String message = (String) advanceUploadVO.getOrDefault("message", "AdvanceVO completed successfully.");
+
+		         // Populate response map
+		         responseObjectsMap.put("advanceVO", advanceVO);
+		         responseObjectsMap.put(CommonConstant.STRING_MESSAGE, message);
+
+		         // Create structured response
+		         responseDTO = createServiceResponse(responseObjectsMap);
+
+		     } catch (ApplicationException e) {
+		         LOGGER.error("{} - Application Error: {}", methodName, e.getMessage(), e);
+		         responseDTO = createServiceResponseError(responseObjectsMap, "Application Error", e.getMessage());
+		         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDTO);
+		     } catch (Exception e) {
+		         LOGGER.error("{} - Unexpected Error: {}", methodName, e.getMessage(), e);
+		         responseDTO = createServiceResponseError(responseObjectsMap, "Unexpected Error", "Something went wrong.");
+		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+		     }
+
+		     LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		     return ResponseEntity.ok(responseDTO);
+		 }
+
+		 
+		 
+//		 @PutMapping("/createUpdateOtherPayments")
+//		 public ResponseEntity<ResponseDTO> createUpdateOtherPayments(@RequestBody OtherPaymentsDTO OtherPaymentsDTO) {
+//		     String methodName = "createUpdateOtherPayments()";
+//		     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+//
+//		     Map<String, Object> responseObjectsMap = new HashMap<>();
+//		     ResponseDTO responseDTO;
+//
+//		     try {
+//		         // Call service method
+//		         Map<String, Object> advanceUploadVO = checkInOutService.createUpdateAdvanceExcel(advanceUploadDTO);
+//
+//		         // Extract message and data
+//		         Object advanceVO = advanceUploadVO.get("paramObjectsMap");
+//		         String message = (String) advanceUploadVO.getOrDefault("message", "AdvanceVO completed successfully.");
+//
+//		         // Populate response map
+//		         responseObjectsMap.put("advanceVO", advanceVO);
+//		         responseObjectsMap.put(CommonConstant.STRING_MESSAGE, message);
+//
+//		         // Create structured response
+//		         responseDTO = createServiceResponse(responseObjectsMap);
+//
+//		     } catch (ApplicationException e) {
+//		         LOGGER.error("{} - Application Error: {}", methodName, e.getMessage(), e);
+//		         responseDTO = createServiceResponseError(responseObjectsMap, "Application Error", e.getMessage());
+//		         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDTO);
+//		     } catch (Exception e) {
+//		         LOGGER.error("{} - Unexpected Error: {}", methodName, e.getMessage(), e);
+//		         responseDTO = createServiceResponseError(responseObjectsMap, "Unexpected Error", "Something went wrong.");
+//		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+//		     }
+//
+//		     LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+//		     return ResponseEntity.ok(responseDTO);
+//		 }
+
+		 
 		 
 		 
 

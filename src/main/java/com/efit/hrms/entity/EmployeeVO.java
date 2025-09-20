@@ -141,8 +141,11 @@ public class EmployeeVO {
 	@Column(name = "bioid")
 	private String bioId;
 	
-	@Column(name = "weekoffoteligible")
-	private boolean weekoffOtEligible;
+//	@Column(name = "weekoffoteligible")
+//	private boolean weekoffOtEligible;
+	
+	@Column(name = "category")
+	private Category category;
 	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
@@ -168,6 +171,10 @@ public class EmployeeVO {
 	
 	public OverTime getOtFlag() {
 	    return otFlag;
+	}
+	
+	public Category getCategory() {
+	    return category;
 	}
 
 	public void setOtFlag(OverTime otFlag) {

@@ -55,8 +55,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.efit.hrms.dto.AdvanceUploadDTO;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
+import com.efit.hrms.dto.SalaryHeadsDTO;
+import com.efit.hrms.entity.AdvanceUploadVO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceLogVO;
 import com.efit.hrms.entity.AttendanceProcessVO;
@@ -66,8 +69,11 @@ import com.efit.hrms.entity.CheckInOutUploadVO;
 import com.efit.hrms.entity.DeviceLogVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.OtherPaymentsVO;
+import com.efit.hrms.entity.SalaryHeadsVO;
 import com.efit.hrms.entity.ShiftAssignDetailsVO;
 import com.efit.hrms.exception.ApplicationException;
+import com.efit.hrms.repo.AdvanceUploadRepo;
 import com.efit.hrms.repo.AttendanceDailyRepo;
 import com.efit.hrms.repo.AttendanceLogRepo;
 import com.efit.hrms.repo.AttendanceProcessRepo;
@@ -80,6 +86,7 @@ import com.efit.hrms.repo.DeviceLogRepo;
 import com.efit.hrms.repo.EmployeeRepo;
 import com.efit.hrms.repo.OtCalculationRepo;
 import com.efit.hrms.repo.OtMasterRepo;
+import com.efit.hrms.repo.OtherPaymentsRepo;
 import com.efit.hrms.repo.ShiftAssignDetailsRepo;
 import com.efit.hrms.repo.ShiftMasterRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -137,6 +144,12 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 	@Autowired
 	DeviceLogRepo deviceLogRepo;
+	
+	@Autowired
+	AdvanceUploadRepo advanceUploadRepo;
+	
+	@Autowired
+	OtherPaymentsRepo otherPaymentsRepo;
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
@@ -2132,6 +2145,251 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	    return new ObjectMapper().writeValueAsString(result);
 	}
+	
+	
+	@Override
+	@Transactional(rollbackOn = Exception.class)
+	public String uploadAdvanceExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode,Long month,Long year) throws Exception {
+	    List<Map<String, Object>> failures = new ArrayList<>();
+	    AtomicInteger successCount = new AtomicInteger(0);
+
+	    try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
+
+	        Sheet sheet = workbook.getSheetAt(0);
+	        DataFormatter formatter = new DataFormatter();
+	        int totalRows = sheet.getLastRowNum();
+	        if (totalRows < 1) {
+	            throw new IllegalArgumentException("No data rows found in Excel.");
+	        }
+
+	        for (int i = 1; i <= totalRows; i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            try {
+	                // Read and validate Excel values
+	                String empCode = formatter.formatCellValue(row.getCell(0)).trim();
+	                String empName = formatter.formatCellValue(row.getCell(1)).trim();
+	                String bankStr = formatter.formatCellValue(row.getCell(2)).trim();
+	                String cashStr = formatter.formatCellValue(row.getCell(3)).trim();
+//	                String monthStr = formatter.formatCellValue(row.getCell(4)).trim();
+//	                String yearStr = formatter.formatCellValue(row.getCell(5)).trim();
+
+	                if (empCode.isEmpty()) throw new IllegalArgumentException("Employee code is empty");
+	                if (empName.isEmpty()) throw new IllegalArgumentException("Employee name is empty");
+
+	                BigDecimal bank = bankStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(bankStr);
+	                BigDecimal cash = cashStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(cashStr);
+//	                Long month = monthStr.isEmpty() ? null : Long.parseLong(monthStr);
+//	                Long year = yearStr.isEmpty() ? null : Long.parseLong(yearStr);
+
+	                if (month == null || year == null) throw new IllegalArgumentException("Month or Year is missing");
+
+	                // Check if employee exists
+	                EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(empCode, orgId, branchCode);
+	                if (employeeVO == null) {
+	                    throw new ApplicationException("Employee not Found: " + empCode);
+	                }
+
+	                // Check if record already exists for this employee, month & year
+	                Optional<AdvanceUploadVO> existingOpt = advanceUploadRepo
+	                        .findByEmployeeCodeAndMonthAndYearAndOrgId(empCode, month, year, orgId);
+
+	                AdvanceUploadVO advance;
+	                if (existingOpt.isPresent()) {
+	                    // Update existing record
+	                    advance = existingOpt.get();
+	                    advance.setBank(bank);
+	                    advance.setCash(cash);
+	                    advance.setBranch(branch);
+	                    advance.setBranchCode(branchCode);
+	                    advance.setCreatedBy(createdBy); // track who updated
+	                } else {
+	                    // Create new record
+	                    advance = new AdvanceUploadVO();
+	                    advance.setEmployeeCode(empCode);
+	                    advance.setEmployeeName(empName);
+	                    advance.setBank(bank);
+	                    advance.setCash(cash);
+	                    advance.setMonth(month);
+	                    advance.setYear(year);
+	                    advance.setBranch(branch);
+	                    advance.setBranchCode(branchCode);
+	                    advance.setOrgId(orgId);
+	                    advance.setCreatedBy(createdBy);
+	                    advance.setActive(true);
+	                }
+
+	                advanceUploadRepo.save(advance);
+	                successCount.incrementAndGet();
+
+	            } catch (Exception e) {
+	                Map<String, Object> error = new HashMap<>();
+	                error.put("row", i + 1);
+	                error.put("error", e.getMessage());
+	                failures.add(error);
+	            }
+	        }
+
+	        // Build response JSON
+	        Map<String, Object> result = new HashMap<>();
+	        result.put("successCount", successCount.get());
+	        result.put("failedCount", failures.size());
+	        result.put("failures", failures);
+	        result.put("message", failures.isEmpty() ? 
+	                "Advance data uploaded successfully" : 
+	                "Advance data uploaded with some errors");
+
+	        return new ObjectMapper().writeValueAsString(result);
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        throw e;
+	    }
+	}
+	
+	
+	@Override
+	@Transactional(rollbackOn = Exception.class)
+	public String uploadOtherPaymentsExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode) throws Exception {
+	    List<Map<String, Object>> failures = new ArrayList<>();
+	    AtomicInteger successCount = new AtomicInteger(0);
+
+	    try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
+
+	        Sheet sheet = workbook.getSheetAt(0);
+	        DataFormatter formatter = new DataFormatter();
+	        int totalRows = sheet.getLastRowNum();
+	        if (totalRows < 1) {
+	            throw new IllegalArgumentException("No data rows found in Excel.");
+	        }
+
+	        for (int i = 1; i <= totalRows; i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            try {
+	                // Read and validate Excel values
+	                String empCode = formatter.formatCellValue(row.getCell(0)).trim();
+	                String empName = formatter.formatCellValue(row.getCell(1)).trim();
+	                String amountStr = formatter.formatCellValue(row.getCell(2)).trim();
+
+	                if (empCode.isEmpty()) throw new IllegalArgumentException("Employee code is empty");
+	                if (empName.isEmpty()) throw new IllegalArgumentException("Employee name is empty");
+
+	                BigDecimal amount = amountStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(amountStr);
+
+	                // Check if employee exists
+	                EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(empCode, orgId, branchCode);
+	                if (employeeVO == null) {
+	                    throw new ApplicationException("Employee not Found: " + empCode);
+	                }
+
+	                // Create new record
+	                OtherPaymentsVO otherPaymentsVO = new OtherPaymentsVO();
+	                otherPaymentsVO.setEmployeeCode(empCode);
+	                otherPaymentsVO.setEmployeeName(empName);
+	                otherPaymentsVO.setAmount(amount);
+	                otherPaymentsVO.setBranch(branch);
+	                otherPaymentsVO.setBranchCode(branchCode);
+	                otherPaymentsVO.setOrgId(orgId);
+	                otherPaymentsVO.setCreatedBy(createdBy);
+	                otherPaymentsVO.setActive(true);
+
+	                otherPaymentsRepo.save(otherPaymentsVO);
+	                successCount.incrementAndGet();
+
+	            } catch (Exception e) {
+	                Map<String, Object> error = new HashMap<>();
+	                error.put("row", i + 1);
+	                error.put("error", e.getMessage());
+	                failures.add(error);
+	            }
+	        }
+
+	        // Build response JSON
+	        Map<String, Object> result = new HashMap<>();
+	        result.put("successCount", successCount.get());
+	        result.put("failedCount", failures.size());
+	        result.put("failures", failures);
+	        result.put("message", failures.isEmpty() ? 
+	                "OtherPayments data uploaded successfully" : 
+	                "OtherPayments data uploaded with some errors");
+
+	        return new ObjectMapper().writeValueAsString(result);
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        throw e;
+	    }
+	}
+
+
+	
+	
+	@Override
+	@Transactional
+	public Map<String, Object> createUpdateAdvanceExcel(AdvanceUploadDTO advanceUploadDTO) throws ApplicationException {
+		final AdvanceUploadVO advanceUploadVO; // Declare final reference
+		Map<String, Object> response = new LinkedHashMap<>(); // Preserve order
+
+		if (advanceUploadDTO.getId() != null) {
+			// If ID is provided, check if it exists
+			advanceUploadVO = advanceUploadRepo.findById(advanceUploadDTO.getId()).orElseThrow(
+					() -> new ApplicationException("Error: AdvanceUpload ID " + advanceUploadDTO.getId() + " not found!"));
+
+			// Updating existing record
+			advanceUploadVO.setUpdatedBy(advanceUploadDTO.getCreatedBy());
+			response.put("message", "AdvanceUpload Updated Successfully");
+		} else {
+			// Creating new record
+			advanceUploadVO = new AdvanceUploadVO();
+
+			advanceUploadVO.setCreatedBy(advanceUploadDTO.getCreatedBy());
+			advanceUploadVO.setUpdatedBy(advanceUploadDTO.getCreatedBy());
+			response.put("message", "AdvanceUpload Created Successfully");
+		}
+		
+		
+		if (advanceUploadDTO.getEmployeeCode() == null || advanceUploadDTO.getEmployeeCode().isEmpty())
+		    throw new IllegalArgumentException("Employee code is empty");
+		if (advanceUploadDTO.getEmployeeName() == null || advanceUploadDTO.getEmployeeName().isEmpty())
+		    throw new IllegalArgumentException("Employee name is empty");
+
+
+          
+	     if (advanceUploadDTO.getMonth() == null || advanceUploadDTO.getYear() == null)
+	            throw new ApplicationException("Month or Year is missing");
+	     
+          // Check if employee exists
+          EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(advanceUploadDTO.getEmployeeCode(), advanceUploadDTO.getOrgId(), advanceUploadDTO.getBranchCode());
+          if (employeeVO == null) {
+              throw new ApplicationException("Employee not Found: " + advanceUploadDTO.getEmployeeCode());
+          }
+          
+		// Set other fields
+		advanceUploadVO.setEmployeeName(advanceUploadDTO.getEmployeeName());
+		advanceUploadVO.setEmployeeCode(advanceUploadDTO.getEmployeeCode());
+		advanceUploadVO.setBank(advanceUploadDTO.getBank());
+		advanceUploadVO.setCash(advanceUploadDTO.getCash());
+		advanceUploadVO.setActive(advanceUploadDTO.isActive());
+		advanceUploadVO.setOrgId(advanceUploadDTO.getOrgId());
+		advanceUploadVO.setBranch(advanceUploadDTO.getBranch());
+		advanceUploadVO.setBranchCode(advanceUploadDTO.getBranchCode());
+		advanceUploadVO.setMonth(advanceUploadDTO.getMonth());
+		advanceUploadVO.setYear(advanceUploadDTO.getYear());
+
+		// Save Parent Record
+		final AdvanceUploadVO savedAdvanceUploadVO = advanceUploadRepo.save(advanceUploadVO); // Make final
+
+		// Attach parent details
+		Map<String, Object> paramObjectsMap = new LinkedHashMap<>();
+		paramObjectsMap.put("advanceUploadVO", savedAdvanceUploadVO);
+		response.put("paramObjectsMap", paramObjectsMap);
+
+		return response;
+	}
+
 
 
 }

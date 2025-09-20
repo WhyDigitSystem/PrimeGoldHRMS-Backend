@@ -310,6 +310,7 @@ public class MasterServiceImpl implements MasterService {
 	    employeeVO.setBioId(employeeDTO.getBioId());
 	    employeeVO.setPayslipEffectiveDate(employeeDTO.getPayslipEffectiveDate());
 
+
 	    UserVO userVO = userRepo.findByEmployeeCodeAndOrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());
 	    if (userVO != null) {
 	        userVO.setDepartment(employeeDTO.getDepartment());
@@ -345,7 +346,7 @@ public class MasterServiceImpl implements MasterService {
 	    employeeVO.setContactPerson(employeeDTO.getContactPerson());
 	    employeeVO.setContactNumber(employeeDTO.getContactNumber());
 	    employeeVO.setContactEmail(employeeDTO.getContactEmail());
-	    employeeVO.setWeekoffOtEligible(employeeDTO.isWeekoffOtEligible());
+	    employeeVO.setCategory(employeeDTO.getCategory());
 
 	    UserLoginRolesVO userLoginRolesVO =
 	        userLoginRolesRepo.findByUserVO_EmployeeCodeAndUserVO_OrgId(employeeDTO.getEmployeeCode(), employeeDTO.getOrgId());

@@ -955,6 +955,32 @@ public class EmployeeMasterController extends BaseController{
 	    }
 	}
 
+	
+	@GetMapping("/getBankAndCashAmtForSalaryProcess")
+	public ResponseEntity<ResponseDTO> getBankAndCashAmtForSalaryProcess(
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal empSalaryDays,@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branchCode) {
+
+	    String methodName = "getBankAndCashAmtForSalaryProcess()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+	    List<Map<String, Object>> salaryProcessVO;
+
+	    try {
+	    	salaryProcessVO = employeeMasterService.getBankAndCashAmtForSalaryProcess( totalCompanyWorkingDays,  empSalaryDays,  orgId,  employeeCode,  branchCode);
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "NetPay details retrieved successfully");
+	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve NetPay details", errorMsg);
+	    }
+
+	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	    return ResponseEntity.ok().body(responseDTO);
+	}
 
 }
 
