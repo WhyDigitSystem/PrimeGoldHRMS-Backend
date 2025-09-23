@@ -1,5 +1,6 @@
 package com.efit.hrms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 
 import javax.persistence.Column;
@@ -24,6 +25,9 @@ public class ShiftMasterDTO {
 	private String breakTime;
 	private String graceTime;
 	private boolean nightShift;
+	private boolean openShift;
+	private BigDecimal halfDayHours;
+	private BigDecimal fullDayHours;
 	
 	private long orgId;
 	private String branchCode;

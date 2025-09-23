@@ -48,11 +48,17 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //		Set<Object[]> getNetPayForSalaryProcess(BigDecimal grossPay, BigDecimal sumOfDetection);
 
 
-	@Query(value = "SELECT ROUND(((CAST(?2 AS DECIMAL) / CAST(?1 AS DECIMAL)) * CAST(?3 AS DECIMAL) - CAST(?4 AS DECIMAL)) + CAST(?5 AS DECIMAL), 2) AS payonhand", 
+	@Query(value = "	SELECT ROUND(\r\n"
+			+ "    ((CAST(?2 AS DECIMAL(10,2)) - CAST(?4 AS DECIMAL(10,2))) \r\n"
+			+ "     / CAST(?1 AS DECIMAL(10,2))) \r\n"
+			+ "     * CAST(?3 AS DECIMAL(10,2)) \r\n"
+			+ "     + CAST(?5 AS DECIMAL(10,2))\r\n"
+			+ ") AS payOnHand "
+			+ "", 
 		       nativeQuery = true)
-	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, Long empSalaryDays,
+	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, BigDecimal empSalaryDays,
 			BigDecimal sumOfDetection, BigDecimal otAmount);
-	
+
 	
 
 	@Query(nativeQuery = true, value = "SELECT * \r\n"
@@ -385,6 +391,61 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 		               "WHERE s.orgid = ?1 AND s.employeecode = ?2 AND s.month = ?3 AND s.year = ?4",
 		       nativeQuery = true)
 		Set<BigDecimal> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long month, String year);
+
+			
+			@Query(nativeQuery = true, value = 
+				    "SELECT * " +
+				    "FROM salaryprocess a " +
+				    "WHERE a.orgid = ?1 " +
+				    "  AND (UPPER(?2) = 'ALL' OR UPPER(a.branch) = UPPER(?2)) " +
+				    "AND a.approvedstatus = 'PENDING'"
+				)
+			List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
+
+			
+			
+			@Query(nativeQuery = true, value = 
+				    "SELECT\r\n"
+				    + "    CASE \r\n"
+				    + "        WHEN e.category = 0 THEN \r\n"
+				    + "            ROUND((s.sumofearning / ?1 ) * ?2 - s.sumofdetection)\r\n"
+				    + "        ELSE \r\n"
+				    + "            ROUND((s.sumofearning / ?1 ) * ?2 - s.sumofdetection)\r\n"
+				    + "    END AS bankAmount,\r\n"
+				    + "    \r\n"
+				    + "    CASE \r\n"
+				    + "        WHEN e.category = 0 THEN 0\r\n"
+				    + "        ELSE \r\n"
+				    + "            ROUND((op.amount / ?1 ) * ?2 )\r\n"
+				    + "    END AS cashAmount\r\n"
+				    + "\r\n"
+				    + "FROM employee e\r\n"
+				    + "JOIN (\r\n"
+				    + "    SELECT ss.*\r\n"
+				    + "    FROM salarystructure ss\r\n"
+				    + "    WHERE STR_TO_DATE(ss.createdon, '%d-%m-%Y %h:%i:%s %p') = (\r\n"
+				    + "        SELECT MAX(STR_TO_DATE(s2.createdon, '%d-%m-%Y %h:%i:%s %p'))\r\n"
+				    + "        FROM salarystructure s2\r\n"
+				    + "        WHERE s2.employeeCode = ss.employeeCode\r\n"
+				    + "          AND s2.orgId = ss.orgId\r\n"
+				    + "    )\r\n"
+				    + ") s ON s.employeeCode = e.employeeCode AND s.orgId = e.orgId\r\n"
+				    + "LEFT JOIN (\r\n"
+				    + "    SELECT op1.*\r\n"
+				    + "    FROM otherpayments op1\r\n"
+				    + "    WHERE STR_TO_DATE(op1.createdon, '%d-%m-%Y %h:%i:%s %p') = (\r\n"
+				    + "        SELECT MAX(STR_TO_DATE(op2.createdon, '%d-%m-%Y %h:%i:%s %p'))\r\n"
+				    + "        FROM otherpayments op2\r\n"
+				    + "        WHERE op2.employeeCode = op1.employeeCode\r\n"
+				    + "          AND op2.orgId = op1.orgId\r\n"
+				    + "    )\r\n"
+				    + ") op ON op.employeeCode = e.employeeCode AND op.orgId = e.orgId\r\n"
+				    + "WHERE e.employeeCode = ?4\r\n"
+				    + "  AND e.orgId = ?3\r\n"
+				    + "  AND e.branchcode=?5 "
+				)
+			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
+					Long orgId, String employeeCode, String branchCode);
 
 
 

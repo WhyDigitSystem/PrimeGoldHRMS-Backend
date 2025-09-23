@@ -1,6 +1,7 @@
 package com.efit.hrms.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import javax.persistence.Column;
 
@@ -27,10 +28,18 @@ public class SalaryProcessDTO {
 	private BigDecimal grossPay;
 	private BigDecimal netPay;
 	private BigDecimal payOnHand;
-	private String approvedStatus;
+//	private String approvedStatus;
 	private BigDecimal otHours;
 	private BigDecimal otAmount;
 	
+	private BigDecimal advanceDeduction;
+	private BigDecimal salary;
+
+	
+	//advance screen 
+	private LocalDate requestDate;
+	private BigDecimal loanBalance;
+
 	
 	private String createdBy;
 	private String branch;

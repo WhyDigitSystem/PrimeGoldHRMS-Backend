@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 
+import com.efit.hrms.entity.Category;
 import com.efit.hrms.entity.OverTime;
 
 import lombok.AllArgsConstructor;
@@ -44,6 +45,7 @@ public class EmployeeDTO {
 	private Long uanNo;
 	private String flagValue;
 	private boolean flag;
+	private boolean weekoffOtEligible;
 
 	
 	private String contractor;
@@ -66,6 +68,8 @@ public class EmployeeDTO {
 
 
 	private OverTime otFlag;
+	private Category category;
+
 
     private boolean pfFlag;
 	private boolean esiFlag;

@@ -60,7 +60,8 @@ public class CheckInOutBiometricVO {
 
 	@Column(name = "screenname", length = 25)
 	private String screenName = "CHECKINOUTBIOMETRIC";
-
+	@Column(name = "createdby")
+	private String createdBy;
 	
 	@Column(name = "email")
 	private String email;

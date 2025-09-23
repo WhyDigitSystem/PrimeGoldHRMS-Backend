@@ -1,6 +1,7 @@
 package com.efit.hrms.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,11 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.common.CommonConstant;
 import com.efit.hrms.common.UserConstants;
@@ -481,7 +484,8 @@ public class EmployeeMasterController extends BaseController{
 	}
 
 	@PutMapping("/createApprovalSalaryProcess")
-	public ResponseEntity<ResponseDTO> createApprovalSalaryProcess(@RequestParam Long orgId, @RequestParam List<Long> id,@RequestParam String action, @RequestParam String actionBy) {
+	public ResponseEntity<ResponseDTO> createApprovalSalaryProcess(@RequestParam Long orgId, @RequestParam List<Long> id,@RequestParam String action, @RequestParam String actionBy
+       ) {
 		String methodName = "createApprovalSalaryProcess()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 		String errorMsg = null;
@@ -489,7 +493,8 @@ public class EmployeeMasterController extends BaseController{
 		ResponseDTO responseDTO = null;
 		try {
 			Map<String, Object> salaryProcessVO = employeeMasterService.createApprovalSalaryProcess(
-	                orgId, id, action, actionBy);
+	                orgId, id, action, actionBy );
+	    	        
 
 	        // ✅ Unwrap values
 	        Object salaryProcessVOs = salaryProcessVO.get("salaryProcessVO");
@@ -507,6 +512,35 @@ public class EmployeeMasterController extends BaseController{
 		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 		return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	
+	@GetMapping("getPendingSalaryProcessByOrgId")
+	public ResponseEntity<ResponseDTO> getPendingSalaryProcessByOrgId(@RequestParam Long orgId,@RequestParam String branch) {
+		String methodName = "getPendingSalaryProcessByOrgId()";
+		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+		String errorMsg = null;
+		Map<String, Object> responseObjectsMap = new HashMap<>();
+		ResponseDTO responseDTO = null;
+		List<SalaryProcessVO> salaryProcessVO = null;
+		try {
+			salaryProcessVO = employeeMasterService.getPendingSalaryProcessByOrgId(  orgId,   branch);
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+		}
+		if (StringUtils.isEmpty(errorMsg)) {
+			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Pending SalaryProcess found by ORGID");
+			responseObjectsMap.put("salaryProcessVO", salaryProcessVO);
+			responseDTO = createServiceResponse(responseObjectsMap);
+		} else {
+			errorMsg = "SalaryProcess not found for orgID: " + orgId;
+			responseDTO = createServiceResponseError(responseObjectsMap, "Pending SalaryProcess not found", errorMsg);
+		}
+		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		return ResponseEntity.ok().body(responseDTO);
+	}
+ 
+ 
 	
 	@GetMapping("/getAllSalaryProcessByOrgId")
 	public ResponseEntity<ResponseDTO> getAllSalaryProcessByOrgId(@RequestParam Long orgId) {
@@ -685,7 +719,7 @@ public class EmployeeMasterController extends BaseController{
 	
 	@GetMapping("/getPayOnHandsForSalaryProcess")
 	public ResponseEntity<ResponseDTO> getPayOnHandsForSalaryProcess(
-	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam Long empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal grossPay,@RequestParam BigDecimal empSalaryDays,@RequestParam BigDecimal sumOfDetection,@RequestParam BigDecimal otAmount) {
 
 	    String methodName = "getPayOnHandsForSalaryProcess()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -884,6 +918,68 @@ public class EmployeeMasterController extends BaseController{
 	        
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
 	    }
+	}
+	
+	
+	@PostMapping("/uploadExcelSalaryStructure")
+	public ResponseEntity<ResponseDTO> uploadExcelSalaryStructure(
+	        @RequestParam("files") MultipartFile file,
+	        @RequestParam("orgId") Long orgId,
+	        @RequestParam("createdBy") String createdBy) {
+
+	    String methodName = "uploadExcelSalaryStructure()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+
+	    try {
+	        String result = employeeMasterService.uploadSalaryStructureExcel(file, orgId, createdBy);
+
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Salary Structure Excel uploaded successfully");
+	        responseObjectsMap.put("uploadResult", result);
+
+	        responseDTO = createServiceResponse(responseObjectsMap);
+
+	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	        return ResponseEntity.ok(responseDTO);
+
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+	        responseDTO = createServiceResponseError(responseObjectsMap,
+	                "Failed to upload Salary Structure Excel", errorMsg);
+
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+	    }
+	}
+
+	
+	@GetMapping("/getBankAndCashAmtForSalaryProcess")
+	public ResponseEntity<ResponseDTO> getBankAndCashAmtForSalaryProcess(
+	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal empSalaryDays,@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branchCode) {
+
+	    String methodName = "getBankAndCashAmtForSalaryProcess()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+	    List<Map<String, Object>> salaryProcessVO;
+
+	    try {
+	    	salaryProcessVO = employeeMasterService.getBankAndCashAmtForSalaryProcess( totalCompanyWorkingDays,  empSalaryDays,  orgId,  employeeCode,  branchCode);
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "NetPay details retrieved successfully");
+	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve NetPay details", errorMsg);
+	    }
+
+	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	    return ResponseEntity.ok().body(responseDTO);
 	}
 
 }

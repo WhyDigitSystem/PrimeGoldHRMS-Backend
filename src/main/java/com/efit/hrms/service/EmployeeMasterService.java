@@ -1,10 +1,12 @@
 package com.efit.hrms.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.efit.hrms.dto.PermissionRequestDTO;
 import com.efit.hrms.dto.PfEsiAmountDTO;
@@ -67,7 +69,7 @@ public interface EmployeeMasterService {
 //			BigDecimal sumOfDetection);
 
 	List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			Long empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
+			BigDecimal empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	//ApprovedSalaryProcess Report
 	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year);
@@ -94,7 +96,14 @@ public interface EmployeeMasterService {
 	List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode,
 			BigDecimal sumOfEarnings);
 
-	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy) throws ApplicationException;
+	Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> id, String action, String actionBy ) throws ApplicationException;
+
+	List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
+
+	String uploadSalaryStructureExcel(MultipartFile file, Long orgId, String createdBy) throws Exception;
+
+	List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
+			Long orgId, String employeeCode, String branchCode);
 
 
 

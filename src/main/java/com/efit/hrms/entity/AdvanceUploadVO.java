@@ -1,48 +1,54 @@
 package com.efit.hrms.entity;
 
-import java.util.List;
+import java.math.BigDecimal;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.efit.hrms.dto.CreatedUpdatedDate;
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "groupmaster")
+@Table(name = "advanceupload")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GroupVO {
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "groupmastergen")
-	@SequenceGenerator(name = "groupmastergen", sequenceName = "groupmasterseq", initialValue = 1000000001, allocationSize = 1)
-	@Column(name = "groupmasterid")
-	private Long id;
+public class AdvanceUploadVO {
 
-	@Column(name = "groupname")
-	private String groupName;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "advancegen")
+	@SequenceGenerator(name = "advancegen", sequenceName = "advanceseq", initialValue = 1000000001, allocationSize = 1)
+	@Column(name = "advanceid")
+	private Long id;
 	
-	@Column(name = "department")
-	private String department;
-	@Column(name = "type")
-	private String type;
-	@Column(name = "contractor")
-	private String contractor;
+	@Column(name = "employeecode",length = 30)
+	private String employeeCode;
+	@Column(name = "employee",length = 150)
+	private String employeeName;
+	@Column(name = "bank",length = 150)
+	private BigDecimal bank;
+	@Column(name = "cash",length = 150)
+	private BigDecimal cash;
+	@Column(name = "month",length = 30)
+	private Long month;
+	@Column(name = "year",length = 50)
+	private Long year;
+	
+	@Column(name = "branch",length = 30)
+	private String branch;
+	@Column(name = "branchcode",length = 30)
+	private String branchCode;
+	
 	
 	@Column(name = "createdby",length = 30)
 	private String createdBy;
@@ -51,23 +57,14 @@ public class GroupVO {
 	@Column(name = "orgid")
 	private Long orgId;
 	@Column(name = "cancel")
-	private boolean cancel;
+	private boolean cancel=false;
 	@Column(name = "cancelremarks",length = 150)
 	private String cancelRemark;
 	@Column(name = "active")
 	private boolean active;
 	
-	@Column(name = "branchcode")
-	private String branchCode;
-	@Column(name = "branchname")
-	private String branchName;
-	@Column(name="finyear")
-	private String finYear;
 	
-	@OneToMany(mappedBy = "groupVO",cascade = CascadeType.ALL)
-	@JsonManagedReference
-	private List<GroupDetailsVO> groupDetailsVO;
-	
+
 	@JsonGetter("active")
 	public String getActive() {
 		return active ? "Active" : "In-Active";
@@ -81,5 +78,6 @@ public class GroupVO {
 	
 	@Embedded
 	private CreatedUpdatedDate commonDate = new CreatedUpdatedDate();
+
 
 }

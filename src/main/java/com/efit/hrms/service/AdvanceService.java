@@ -1,6 +1,7 @@
 package com.efit.hrms.service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -30,5 +31,7 @@ public interface AdvanceService {
 
 	List<ShiftAssignVO> getAllShiftDetails(Long orgId, String shifttype, String department, String effectiveFrom,
 			String effectiveTo, String type, String contractorName);
+
+	List<Map<String, Object>>  getEmployeeAdvanceSalary(Long orgId, String branchCode, String employeeCode, BigDecimal payOnHand, Long month, String year);
 
 }

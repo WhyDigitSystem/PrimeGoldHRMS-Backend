@@ -1,5 +1,6 @@
 package com.efit.hrms.repo;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,31 @@ public interface AdvanceRepo extends JpaRepository<AdvanceVO, Long> {
 
 	@Query(nativeQuery = true, value = "select employee,employeecode,department,designation from employee where orgid=?1 and active= 1")
 	Set<Object[]> findEmployeeDetails(Long orgId);
+
+	@Query(nativeQuery = true, value = "SELECT employeename,\r\n"
+			+ "       employeecode,\r\n"
+			+ "       advanceamount AS advanceAmount,\r\n"
+			+ "       dueMonth,\r\n"
+			+ "       requestdate,\r\n"
+			+ "       loanbalance\r\n"
+			+ "FROM advance\r\n"
+			+ "WHERE orgid = ?1 \r\n"
+			+ "  AND branchcode = ?2 \r\n"
+			+ "  AND employeecode = ?3 \r\n"
+			+ "  AND approve = 1\r\n"
+			+ "  AND active = 1\r\n"
+			+ "  AND (\r\n"
+			+ "        DATE(CONCAT(?4 , '-', LPAD(?5 ,2,'0'), '-01')) \r\n"
+			+ "          BETWEEN requestdate AND LAST_DAY(DATE_ADD(requestdate, INTERVAL dueMonth - 1 MONTH))\r\n"
+			+ "        OR loanbalance > 0\r\n"
+			+ "      )\r\n"
+			+ "ORDER BY requestdate DESC\r\n"
+			+ "LIMIT 1;\r\n"
+			+ "")
+	Set<Object[]> getEmployeeAdvanceSalary(Long orgId, String branchCode, String employeeCode, Long month, String year);
+
+	AdvanceVO findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(String employeeCode, String branchCode, Long orgId,
+			LocalDate requestDate);
 
 //	@Query(value = "SELECT *\r\n"
 //			+ "FROM shiftassign a\r\n"

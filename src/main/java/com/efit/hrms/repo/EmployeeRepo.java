@@ -170,6 +170,13 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 	EmployeeVO findByEmployeeCodeAndOrgId(String empCode, Long orgId);
     List<EmployeeVO> findByEmployeeCodeInAndOrgId(Set<String> employeeCodes, Long orgId);
 
+	EmployeeVO findByEmployeeCodeAndEmployeeNameAndOrgId(String empCode, String empName, Long orgId);
+
+
+	EmployeeVO findByEmployeeCodeAndEmployeeName(String employeeCode, String employeeName);
+
+	EmployeeVO findByEmployeeCodeAndOrgIdAndBranchCode(String empCode, Long orgId, String branchCode);
+
 
 
 //	EmployeeVO findByEmployeeVO(String empCode);

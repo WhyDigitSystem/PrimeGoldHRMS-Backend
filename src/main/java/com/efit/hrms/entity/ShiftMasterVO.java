@@ -1,6 +1,6 @@
 package com.efit.hrms.entity;
 
-import java.time.LocalTime;
+import java.math.BigDecimal;
 
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -44,6 +44,8 @@ public class ShiftMasterVO {
 	private String graceTime;
 	@Column(name = "nightshift")
 	private boolean nightShift;
+	@Column(name = "openshift")
+	private boolean openShift;
 
 	@Column(name = "orgid")
 	private long orgId;
@@ -53,6 +55,11 @@ public class ShiftMasterVO {
 	private String branch;
 	@Column(name = "finyear")
 	private String finYear;
+
+	@Column(name = "halfdayhours")
+	private BigDecimal halfDayHours;
+	@Column(name = "fulldayhours")
+	private BigDecimal fullDayHours;
 
 	@Column(name = "createdby")
 	private String createdBy;

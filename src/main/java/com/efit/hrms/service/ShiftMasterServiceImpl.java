@@ -162,11 +162,16 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 		shiftMasterVO.setBreakTime(shiftMasterDTO.getBreakTime());
 		shiftMasterVO.setGraceTime(shiftMasterDTO.getGraceTime());
 		shiftMasterVO.setNightShift(shiftMasterDTO.isNightShift());
+		shiftMasterVO.setOpenShift(shiftMasterDTO.isOpenShift());
+
 
 		shiftMasterVO.setOrgId(shiftMasterDTO.getOrgId());
 		shiftMasterVO.setBranchCode(shiftMasterDTO.getBranchCode());
 		shiftMasterVO.setBranch(shiftMasterDTO.getBranch());
 		shiftMasterVO.setFinYear(shiftMasterDTO.getFinYear());
+		shiftMasterVO.setHalfDayHours(shiftMasterDTO.getHalfDayHours());
+		shiftMasterVO.setFullDayHours(shiftMasterDTO.getFullDayHours());
+
 
 		shiftMasterVO.setActive(shiftMasterDTO.isActive());
 
@@ -513,6 +518,9 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 	private GroupVO getGroupDTOFormGroupDTO(GroupVO groupVO, GroupDTO groupDTO) throws ApplicationException {
 
 		groupVO.setGroupName(groupDTO.getGroupName());
+		groupVO.setDepartment(groupDTO.getDepartment());
+		groupVO.setType(groupDTO.getType());
+		groupVO.setContractor(groupDTO.getContractor());
 		groupVO.setCancelRemark(groupDTO.getCancelRemark());
 		groupVO.setFinYear(groupDTO.getFinYear());
 		groupVO.setOrgId(groupDTO.getOrgId());
@@ -548,6 +556,28 @@ public class ShiftMasterServiceImpl implements ShiftMasterService {
 	@Override
 	public Optional<GroupVO> getPreGroupById(Long id) {
 		return groupRepo.findById(id);
+	}
+	
+	@Override
+	public List<Map<String, Object>> getEmployeeNameForGroupMaster(Long orgId, String branch, String department,
+			String type, String contractor) {
+		List<Object[]> rawList = groupRepo.getEmployeeNameForGroupMaster(orgId, branch, department, type,
+				contractor); // change to Object[]
+		return mapLeaveDetails(rawList);
+	}
+
+	private List<Map<String, Object>> mapLeaveDetails(List<Object[]> result) {
+		List<Map<String, Object>> detailsList = new ArrayList<>();
+
+		for (Object[] record : result) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("employeeName", record[1] != null ? record[1].toString() : "");
+			map.put("employeeCode", record[0] != null ? record[0].toString() : "");
+			map.put("department", record[2] != null ? record[2].toString() : "");
+
+			detailsList.add(map);
+		}
+		return detailsList;
 	}
 
 	// GroupsalaryStructure
