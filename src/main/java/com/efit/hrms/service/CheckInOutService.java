@@ -76,9 +76,9 @@ public interface CheckInOutService {
 
 	Map<String, Object> createUpdateOtherPayments(OtherPaymentsDTO otherPaymentsDTO) throws ApplicationException;
 
-	List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId);
+	List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId, Long month, Long year);
 
-	List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId);
+	List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId, Long month, Long year);
 
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 

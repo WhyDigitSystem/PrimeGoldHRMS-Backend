@@ -2554,13 +2554,13 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 	
 	@Override
-	public List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId) {
-		return advanceUploadRepo.getAllAdvanceUploadByOrgId(orgId);
+	public List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId,Long month,Long year) {
+		return advanceUploadRepo.getAllAdvanceUploadByOrgId(orgId,month,year);
 	}
 
 	@Override
-	public List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId) {
-		return otherPaymentsRepo.getAllOtherPaymentsByOrgId(orgId);
+	public List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId,Long month,Long year) {
+		return otherPaymentsRepo.getAllOtherPaymentsByOrgId(orgId,month,year);
 	}
 
 

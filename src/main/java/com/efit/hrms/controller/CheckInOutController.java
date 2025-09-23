@@ -677,7 +677,7 @@ public class CheckInOutController extends BaseController{
 		 
 		 
 		 @GetMapping("/getAllAdvanceUploadByOrgId")
-			public ResponseEntity<ResponseDTO> getAllAdvanceUploadByOrgId(@RequestParam Long orgId) {
+			public ResponseEntity<ResponseDTO> getAllAdvanceUploadByOrgId(@RequestParam Long orgId,@RequestParam Long month,@RequestParam Long year) {
 			    String methodName = "getAllAdvanceUploadByOrgId()";
 			    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 
@@ -686,7 +686,7 @@ public class CheckInOutController extends BaseController{
 			    
 			    try {
 			        // Fetch Salary Heads and handle nulls safely
-			        List<AdvanceUploadVO> advanceUploadVO = checkInOutService.getAllAdvanceUploadByOrgId(orgId);
+			        List<AdvanceUploadVO> advanceUploadVO = checkInOutService.getAllAdvanceUploadByOrgId(orgId,month,year);
 			                                                    
 			        
 			        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "AdvanceUpload information retrieved successfully By OrgId");
@@ -711,7 +711,7 @@ public class CheckInOutController extends BaseController{
 		 //otherpaymets
 		 
 		 @GetMapping("/getAllOtherPaymentsByOrgId")
-			public ResponseEntity<ResponseDTO> getAllOtherPaymentsByOrgId(@RequestParam Long orgId) {
+			public ResponseEntity<ResponseDTO> getAllOtherPaymentsByOrgId(@RequestParam Long orgId,@RequestParam Long month,@RequestParam Long year) {
 			    String methodName = "getAllOtherPaymentsByOrgId()";
 			    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 
@@ -720,7 +720,7 @@ public class CheckInOutController extends BaseController{
 			    
 			    try {
 			        // Fetch Salary Heads and handle nulls safely
-			        List<OtherPaymentsVO> otherPaymentsVO = checkInOutService.getAllOtherPaymentsByOrgId(orgId);
+			        List<OtherPaymentsVO> otherPaymentsVO = checkInOutService.getAllOtherPaymentsByOrgId(orgId,month,year);
 			                                                    
 			        
 			        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "OtherPayments information retrieved successfully By OrgId");

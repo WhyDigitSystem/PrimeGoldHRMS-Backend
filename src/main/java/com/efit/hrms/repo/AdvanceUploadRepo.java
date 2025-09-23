@@ -15,7 +15,7 @@ public interface AdvanceUploadRepo extends JpaRepository<AdvanceUploadVO, Long> 
 	Optional<AdvanceUploadVO> findByEmployeeCodeAndMonthAndYearAndOrgId(String empCode, Long month, Long year,
 			Long orgId);
 
-	@Query( value = "SELECT * FROM advanceupload WHERE orgid =?1",nativeQuery = true)
-	List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId);
+	@Query( value = "SELECT * FROM advanceupload WHERE orgid =?1 and month=?2 and year=?3 ",nativeQuery = true)
+	List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId, Long month, Long year);
 
 }

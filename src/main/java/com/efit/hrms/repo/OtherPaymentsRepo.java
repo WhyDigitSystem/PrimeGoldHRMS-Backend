@@ -11,7 +11,7 @@ import com.efit.hrms.entity.OtherPaymentsVO;
 @Repository
 public interface OtherPaymentsRepo  extends JpaRepository<OtherPaymentsVO, Long>{
 
-	@Query( value = "SELECT * FROM otherpayments WHERE orgid =?1",nativeQuery = true)
-	List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId);
+	@Query( value = "SELECT * FROM otherpayments WHERE orgid =?1 and month=?2 and year=?3 ",nativeQuery = true)
+	List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId, Long month, Long year);
 
 }
