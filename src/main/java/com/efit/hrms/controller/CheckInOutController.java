@@ -29,10 +29,13 @@ import com.efit.hrms.common.UserConstants;
 import com.efit.hrms.dto.AdvanceUploadDTO;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
+import com.efit.hrms.dto.OtherPaymentsDTO;
 import com.efit.hrms.dto.ResponseDTO;
+import com.efit.hrms.entity.AdvanceUploadVO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.OtherPaymentsVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.service.CheckInOutService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -548,7 +551,9 @@ public class CheckInOutController extends BaseController{
 		         @RequestParam("orgId") Long orgId,
 		         @RequestParam("createdBy") String createdBy,
 		         @RequestParam("branch") String branch,
-		         @RequestParam("branchCode") String branchCode
+		         @RequestParam("branchCode") String branchCode,
+		         @RequestParam("month") Long month,
+		         @RequestParam("year") Long year
 		         ) {
 
 		     String methodName = "uploadOtherPaymentsExcel()";
@@ -559,7 +564,7 @@ public class CheckInOutController extends BaseController{
 
 		     try {
 		         // Call service to upload Excel; returns JSON string with success/failure counts
-		         String resultJson = checkInOutService.uploadOtherPaymentsExcel(file, orgId, createdBy, branch, branchCode);
+		         String resultJson = checkInOutService.uploadOtherPaymentsExcel(file, orgId, createdBy, branch, branchCode,month,year);
 
 		         // Convert result JSON to Map to check failedCount
 		         ObjectMapper mapper = new ObjectMapper();
@@ -632,45 +637,110 @@ public class CheckInOutController extends BaseController{
 		 }
 
 		 
-		 
-//		 @PutMapping("/createUpdateOtherPayments")
-//		 public ResponseEntity<ResponseDTO> createUpdateOtherPayments(@RequestBody OtherPaymentsDTO OtherPaymentsDTO) {
-//		     String methodName = "createUpdateOtherPayments()";
-//		     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-//
-//		     Map<String, Object> responseObjectsMap = new HashMap<>();
-//		     ResponseDTO responseDTO;
-//
-//		     try {
-//		         // Call service method
-//		         Map<String, Object> advanceUploadVO = checkInOutService.createUpdateAdvanceExcel(advanceUploadDTO);
-//
-//		         // Extract message and data
-//		         Object advanceVO = advanceUploadVO.get("paramObjectsMap");
-//		         String message = (String) advanceUploadVO.getOrDefault("message", "AdvanceVO completed successfully.");
-//
-//		         // Populate response map
-//		         responseObjectsMap.put("advanceVO", advanceVO);
-//		         responseObjectsMap.put(CommonConstant.STRING_MESSAGE, message);
-//
-//		         // Create structured response
-//		         responseDTO = createServiceResponse(responseObjectsMap);
-//
-//		     } catch (ApplicationException e) {
-//		         LOGGER.error("{} - Application Error: {}", methodName, e.getMessage(), e);
-//		         responseDTO = createServiceResponseError(responseObjectsMap, "Application Error", e.getMessage());
-//		         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDTO);
-//		     } catch (Exception e) {
-//		         LOGGER.error("{} - Unexpected Error: {}", methodName, e.getMessage(), e);
-//		         responseDTO = createServiceResponseError(responseObjectsMap, "Unexpected Error", "Something went wrong.");
-//		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
-//		     }
-//
-//		     LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
-//		     return ResponseEntity.ok(responseDTO);
-//		 }
+		 @PutMapping("/createUpdateOtherPayments")
+		 public ResponseEntity<ResponseDTO> createUpdateOtherPayments(@RequestBody OtherPaymentsDTO otherPaymentsDTO) {
+		     String methodName = "createUpdateOtherPayments()";
+		     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+		     Map<String, Object> responseObjectsMap = new HashMap<>();
+		     ResponseDTO responseDTO;
+
+		     try {
+		         // Call service method
+		         Map<String, Object> otherPaymentsVO = checkInOutService.createUpdateOtherPayments(otherPaymentsDTO);
+
+		         // Extract message and data
+		         Object advanceVO = otherPaymentsVO.get("paramObjectsMap");
+		         String message = (String) otherPaymentsVO.getOrDefault("message", "OtherPayments completed successfully.");
+
+		         // Populate response map
+		         responseObjectsMap.put("otherPaymentsVO", otherPaymentsVO);
+		         responseObjectsMap.put(CommonConstant.STRING_MESSAGE, message);
+
+		         // Create structured response
+		         responseDTO = createServiceResponse(responseObjectsMap);
+
+		     } catch (ApplicationException e) {
+		         LOGGER.error("{} - Application Error: {}", methodName, e.getMessage(), e);
+		         responseDTO = createServiceResponseError(responseObjectsMap, "Application Error", e.getMessage());
+		         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDTO);
+		     } catch (Exception e) {
+		         LOGGER.error("{} - Unexpected Error: {}", methodName, e.getMessage(), e);
+		         responseDTO = createServiceResponseError(responseObjectsMap, "Unexpected Error", "Something went wrong.");
+		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+		     }
+
+		     LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+		     return ResponseEntity.ok(responseDTO);
+		 }
 
 		 
+		 
+		 @GetMapping("/getAllAdvanceUploadByOrgId")
+			public ResponseEntity<ResponseDTO> getAllAdvanceUploadByOrgId(@RequestParam Long orgId) {
+			    String methodName = "getAllAdvanceUploadByOrgId()";
+			    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+			    Map<String, Object> responseObjectsMap = new HashMap<>();
+			    ResponseDTO responseDTO;
+			    
+			    try {
+			        // Fetch Salary Heads and handle nulls safely
+			        List<AdvanceUploadVO> advanceUploadVO = checkInOutService.getAllAdvanceUploadByOrgId(orgId);
+			                                                    
+			        
+			        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "AdvanceUpload information retrieved successfully By OrgId");
+			        responseObjectsMap.put("advanceUploadVO", advanceUploadVO);
+			        responseDTO = createServiceResponse(responseObjectsMap);
+			        
+			        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			        return ResponseEntity.ok(responseDTO);
+
+			    } catch (Exception e) {
+			        String errorMsg = e.getMessage();
+			        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+			        responseDTO = createServiceResponseError(responseObjectsMap, 
+			                     "Failed to retrieve advanceUpload information By OrgId", errorMsg);
+			        
+			        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+			    }
+			}
+			
+		 
+		 //otherpaymets
+		 
+		 @GetMapping("/getAllOtherPaymentsByOrgId")
+			public ResponseEntity<ResponseDTO> getAllOtherPaymentsByOrgId(@RequestParam Long orgId) {
+			    String methodName = "getAllOtherPaymentsByOrgId()";
+			    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+			    Map<String, Object> responseObjectsMap = new HashMap<>();
+			    ResponseDTO responseDTO;
+			    
+			    try {
+			        // Fetch Salary Heads and handle nulls safely
+			        List<OtherPaymentsVO> otherPaymentsVO = checkInOutService.getAllOtherPaymentsByOrgId(orgId);
+			                                                    
+			        
+			        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "OtherPayments information retrieved successfully By OrgId");
+			        responseObjectsMap.put("otherPaymentsVO", otherPaymentsVO);
+			        responseDTO = createServiceResponse(responseObjectsMap);
+			        
+			        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+			        return ResponseEntity.ok(responseDTO);
+
+			    } catch (Exception e) {
+			        String errorMsg = e.getMessage();
+			        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+			        responseDTO = createServiceResponseError(responseObjectsMap, 
+			                     "Failed to retrieve OtherPayments information By OrgId", errorMsg);
+			        
+			        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+			    }
+			}
+			
 		 
 		 
 

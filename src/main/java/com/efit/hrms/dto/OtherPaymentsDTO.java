@@ -23,7 +23,8 @@ public class OtherPaymentsDTO {
 
 	private String branch;
 	private String branchCode;
-
+	private Long month;
+	private Long year;
 	private String createdBy;
 	private Long orgId;
 	private boolean active;

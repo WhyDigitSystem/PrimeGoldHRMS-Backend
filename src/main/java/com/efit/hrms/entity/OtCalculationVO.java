@@ -48,8 +48,15 @@ public class OtCalculationVO {
     @Column(name = "othours")
     private int othours;
 
-    @Column(name = "otamount", precision = 10, scale = 2)
-    private BigDecimal otamount;
+//    @Column(name = "otamount", precision = 10, scale = 2)
+//    private BigDecimal otamount;
+    
+    
+    @Column(name = "bankotamount", precision = 10, scale = 2)
+    private BigDecimal bankOtAmount;
+    
+    @Column(name = "cashotamount", precision = 10, scale = 2)
+    private BigDecimal cashOtAmount;
 
     @Column(name = "rate")
     private BigDecimal rate;

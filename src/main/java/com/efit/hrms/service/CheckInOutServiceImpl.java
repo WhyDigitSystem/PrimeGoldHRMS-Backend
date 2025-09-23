@@ -58,7 +58,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.efit.hrms.dto.AdvanceUploadDTO;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
-import com.efit.hrms.dto.SalaryHeadsDTO;
+import com.efit.hrms.dto.OtherPaymentsDTO;
 import com.efit.hrms.entity.AdvanceUploadVO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceLogVO;
@@ -70,8 +70,8 @@ import com.efit.hrms.entity.DeviceLogVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.OtCalculationVO;
 import com.efit.hrms.entity.OtherPaymentsVO;
-import com.efit.hrms.entity.SalaryHeadsVO;
 import com.efit.hrms.entity.ShiftAssignDetailsVO;
+import com.efit.hrms.entity.ShiftMasterVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AdvanceUploadRepo;
 import com.efit.hrms.repo.AttendanceDailyRepo;
@@ -1386,94 +1386,189 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		}
 	}
 
+//	@Override
+//	public List<OtCalculationVO> generateOtAndSave(Long orgId) {
+//		List<Object[]> rows = otCalculationRepo.getFinalOtRecords(orgId);
+//		List<OtCalculationVO> resultList = new ArrayList<>();
+//		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+//
+//		for (Object[] row : rows) {
+//			try {
+//				String empcode = (String) row[0];
+//				String empname = (String) row[1];
+//				LocalDate checkindate = ((Date) row[2]).toLocalDate();
+//				LocalTime intime = LocalTime.parse((String) row[3], timeFormatter);
+//				LocalTime outtime = LocalTime.parse((String) row[4], timeFormatter);
+//				Integer othours = row[5] != null ? Integer.parseInt(row[5].toString().trim()) : 0;
+//				BigDecimal otamount = safeBigDecimal(row[6]);
+//				BigDecimal rate = safeBigDecimal(row[7]);
+//				String ottype = row[8] != null ? row[8].toString().trim() : null;
+//				String otcategory = row[9] != null ? row[9].toString().trim() : null;
+//				String companyOtPolicy = row[10] != null ? row[10].toString().trim() : null;
+//
+//				// Try exact match with empcode + checkindate + intime + outtime
+//				Optional<OtCalculationVO> exactMatchOpt = otCalculationRepo
+//						.findByEmpcodeAndCheckindateAndIntimeAndOuttime(empcode, checkindate, intime, outtime);
+//
+//				OtCalculationVO vo;
+//
+//				if (exactMatchOpt.isPresent()) {
+//					vo = exactMatchOpt.get();
+//					if (!isDifferent(vo, othours, otamount, rate, ottype, otcategory, companyOtPolicy)) {
+//						continue; // All values same, skip
+//					}
+//					// Else update the fields
+//				} else {
+//					// Check if record exists with empcode + checkindate only (even if in/out
+//					// changed)
+//					Optional<OtCalculationVO> partialMatch = otCalculationRepo.findByEmpcodeAndCheckindate(empcode,
+//							checkindate);
+//					if (partialMatch.isPresent()) {
+//						vo = partialMatch.get(); // Update existing
+//					} else {
+//						vo = new OtCalculationVO(); // Create new
+//						vo.setCreatedon(LocalDateTime.now());
+//					}
+//				}
+//
+//				// Create or update values
+//				vo.setEmpcode(empcode);
+//				vo.setEmpname(empname);
+//				vo.setCheckindate(checkindate);
+//				vo.setIntime(intime);
+//				vo.setOuttime(outtime);
+//				vo.setOthours(othours);
+//				vo.setOtamount(otamount);
+//				vo.setRate(rate);
+//				vo.setOttype(ottype);
+//				vo.setOtcategory(otcategory);
+//				vo.setCompanyOtPolicy(companyOtPolicy);
+//				vo.setOrgId(orgId);
+//				vo.setStatus("PENDING");
+//
+//				resultList.add(vo);
+//
+//			} catch (Exception e) {
+//				System.err.println("Error processing OT row: " + Arrays.toString(row));
+//				e.printStackTrace();
+//			}
+//		}
+//
+//		return otCalculationRepo.saveAll(resultList);
+//	}
+//
+//	private boolean isDifferent(OtCalculationVO vo, Integer othours, BigDecimal otamount, BigDecimal rate,
+//			String ottype, String otcategory, String companyOtPolicy) {
+//
+//		return !Objects.equals(vo.getOthours(), othours) || !Objects.equals(vo.getOtamount(), otamount)
+//				|| !Objects.equals(vo.getRate(), rate) || !Objects.equals(vo.getOttype(), ottype)
+//				|| !Objects.equals(vo.getOtcategory(), otcategory)
+//				|| !Objects.equals(vo.getCompanyOtPolicy(), companyOtPolicy);
+//	}
+//
+//	private BigDecimal safeBigDecimal(Object obj) {
+//		try {
+//			return obj != null ? new BigDecimal(obj.toString().trim()) : BigDecimal.ZERO;
+//		} catch (NumberFormatException e) {
+//			System.err.println("Invalid BigDecimal input: " + obj);
+//			return BigDecimal.ZERO;
+//		}
+//	}
+	
+	
+	
 	@Override
 	public List<OtCalculationVO> generateOtAndSave(Long orgId) {
-		List<Object[]> rows = otCalculationRepo.getFinalOtRecords(orgId);
-		List<OtCalculationVO> resultList = new ArrayList<>();
-		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+	    List<Object[]> rows = otCalculationRepo.getFinalOtRecords(orgId); // SQL must return bankOtAmount and cashOtAmount separately
+	    List<OtCalculationVO> resultList = new ArrayList<>();
+	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-		for (Object[] row : rows) {
-			try {
-				String empcode = (String) row[0];
-				String empname = (String) row[1];
-				LocalDate checkindate = ((Date) row[2]).toLocalDate();
-				LocalTime intime = LocalTime.parse((String) row[3], timeFormatter);
-				LocalTime outtime = LocalTime.parse((String) row[4], timeFormatter);
-				Integer othours = row[5] != null ? Integer.parseInt(row[5].toString().trim()) : 0;
-				BigDecimal otamount = safeBigDecimal(row[6]);
-				BigDecimal rate = safeBigDecimal(row[7]);
-				String ottype = row[8] != null ? row[8].toString().trim() : null;
-				String otcategory = row[9] != null ? row[9].toString().trim() : null;
-				String companyOtPolicy = row[10] != null ? row[10].toString().trim() : null;
+	    for (Object[] row : rows) {
+	        try {
+	            String empcode = (String) row[0];
+	            String empname = (String) row[1];
+	            LocalDate checkindate = ((Date) row[2]).toLocalDate();
+	            LocalTime intime = LocalTime.parse((String) row[3], timeFormatter);
+	            LocalTime outtime = LocalTime.parse((String) row[4], timeFormatter);
+	            Integer othours = row[5] != null ? Integer.parseInt(row[5].toString().trim()) : 0;
 
-				// Try exact match with empcode + checkindate + intime + outtime
-				Optional<OtCalculationVO> exactMatchOpt = otCalculationRepo
-						.findByEmpcodeAndCheckindateAndIntimeAndOuttime(empcode, checkindate, intime, outtime);
+	            // Correctly map bank and cash OT amounts
+	            BigDecimal bankOtAmount = safeBigDecimal(row[6]);
+	            BigDecimal cashOtAmount = safeBigDecimal(row[7]);
 
-				OtCalculationVO vo;
+	            BigDecimal rate = safeBigDecimal(row[8]);
+	            String ottype = row[9] != null ? row[9].toString().trim() : null;
+	            String otcategory = row[10] != null ? row[10].toString().trim() : null;
+	            String companyOtPolicy = row[11] != null ? row[11].toString().trim() : null;
 
-				if (exactMatchOpt.isPresent()) {
-					vo = exactMatchOpt.get();
-					if (!isDifferent(vo, othours, otamount, rate, ottype, otcategory, companyOtPolicy)) {
-						continue; // All values same, skip
-					}
-					// Else update the fields
-				} else {
-					// Check if record exists with empcode + checkindate only (even if in/out
-					// changed)
-					Optional<OtCalculationVO> partialMatch = otCalculationRepo.findByEmpcodeAndCheckindate(empcode,
-							checkindate);
-					if (partialMatch.isPresent()) {
-						vo = partialMatch.get(); // Update existing
-					} else {
-						vo = new OtCalculationVO(); // Create new
-						vo.setCreatedon(LocalDateTime.now());
-					}
-				}
+	            Optional<OtCalculationVO> exactMatchOpt = otCalculationRepo
+	                    .findByEmpcodeAndCheckindateAndIntimeAndOuttime(empcode, checkindate, intime, outtime);
 
-				// Create or update values
-				vo.setEmpcode(empcode);
-				vo.setEmpname(empname);
-				vo.setCheckindate(checkindate);
-				vo.setIntime(intime);
-				vo.setOuttime(outtime);
-				vo.setOthours(othours);
-				vo.setOtamount(otamount);
-				vo.setRate(rate);
-				vo.setOttype(ottype);
-				vo.setOtcategory(otcategory);
-				vo.setCompanyOtPolicy(companyOtPolicy);
-				vo.setOrgId(orgId);
-				vo.setStatus("PENDING");
+	            OtCalculationVO vo;
 
-				resultList.add(vo);
+	            if (exactMatchOpt.isPresent()) {
+	                vo = exactMatchOpt.get();
+	                if (!isDifferent(vo, othours, bankOtAmount, cashOtAmount, rate, ottype, otcategory, companyOtPolicy)) {
+	                    continue; // No change, skip
+	                }
+	            } else {
+	                Optional<OtCalculationVO> partialMatch = otCalculationRepo
+	                        .findByEmpcodeAndCheckindate(empcode, checkindate);
+	                vo = partialMatch.orElseGet(() -> {
+	                    OtCalculationVO newVo = new OtCalculationVO();
+	                    newVo.setCreatedon(LocalDateTime.now());
+	                    return newVo;
+	                });
+	            }
 
-			} catch (Exception e) {
-				System.err.println("Error processing OT row: " + Arrays.toString(row));
-				e.printStackTrace();
-			}
-		}
+	            // Set all fields
+	            vo.setEmpcode(empcode);
+	            vo.setEmpname(empname);
+	            vo.setCheckindate(checkindate);
+	            vo.setIntime(intime);
+	            vo.setOuttime(outtime);
+	            vo.setOthours(othours);
+	            vo.setBankOtAmount(bankOtAmount);
+	            vo.setCashOtAmount(cashOtAmount);
+	            vo.setRate(rate);
+	            vo.setOttype(ottype);
+	            vo.setOtcategory(otcategory);
+	            vo.setCompanyOtPolicy(companyOtPolicy);
+	            vo.setOrgId(orgId);
+	            vo.setStatus("PENDING");
 
-		return otCalculationRepo.saveAll(resultList);
+	            resultList.add(vo);
+
+	        } catch (Exception e) {
+	            System.err.println("Error processing OT row: " + Arrays.toString(row));
+	            e.printStackTrace();
+	        }
+	    }
+
+	    return otCalculationRepo.saveAll(resultList);
 	}
 
-	private boolean isDifferent(OtCalculationVO vo, Integer othours, BigDecimal otamount, BigDecimal rate,
-			String ottype, String otcategory, String companyOtPolicy) {
+	private boolean isDifferent(OtCalculationVO vo, Integer othours, BigDecimal bankOtAmount, BigDecimal cashOtAmount,
+	        BigDecimal rate, String ottype, String otcategory, String companyOtPolicy) {
 
-		return !Objects.equals(vo.getOthours(), othours) || !Objects.equals(vo.getOtamount(), otamount)
-				|| !Objects.equals(vo.getRate(), rate) || !Objects.equals(vo.getOttype(), ottype)
-				|| !Objects.equals(vo.getOtcategory(), otcategory)
-				|| !Objects.equals(vo.getCompanyOtPolicy(), companyOtPolicy);
+	    return !Objects.equals(vo.getOthours(), othours)
+	            || !Objects.equals(vo.getBankOtAmount(), bankOtAmount)
+	            || !Objects.equals(vo.getCashOtAmount(), cashOtAmount)
+	            || !Objects.equals(vo.getRate(), rate)
+	            || !Objects.equals(vo.getOttype(), ottype)
+	            || !Objects.equals(vo.getOtcategory(), otcategory)
+	            || !Objects.equals(vo.getCompanyOtPolicy(), companyOtPolicy);
 	}
 
 	private BigDecimal safeBigDecimal(Object obj) {
-		try {
-			return obj != null ? new BigDecimal(obj.toString().trim()) : BigDecimal.ZERO;
-		} catch (NumberFormatException e) {
-			System.err.println("Invalid BigDecimal input: " + obj);
-			return BigDecimal.ZERO;
-		}
+	    try {
+	        return obj != null ? new BigDecimal(obj.toString().trim()) : BigDecimal.ZERO;
+	    } catch (NumberFormatException e) {
+	        System.err.println("Invalid BigDecimal input: " + obj);
+	        return BigDecimal.ZERO;
+	    }
 	}
+
 
 	@Override
 	public List<OtCalculationVO> getPendingOTHoursByOrgId(String fromDate, String toDate, Long orgId,
@@ -2251,7 +2346,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	public String uploadOtherPaymentsExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode) throws Exception {
+	public String uploadOtherPaymentsExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode,Long month,Long year) throws Exception {
 	    List<Map<String, Object>> failures = new ArrayList<>();
 	    AtomicInteger successCount = new AtomicInteger(0);
 
@@ -2279,6 +2374,8 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 
 	                BigDecimal amount = amountStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(amountStr);
 
+	                if (month == null || year == null) throw new IllegalArgumentException("Month or Year is missing");
+
 	                // Check if employee exists
 	                EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(empCode, orgId, branchCode);
 	                if (employeeVO == null) {
@@ -2295,7 +2392,9 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	                otherPaymentsVO.setOrgId(orgId);
 	                otherPaymentsVO.setCreatedBy(createdBy);
 	                otherPaymentsVO.setActive(true);
-
+	                otherPaymentsVO.setMonth(month);   // <- add this
+	                otherPaymentsVO.setYear(year);
+	                
 	                otherPaymentsRepo.save(otherPaymentsVO);
 	                successCount.incrementAndGet();
 
@@ -2393,6 +2492,76 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    return response;
 	}
 
+
+	
+	
+	@Override
+	@Transactional
+	public Map<String, Object> createUpdateOtherPayments(OtherPaymentsDTO dto) throws ApplicationException {
+	    Map<String, Object> response = new LinkedHashMap<>();
+	    OtherPaymentsVO otherPaymentVO;
+
+	    // Validate mandatory fields
+	    if (dto.getEmployeeCode() == null || dto.getEmployeeCode().isEmpty())
+	        throw new IllegalArgumentException("Employee code is empty");
+	    if (dto.getEmployeeName() == null || dto.getEmployeeName().isEmpty())
+	        throw new IllegalArgumentException("Employee name is empty");
+	    if (dto.getMonth() == null || dto.getYear() == null)
+	        throw new ApplicationException("Month or Year is missing");
+
+	    // Validate employee exists
+	    EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndOrgIdAndBranchCode(
+	            dto.getEmployeeCode(), dto.getOrgId(), dto.getBranchCode());
+	    if (employeeVO == null) {
+	        throw new ApplicationException("Employee not Found: " + dto.getEmployeeCode());
+	    }
+
+	    // 1️⃣ If ID is provided → update by ID
+	    if (dto.getId() != null) {
+	    	otherPaymentVO = otherPaymentsRepo.findById(dto.getId())
+	                .orElseThrow(() -> new ApplicationException("Error: OtherPayment ID " + dto.getId() + " not found!"));
+	    	otherPaymentVO.setUpdatedBy(dto.getCreatedBy());
+	        response.put("message", "OtherPayment Updated Successfully");
+	    } else {
+	            // New record
+	    	otherPaymentVO = new OtherPaymentsVO();
+	    	otherPaymentVO.setCreatedBy(dto.getCreatedBy());
+	    	otherPaymentVO.setActive(true);
+	            response.put("message", "AdvanceUpload Created Successfully");
+	        
+	    }
+
+	    // Set/update common fields
+	    otherPaymentVO.setEmployeeCode(dto.getEmployeeCode());
+	    otherPaymentVO.setEmployeeName(dto.getEmployeeName());
+	    otherPaymentVO.setAmount(dto.getAmount());
+	    otherPaymentVO.setMonth(dto.getMonth());
+	    otherPaymentVO.setYear(dto.getYear());
+	    otherPaymentVO.setBranch(dto.getBranch());
+	    otherPaymentVO.setBranchCode(dto.getBranchCode());
+	    otherPaymentVO.setOrgId(dto.getOrgId());
+
+	    // Save record
+	    OtherPaymentsVO savedAdvance = otherPaymentsRepo.save(otherPaymentVO);
+
+	    // Build response
+	    Map<String, Object> paramObjectsMap = new LinkedHashMap<>();
+	    paramObjectsMap.put("otherPaymentVO", savedAdvance);
+	    response.put("paramObjectsMap", paramObjectsMap);
+
+	    return response;
+	}
+	
+	
+	@Override
+	public List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId) {
+		return advanceUploadRepo.getAllAdvanceUploadByOrgId(orgId);
+	}
+
+	@Override
+	public List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId) {
+		return otherPaymentsRepo.getAllOtherPaymentsByOrgId(orgId);
+	}
 
 
 

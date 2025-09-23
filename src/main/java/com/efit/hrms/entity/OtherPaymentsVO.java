@@ -61,7 +61,10 @@ public class OtherPaymentsVO {
 	@Column(name = "active")
 	private boolean active;
 	
-	
+	@Column(name = "month",length = 30)
+	private Long month;
+	@Column(name = "year",length = 50)
+	private Long year;
 
 	@JsonGetter("active")
 	public String getActive() {

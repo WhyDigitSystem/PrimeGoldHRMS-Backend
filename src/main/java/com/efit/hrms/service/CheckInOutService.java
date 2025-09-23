@@ -11,9 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.efit.hrms.dto.AdvanceUploadDTO;
 import com.efit.hrms.dto.AttendanceSummaryDTO;
 import com.efit.hrms.dto.CheckInOutBiometricDTO;
+import com.efit.hrms.dto.OtherPaymentsDTO;
+import com.efit.hrms.entity.AdvanceUploadVO;
 import com.efit.hrms.entity.AttendanceDailyVO;
 import com.efit.hrms.entity.AttendanceSummaryVO;
 import com.efit.hrms.entity.OtCalculationVO;
+import com.efit.hrms.entity.OtherPaymentsVO;
 import com.efit.hrms.entity.ShiftMasterVO;
 import com.efit.hrms.exception.ApplicationException;
 
@@ -67,9 +70,15 @@ public interface CheckInOutService {
 
 	String uploadAdvanceExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode, Long month, Long year) throws Exception;
 
-	String uploadOtherPaymentsExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode) throws Exception;
+	String uploadOtherPaymentsExcel(MultipartFile file, Long orgId, String createdBy, String branch, String branchCode, Long month, Long year) throws Exception;
 
 	Map<String, Object> createUpdateAdvanceExcel(AdvanceUploadDTO advanceUploadDTO) throws ApplicationException;
+
+	Map<String, Object> createUpdateOtherPayments(OtherPaymentsDTO otherPaymentsDTO) throws ApplicationException;
+
+	List<AdvanceUploadVO> getAllAdvanceUploadByOrgId(Long orgId);
+
+	List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId);
 
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 
