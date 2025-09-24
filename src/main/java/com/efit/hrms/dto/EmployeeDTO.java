@@ -45,7 +45,7 @@ public class EmployeeDTO {
 	private Long uanNo;
 	private String flagValue;
 	private boolean flag;
-	private boolean weekoffOtEligible;
+	private boolean weekoffEligible;
 
 	
 	private String contractor;

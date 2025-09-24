@@ -1,5 +1,6 @@
 package com.efit.hrms.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +65,10 @@ public interface CheckInOutService {
 	List<Map<String, Object>> getEmployeeShiftHoursForMonthlyReport(String empCode, Integer month, String finYear, Long orgId,
 			String branchCode);
 
-	Map<String, Object> createCheckInOutBiometricDevice() throws ApplicationException;
+//	Map<String, Object> createCheckInOutBiometricDevice() throws ApplicationException;
+	
+	Map<String, Object> createCheckInOutBiometricDevice(Long orgId, String createdBy, LocalDate fromDate, LocalDate toDate, String branch, String branchCode) throws ApplicationException, Exception;
+
 
 	String processDeviceLogs(Long orgId, String createdBy) throws Exception;
 

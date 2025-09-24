@@ -1,5 +1,6 @@
 package com.efit.hrms.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -87,30 +89,60 @@ public class CheckInOutController extends BaseController{
 	    }
 	
 	
-	@PutMapping("/createCheckInOutBiometricDevice")
-	public ResponseEntity<ResponseDTO> createCheckInOutBiometricDevice() {
-		String methodName = "createCheckInOutBiometric()";
-		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-		Map<String, Object> responseObjectsMap = new HashMap<String, Object>();
-		String errorMsg = null;
-		ResponseDTO responseDTO = null;
-		try {
-			Map<String, Object> checkInBiometricVO = checkInOutService.createCheckInOutBiometricDevice();
-			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, checkInBiometricVO.get("message"));
-			responseObjectsMap.put("checkInBiometricVO", checkInBiometricVO.get("checkInBiometricVO"));
-			responseDTO = createServiceResponse(responseObjectsMap);
-		} catch (Exception e) {
-			errorMsg = e.getMessage();
-			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
-			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
-		}
-		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
-		return ResponseEntity.ok().body(responseDTO);
-	}
+//	@PutMapping("/createCheckInOutBiometricDevice")
+//	public ResponseEntity<ResponseDTO> createCheckInOutBiometricDevice() {
+//		String methodName = "createCheckInOutBiometric()";
+//		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+//		Map<String, Object> responseObjectsMap = new HashMap<String, Object>();
+//		String errorMsg = null;
+//		ResponseDTO responseDTO = null;
+//		try {
+//			Map<String, Object> checkInBiometricVO = checkInOutService.createCheckInOutBiometricDevice();
+//			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, checkInBiometricVO.get("message"));
+//			responseObjectsMap.put("checkInBiometricVO", checkInBiometricVO.get("checkInBiometricVO"));
+//			responseDTO = createServiceResponse(responseObjectsMap);
+//		} catch (Exception e) {
+//			errorMsg = e.getMessage();
+//			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+//			responseDTO = createServiceResponseError(responseObjectsMap, errorMsg, errorMsg);
+//		}
+//		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+//		return ResponseEntity.ok().body(responseDTO);
+//	}
+//	
 	
-	
+	 
+	 @PutMapping("/createCheckInOutBiometricDevice")
+	 public ResponseEntity<ResponseDTO> createCheckInOutBiometricDevice(
+	         @RequestParam Long orgId,
+	         @RequestParam String createdBy,
+	         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+	         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+	         @RequestParam String branch,
+	         @RequestParam String branchCode) {
 
-	    @PostMapping("/checkInOutUploadExcel")
+	     String methodName = "createCheckInOutBiometricDevice()";
+	     LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	     Map<String, Object> responseObjectsMap = new HashMap<>();
+	     ResponseDTO responseDTO;
+
+	     try {
+	         Map<String, Object> result = checkInOutService.createCheckInOutBiometricDevice(orgId, createdBy, fromDate, toDate,branch,branchCode);
+	         responseObjectsMap.put("message", result.get("message"));
+	         responseObjectsMap.put("successCount", result.get("successCount"));
+	         responseDTO = createServiceResponse(responseObjectsMap);
+	     } catch (Exception e) {
+	         LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, e.getMessage());
+	         responseDTO = createServiceResponseError(responseObjectsMap, e.getMessage(), e.getMessage());
+	     }
+
+	     LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	     return ResponseEntity.ok(responseDTO);
+	 }
+
+	 
+	 @PostMapping("/checkInOutUploadExcel")
 	    public ResponseEntity<String> checkInOutUploadExcel(@RequestParam("files") MultipartFile file,@RequestParam Long orgId,@RequestParam String createdBy) {
 	        if (file.isEmpty()) {
 	            return ResponseEntity.badRequest().body("File is empty.");

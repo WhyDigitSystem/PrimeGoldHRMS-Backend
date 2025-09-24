@@ -1,5 +1,6 @@
 package com.efit.hrms.repo;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -131,6 +132,9 @@ public interface AttendanceLogRepo extends JpaRepository<AttendanceLogVO, Long> 
 			+ "ORDER BY b.employeecode, intime ASC")
 	Set<Object[]> getEmployeeAttendanceContractor(String date, String department, String status,
 			String missPunch, String mainDepartment);
+
+	@Query(nativeQuery = true, value = "SELECT * FROM attendancelog a WHERE a.attendanceDate BETWEEN ?1 AND ?2")
+	List<AttendanceLogVO> findByAttendanceDateBetween(LocalDate fromDate, LocalDate toDate);
 
 
 

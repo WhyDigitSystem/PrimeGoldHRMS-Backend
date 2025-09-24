@@ -72,8 +72,12 @@ public class SalaryProcessVO {
 	@Column(name = "approveon")
 	private String approveOn;
 	
-	@Column(name = "advancededuction")
-	private BigDecimal advanceDeduction;
+	@Column(name = "cashadvance")
+	private BigDecimal cashAdvance;
+	@Column(name = "bankadvance")
+	private BigDecimal bankAdvance;
+//	@Column(name = "advancededuction")
+//	private BigDecimal advanceDeduction;
 	@Column(name = "salaryamount")
 	private BigDecimal salary;
 	

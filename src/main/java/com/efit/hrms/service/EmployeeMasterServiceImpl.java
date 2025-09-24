@@ -575,7 +575,10 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
 				salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
-				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
+				salaryProcessVO.setCashAdvance(salaryProcessDTO.getCashAdvance());
+				salaryProcessVO.setBankAdvance(salaryProcessDTO.getBankAdvance());
+
+//				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 //				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
 //				salaryProcessVO.setRequestDate(salaryProcessDTO.getRequestDate());
 //				salaryProcessVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
@@ -1188,6 +1191,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	    if (result.isEmpty()) {
 	        // no records from DB → return default all = 0
 	        Map<String, Object> defaultMap = new HashMap<>();
+	        defaultMap.put("totalEarnings", 0);
+	        defaultMap.put("totalDeductions", 0);
 	        defaultMap.put("bankAmount", 0);
 	        defaultMap.put("cashAmount", 0);
 	        defaultMap.put("bankOtAmount", 0);
@@ -1201,12 +1206,15 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 
 	    for (Object[] record : result) {
 	        Map<String, Object> map = new HashMap<>();
-	        map.put("bankAmount", record[0] != null ? record[0] : 0);
-	        map.put("cashAmount", record[1] != null ? record[1] : 0);
-	        map.put("bankOtAmount", record[2] != null ? record[2] : 0);
-	        map.put("cashOtAmount", record[3] != null ? record[3] : 0);
-	        map.put("bankAdvance", record[4] != null ? record[4] : 0);
-	        map.put("cashAdvance", record[5] != null ? record[5] : 0);
+
+	        map.put("totalEarnings", record[0] != null ? record[0] : 0);
+	        map.put("totalDeductions", record[1] != null ? record[1] : 0);
+	        map.put("bankAmount", record[2] != null ? record[2] : 0);
+	        map.put("cashAmount", record[3] != null ? record[3] : 0);
+	        map.put("bankOtAmount", record[4] != null ? record[4] : 0);
+	        map.put("cashOtAmount", record[5] != null ? record[5] : 0);
+	        map.put("bankAdvance", record[6] != null ? record[6] : 0);
+	        map.put("cashAdvance", record[7] != null ? record[7] : 0);
 
 	        detailsList.add(map);
 	    }

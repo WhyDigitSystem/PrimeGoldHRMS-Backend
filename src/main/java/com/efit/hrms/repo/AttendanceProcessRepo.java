@@ -482,7 +482,7 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 		    + "    SELECT ds.dt AS weekoffdate\r\n"
 		    + "    FROM date_series ds\r\n"
 		    + "    JOIN companyweekoff cw\r\n"
-		    + "      ON cw.companyid = ?3\r\n"
+		    + "      ON cw.companyid = ?3  join employee e  on e.orgid=?3 and e.weekoffeligible=1 \r\n"
 		    + "     AND UPPER(DAYNAME(ds.dt)) = UPPER(cw.weekoffdays)\r\n"
 		    + "),\r\n"
 		    + "holidays_cte AS (\r\n"

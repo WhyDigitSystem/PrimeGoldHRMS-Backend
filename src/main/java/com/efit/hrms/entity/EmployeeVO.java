@@ -134,6 +134,8 @@ public class EmployeeVO {
 	private String flagValue;
 	@Column(name = "flag")
 	private boolean flag;
+	@Column(name = "weekoffeligible")
+	private boolean weekoffEligible;
 	
 	@Column(name = "otflag")
 	private OverTime otFlag;
