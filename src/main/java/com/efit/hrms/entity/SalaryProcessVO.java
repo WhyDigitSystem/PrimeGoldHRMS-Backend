@@ -57,10 +57,14 @@ public class SalaryProcessVO {
 	private BigDecimal netPay;
 	@Column(name = "othours")
 	private BigDecimal otHours;
-	@Column(name = "otamount")
-	private BigDecimal otAmount;
-	@Column(name = "payonhand")
-	private BigDecimal payOnHand;
+	@Column(name = "bankotamount")
+	private BigDecimal BankOtAmount;
+	@Column(name = "cashotamount")
+	private BigDecimal cashOtAmount;
+	@Column(name = "bankamount")
+	private BigDecimal bankAmount;
+	@Column(name = "cashamount")
+	private BigDecimal cashAmount;
 	@Column(name = "approvedstatus")
 	private String approvedStatus;
 	@Column(name = "approveby")
@@ -73,10 +77,10 @@ public class SalaryProcessVO {
 	@Column(name = "salaryamount")
 	private BigDecimal salary;
 	
-	@Column(name = "requestdate")
-	private LocalDate requestDate;
-	@Column(name = "loanbalance")
-	private BigDecimal loanBalance;
+//	@Column(name = "requestdate")
+//	private LocalDate requestDate;
+//	@Column(name = "loanbalance")
+//	private BigDecimal loanBalance;
 	
 	@Column(name = "createdby")
 	private String createdBy;

@@ -14,10 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SalaryProcessDTO {
 
+
 	private Long id;
 	private Long month;
 	private String year;
-//	private LocalDate date;
+
 	private String employeeName;
 	private String employeeCode;
 	private BigDecimal totalCompanyWorkingDays;
@@ -27,19 +28,22 @@ public class SalaryProcessDTO {
 	private BigDecimal empSalaryDays;
 	private BigDecimal grossPay;
 	private BigDecimal netPay;
-	private BigDecimal payOnHand;
-//	private String approvedStatus;
 	private BigDecimal otHours;
-	private BigDecimal otAmount;
+	private BigDecimal BankOtAmount;
+	private BigDecimal cashOtAmount;
+	private BigDecimal bankAmount;
+	private BigDecimal cashAmount;
+	private String approvedStatus;
+	private String approveBy;
+	private String approveOn;
 	
 	private BigDecimal advanceDeduction;
-	private BigDecimal salary;
-
+//	private BigDecimal salary;
 	
-	//advance screen 
-	private LocalDate requestDate;
-	private BigDecimal loanBalance;
-
+//	@Column(name = "requestdate")
+//	private LocalDate requestDate;
+//	@Column(name = "loanbalance")
+//	private BigDecimal loanBalance;
 	
 	private String createdBy;
 	private String branch;

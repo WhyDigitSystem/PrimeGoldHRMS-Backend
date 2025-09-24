@@ -566,14 +566,17 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 
 				salaryProcessVO.setGrossPay(salaryProcessDTO.getGrossPay());
 				salaryProcessVO.setNetPay(salaryProcessDTO.getNetPay());
-				salaryProcessVO.setPayOnHand(salaryProcessDTO.getPayOnHand());
+				salaryProcessVO.setCashAmount(salaryProcessDTO.getCashAmount());
+				salaryProcessVO.setBankAmount(salaryProcessDTO.getBankAmount());
 				salaryProcessVO.setOtHours(salaryProcessDTO.getOtHours());
-				salaryProcessVO.setOtAmount(salaryProcessDTO.getOtAmount());
+				salaryProcessVO.setCashOtAmount(salaryProcessDTO.getCashOtAmount());
+				salaryProcessVO.setBankOtAmount(salaryProcessDTO.getBankOtAmount());
+
 				salaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
 				salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
 				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
-				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
+//				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
 //				salaryProcessVO.setRequestDate(salaryProcessDTO.getRequestDate());
 //				salaryProcessVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
 
@@ -724,7 +727,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("netPay", record[0] != null ? record[0].toString() : "");
 			map.put("sumOfEarningAmount", record[1] != null ? record[1].toString() : "");
 			map.put("sumOfDetectionAmount", record[2] != null ? record[2].toString() : "");
-			map.put("otAmount", record[3] != null ? record[3].toString() : "");
+//			map.put("otAmount", record[3] != null ? record[3].toString() : "");
 
 
 			detailsList.add(map);
@@ -1165,13 +1168,13 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	
 	@Override
 	public List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays,
-	        BigDecimal empSalaryDays, Long orgId, String employeeCode, String branchCode) {
+	        BigDecimal empSalaryDays, Long orgId, String employeeCode, String branchCode, Long month, Long year) {
 
 	    List<Object[]> result;
 
 	    if (empSalaryDays != null && empSalaryDays.compareTo(BigDecimal.ZERO) > 0) {
 	        result = salaryProcessRepo.getBankAndCashAmtForSalaryProcess(
-	                totalCompanyWorkingDays, empSalaryDays, orgId, employeeCode, branchCode);
+	                totalCompanyWorkingDays, empSalaryDays, orgId, employeeCode, branchCode, month, year);
 	    } else {
 	        result = new ArrayList<>();
 	    }
@@ -1183,10 +1186,15 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	    List<Map<String, Object>> detailsList = new ArrayList<>();
 
 	    if (result.isEmpty()) {
-	        // no records from DB → return default payOnHand = 0
+	        // no records from DB → return default all = 0
 	        Map<String, Object> defaultMap = new HashMap<>();
 	        defaultMap.put("bankAmount", 0);
 	        defaultMap.put("cashAmount", 0);
+	        defaultMap.put("bankOtAmount", 0);
+	        defaultMap.put("cashOtAmount", 0);
+	        defaultMap.put("bankAdvance", 0);
+	        defaultMap.put("cashAdvance", 0);
+
 	        detailsList.add(defaultMap);
 	        return detailsList;
 	    }
@@ -1195,11 +1203,17 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	        Map<String, Object> map = new HashMap<>();
 	        map.put("bankAmount", record[0] != null ? record[0] : 0);
 	        map.put("cashAmount", record[1] != null ? record[1] : 0);
+	        map.put("bankOtAmount", record[2] != null ? record[2] : 0);
+	        map.put("cashOtAmount", record[3] != null ? record[3] : 0);
+	        map.put("bankAdvance", record[4] != null ? record[4] : 0);
+	        map.put("cashAdvance", record[5] != null ? record[5] : 0);
+
 	        detailsList.add(map);
 	    }
 
 	    return detailsList;
 	}
+
 
 	
 
