@@ -71,6 +71,11 @@ public class SalaryProcessVO {
 	private String approveBy;
 	@Column(name = "approveon")
 	private String approveOn;
+
+	@Column(name = "sumofearnings")
+	private BigDecimal sumOfEarnings;
+	@Column(name = "sumofdeductions")
+	private BigDecimal sumOfDeductions;
 	
 	@Column(name = "cashadvance")
 	private BigDecimal cashAdvance;
@@ -78,8 +83,8 @@ public class SalaryProcessVO {
 	private BigDecimal bankAdvance;
 //	@Column(name = "advancededuction")
 //	private BigDecimal advanceDeduction;
-	@Column(name = "salaryamount")
-	private BigDecimal salary;
+//	@Column(name = "salaryamount")
+//	private BigDecimal salary;
 	
 //	@Column(name = "requestdate")
 //	private LocalDate requestDate;

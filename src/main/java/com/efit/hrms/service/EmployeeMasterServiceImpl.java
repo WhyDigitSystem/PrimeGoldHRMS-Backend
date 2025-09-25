@@ -577,6 +577,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
 				salaryProcessVO.setCashAdvance(salaryProcessDTO.getCashAdvance());
 				salaryProcessVO.setBankAdvance(salaryProcessDTO.getBankAdvance());
+				salaryProcessVO.setSumOfEarnings(salaryProcessDTO.getSumOfEarnings());
+				salaryProcessVO.setSumOfDeductions(salaryProcessDTO.getSumOfDeductions());
 
 //				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 //				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
@@ -1199,7 +1201,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	        defaultMap.put("cashOtAmount", 0);
 	        defaultMap.put("bankAdvance", 0);
 	        defaultMap.put("cashAdvance", 0);
-
+	        defaultMap.put("pfAmount", 0);
+	        defaultMap.put("esiAmount", 0);
 	        detailsList.add(defaultMap);
 	        return detailsList;
 	    }
@@ -1215,7 +1218,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	        map.put("cashOtAmount", record[5] != null ? record[5] : 0);
 	        map.put("bankAdvance", record[6] != null ? record[6] : 0);
 	        map.put("cashAdvance", record[7] != null ? record[7] : 0);
-
+	        map.put("pfAmount", record[8] != null ? record[8] : 0);
+	        map.put("esiAmount", record[9] != null ? record[9] : 0);
 	        detailsList.add(map);
 	    }
 

@@ -38,6 +38,9 @@ public class SalaryProcessDTO {
 	private String approveOn;
 	private BigDecimal cashAdvance;
 	private BigDecimal bankAdvance;
+	private BigDecimal sumOfEarnings;
+	@Column(name = "sumofdeductions")
+	private BigDecimal sumOfDeductions;
 //	private BigDecimal advanceDeduction;
 //	private BigDecimal salary;
 	
