@@ -92,16 +92,20 @@ public interface AttendanceLogRepo extends JpaRepository<AttendanceLogVO, Long> 
 			+ "GROUP BY m.team")
 	List<Object[]> getContractMainDepartments(String date, String empType);
 
-	@Query(nativeQuery = true, value = "SELECT b.SubDepartment,\r\n"
-			+ "       SUM(CASE WHEN a.attendancestatus = 'Present' THEN 1 ELSE 0 END) AS present_count,\r\n"
-			+ "       SUM(CASE WHEN a.attendancestatus = 'Absent' THEN 1 ELSE 0 END) AS absent_count,\r\n"
-			+ "       SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count,b.Team\r\n"
-			+ "FROM attendancelog a\r\n"
-			+ "JOIN employeemaster b ON a.employeecode = b.employeecode\r\n"
-			+ "WHERE a.attendancedate = ?1 and b.team=?2\r\n"
-			+ "  AND 'Contract' = 'Contract' AND a.employeecode LIKE 'CPGH%'\r\n"
-			+ "and  b.team not in('Default','')\r\n"
-			+ "GROUP BY b.SubDepartment,b.team")
+	@Query(nativeQuery = true, value = "SELECT \r\n"
+			+ "    b.SubDepartment,\r\n"
+			+ "    SUM(CASE WHEN a.attendancestatus = 'Present' THEN 1 ELSE 0 END) AS present_count,\r\n"
+			+ "    SUM(CASE WHEN a.attendancestatus = 'Absent' || a.attendancestatus IS NULL THEN 1 ELSE 0 END) AS absent_count,\r\n"
+			+ "    SUM(CASE WHEN a.outdevice = 'SE' THEN 1 ELSE 0 END) AS miss_count,\r\n"
+			+ "    b.Team\r\n"
+			+ "FROM employeemaster b\r\n"
+			+ "LEFT JOIN attendancelog a \r\n"
+			+ "    ON a.employeecode = b.employeecode\r\n"
+			+ "   AND a.attendancedate = ?1\r\n"
+			+ "WHERE 'Contract' = 'Contract'  and b.team=?2\r\n"
+			+ "  AND b.employeecode LIKE 'CPGH%'\r\n"
+			+ "  AND b.team NOT IN ('Default', '')\r\n"
+			+ "GROUP BY b.SubDepartment, b.Team")
 	List<Object[]> getContractorSubDepartments(String date, String mainDept);
 
 	@Query(nativeQuery = true, value = "SELECT \r\n"
@@ -133,7 +137,7 @@ public interface AttendanceLogRepo extends JpaRepository<AttendanceLogVO, Long> 
 	Set<Object[]> getEmployeeAttendanceContractor(String date, String department, String status,
 			String missPunch, String mainDepartment);
 
-	@Query(nativeQuery = true, value = "SELECT * FROM attendancelog a WHERE a.attendanceDate BETWEEN ?1 AND ?2")
+@Query(nativeQuery = true, value = "SELECT * FROM attendancelog a WHERE a.attendanceDate BETWEEN ?1 AND ?2")
 	List<AttendanceLogVO> findByAttendanceDateBetween(LocalDate fromDate, LocalDate toDate);
 
 

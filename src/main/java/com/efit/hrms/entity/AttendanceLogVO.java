@@ -114,7 +114,7 @@ public class AttendanceLogVO {
     @JsonProperty("OverTime")
     private String overTime;
 
-    @Column(name = "punchrecords", length = 1000)
+    @Column(name = "punchrecords", length = 5000)
     @JsonProperty("PunchRecords")
     private String punchRecords;
 
