@@ -66,7 +66,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "WHERE a.orgid = ?1 \r\n"
 			+ " \r\n"
 			+ "  AND (a.month = ?2 OR ?2 = 0) \r\n"
-			+ "  AND (a.year = ?3 OR ?3 = 'ALL') ")
+			+ "  AND (a.year = ?3 OR ?3 = 'ALL') AND a.approvedstatus = 'APPROVED' ")
 	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year);
 	
 	@Query(nativeQuery = true, value = "select distinct(a.employee),a.orgid,a.employeecode ,a.joiningdate, a.designation,a.department ,a.branch,a.branchcode,a.accountno,a.panno,a.uanno,empsalarydays as effectiveworkingdays,totalcompanyworkingdays as monthdays,a.bankname,s.lopleave,s.othours from employee a, salaryprocess s \r\n"

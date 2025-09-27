@@ -26,8 +26,8 @@ public class SalaryProcessDTO {
 	private BigDecimal lopLeave;
 	private BigDecimal empTotalWorkingDays;
 	private BigDecimal empSalaryDays;
-	private BigDecimal grossPay;
-	private BigDecimal netPay;
+//	private BigDecimal grossPay;
+//	private BigDecimal netPay;
 	private BigDecimal otHours;
 	private BigDecimal BankOtAmount;
 	private BigDecimal cashOtAmount;
@@ -38,9 +38,11 @@ public class SalaryProcessDTO {
 	private String approveOn;
 	private BigDecimal cashAdvance;
 	private BigDecimal bankAdvance;
-	private BigDecimal sumOfEarnings;
-	@Column(name = "sumofdeductions")
-	private BigDecimal sumOfDeductions;
+	private BigDecimal totalEarnings;
+	private BigDecimal totalDeductions;
+	
+	private BigDecimal pfAmount;
+	private BigDecimal esiAmount;
 //	private BigDecimal advanceDeduction;
 //	private BigDecimal salary;
 	

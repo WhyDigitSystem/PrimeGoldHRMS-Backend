@@ -88,6 +88,70 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 		return savedLogs; // return saved data
 	}
 
+	 // Run every 1 hour (3600000 ms)
+    @Scheduled(fixedRate = 3600000) 
+    public void fetchAttendanceLogsEveryHour() {
+        try {
+            // Format current date as yyyy-MM-dd
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+            // Call your method with today’s date as both from and to date
+           getAllAttendanceLogDetailsSchedular(today, today);
+
+            System.out.println("Scheduler executed for date: " + today);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+	public List<AttendanceLogVO> getAllAttendanceLogDetailsSchedular(String startDate, String endDate) {
+		RestTemplate restTemplate = new RestTemplate();
+		List<AttendanceLogVO> savedLogs = new ArrayList<>();
+
+		try {
+			String url = "http://localhost:8082/api/WebAPI/GetAttendanceInOutProcessedET" + "?AppKey=2716110845479"
+					+ "&StartDate=" + startDate + "&EndDate=" + endDate;
+
+			String response = restTemplate.getForObject(url, String.class);
+			System.out.println("Raw JSON Response: " + response);
+
+			// Step 2: Convert JSON into list of AttendanceLogVO
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.registerModule(new JavaTimeModule()); // handle LocalDate & LocalDateTime
+
+			List<AttendanceLogVO> logs = mapper.readValue(response, new TypeReference<List<AttendanceLogVO>>() {
+			});
+
+			attendanceLogRepo.deleteByAttendanceDate(startDate);
+
+			// Step 3: Save each log into DB
+			for (AttendanceLogVO log : logs) {
+
+				if (log.getInTime().equals("1900-01-01 00:00:00")) {
+					log.setInTime(null);
+				}
+				if (log.getOutTime().equals("1900-01-01 00:00:00")) {
+					log.setOutTime(null);
+				}
+				if (log.getInDevice().equals("")) {
+					log.setInDevice(null);
+				}
+				if (log.getOutDevice().equals("")) {
+					log.setOutDevice(null);
+				}
+				if (log.getPunchRecords().equals("")) {
+					log.setPunchRecords(null);
+				}
+				log.setAttendanceStatus(log.getAttendanceStatus() != null ? log.getAttendanceStatus().trim() : null);
+				savedLogs.add(attendanceLogRepo.save(log));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return savedLogs; // return saved data
+	}
+	
 	@Override
 	public List<Map<String, Object>> getEmployeeAttendanceDetails(String date, String department, String employeeType,
 			String status, String missPunch, String mainDepartment) {

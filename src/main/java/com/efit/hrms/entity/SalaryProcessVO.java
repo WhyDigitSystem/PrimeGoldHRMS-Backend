@@ -51,10 +51,10 @@ public class SalaryProcessVO {
 	private BigDecimal empTotalWorkingDays;
 	@Column(name = "empsalarydays")
 	private BigDecimal empSalaryDays;
-	@Column(name = "grosspay")
-	private BigDecimal grossPay;
-	@Column(name = "netpay")
-	private BigDecimal netPay;
+//	@Column(name = "grosspay")
+//	private BigDecimal grossPay;
+//	@Column(name = "netpay")
+//	private BigDecimal netPay;
 	@Column(name = "othours")
 	private BigDecimal otHours;
 	@Column(name = "bankotamount")
@@ -72,10 +72,15 @@ public class SalaryProcessVO {
 	@Column(name = "approveon")
 	private String approveOn;
 
-	@Column(name = "sumofearnings")
-	private BigDecimal sumOfEarnings;
-	@Column(name = "sumofdeductions")
-	private BigDecimal sumOfDeductions;
+	@Column(name = "totalearnings")
+	private BigDecimal totalEarnings;
+	@Column(name = "totaldeductions")
+	private BigDecimal totalDeductions;
+	
+	@Column(name = "pfamount")
+	private BigDecimal pfAmount;
+	@Column(name = "esiamount")
+	private BigDecimal esiAmount;
 	
 	@Column(name = "cashadvance")
 	private BigDecimal cashAdvance;

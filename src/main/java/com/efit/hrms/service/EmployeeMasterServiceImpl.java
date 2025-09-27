@@ -258,6 +258,9 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	    salaryStructureVO.setBranch(salaryStructureDTO.getBranch());
 	    salaryStructureVO.setBranchCode(salaryStructureDTO.getBranchCode());
 	    salaryStructureVO.setDesignation(salaryStructureDTO.getDesignation());
+	    salaryStructureVO.setPfPercentage(salaryStructureDTO.getPfPercentage());
+	    salaryStructureVO.setEsiPercentage(salaryStructureDTO.getEsiPercentage());
+
 
 	    // Save Parent Record
 	    final SalaryStructureVO savedSalaryStructureVO = salaryStructureRepo.save(salaryStructureVO);
@@ -564,8 +567,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setEmpSalaryDays(salaryProcessDTO.getEmpSalaryDays());
 				salaryProcessVO.setApprovedStatus("PENDING");
 
-				salaryProcessVO.setGrossPay(salaryProcessDTO.getGrossPay());
-				salaryProcessVO.setNetPay(salaryProcessDTO.getNetPay());
+			
 				salaryProcessVO.setCashAmount(salaryProcessDTO.getCashAmount());
 				salaryProcessVO.setBankAmount(salaryProcessDTO.getBankAmount());
 				salaryProcessVO.setOtHours(salaryProcessDTO.getOtHours());
@@ -577,8 +579,10 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
 				salaryProcessVO.setCashAdvance(salaryProcessDTO.getCashAdvance());
 				salaryProcessVO.setBankAdvance(salaryProcessDTO.getBankAdvance());
-				salaryProcessVO.setSumOfEarnings(salaryProcessDTO.getSumOfEarnings());
-				salaryProcessVO.setSumOfDeductions(salaryProcessDTO.getSumOfDeductions());
+				salaryProcessVO.setTotalEarnings(salaryProcessDTO.getTotalEarnings());
+				salaryProcessVO.setTotalDeductions(salaryProcessDTO.getTotalDeductions());
+				salaryProcessVO.setPfAmount(salaryProcessDTO.getPfAmount());
+				salaryProcessVO.setEsiAmount(salaryProcessDTO.getEsiAmount());
 
 //				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 //				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());

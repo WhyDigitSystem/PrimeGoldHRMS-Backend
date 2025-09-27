@@ -28,7 +28,8 @@ public class SalaryStructureDTO {
 	private BigDecimal amount;
 	private BigDecimal sumOfEarning;
 	private BigDecimal sumOfDetection;
-
+	private BigDecimal pfPercentage;
+	private BigDecimal esiPercentage;
 
 
 	private String createdBy;

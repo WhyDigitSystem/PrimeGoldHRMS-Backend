@@ -84,6 +84,9 @@ public interface CheckInOutService {
 
 	List<OtherPaymentsVO> getAllOtherPaymentsByOrgId(Long orgId, Long month, Long year);
 
+	Map<String, Object> createCheckInOutBiometricDeviceSchedular(Long orgId, String createdBy, LocalDate fromDate,
+			LocalDate toDate, String branch, String branchCode) throws Exception;
+
 //	List<AttendanceRecordVO> processExcel(MultipartFile file) throws Exception;
 
 
