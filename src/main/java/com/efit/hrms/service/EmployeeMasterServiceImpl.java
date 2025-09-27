@@ -90,11 +90,10 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	LeaveProcessRepo leaveProcessRepo;
 
 	@Autowired
-	PermissionRequestNotifyRepo  permissionRequestNotifyRepo;
-	
+	PermissionRequestNotifyRepo permissionRequestNotifyRepo;
+
 	@Autowired
 	AdvanceRepo advanceRepo;
-	
 
 	@Override
 	@Transactional
@@ -195,159 +194,152 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	}
 
 	@Override
-	public List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branch, BigDecimal sumOfEarnings) {
-	    EmployeeVO employeeVO = Optional.ofNullable(
-	            employeeRepo.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branch))
-	        .orElseThrow(() -> new RuntimeException("Employee details not found for orgId: " + orgId));
+	public List<PfEsiAmountDTO> getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branch,
+			BigDecimal sumOfEarnings) {
+		EmployeeVO employeeVO = Optional
+				.ofNullable(employeeRepo.getPfAmountAndEsiAmountByEmployee(orgId, employeeCode, branch))
+				.orElseThrow(() -> new RuntimeException("Employee details not found for orgId: " + orgId));
 
-	    BigDecimal pfPercentage = employeeVO.getPfPercentage();
-	    BigDecimal esiPercentage = employeeVO.getEsiPercentage();
+		BigDecimal pfPercentage = employeeVO.getPfPercentage();
+		BigDecimal esiPercentage = employeeVO.getEsiPercentage();
 
-	    BigDecimal pfAmount = sumOfEarnings.multiply(pfPercentage).divide(BigDecimal.valueOf(100));
-	    BigDecimal esiAmount = sumOfEarnings.multiply(esiPercentage).divide(BigDecimal.valueOf(100));
+		BigDecimal pfAmount = sumOfEarnings.multiply(pfPercentage).divide(BigDecimal.valueOf(100));
+		BigDecimal esiAmount = sumOfEarnings.multiply(esiPercentage).divide(BigDecimal.valueOf(100));
 
-	    List<PfEsiAmountDTO> list = new ArrayList<>();
+		List<PfEsiAmountDTO> list = new ArrayList<>();
 
-	    PfEsiAmountDTO pfDto = new PfEsiAmountDTO();
-	    pfDto.setHeading("Professional Tax");
-	    pfDto.setAmount(pfAmount);
+		PfEsiAmountDTO pfDto = new PfEsiAmountDTO();
+		pfDto.setHeading("Professional Tax");
+		pfDto.setAmount(pfAmount);
 
-	    PfEsiAmountDTO esiDto = new PfEsiAmountDTO();
-	    esiDto.setHeading("ESI Tax");
-	    esiDto.setAmount(esiAmount);
+		PfEsiAmountDTO esiDto = new PfEsiAmountDTO();
+		esiDto.setHeading("ESI Tax");
+		esiDto.setAmount(esiAmount);
 
-	    list.add(pfDto);
-	    list.add(esiDto);
+		list.add(pfDto);
+		list.add(esiDto);
 
-	    return list;
+		return list;
 	}
-
 
 	@Override
 	@Transactional
 	public Map<String, Object> createUpdateSalaryStructure(SalaryStructureDTO salaryStructureDTO)
-	        throws ApplicationException {
-	    final SalaryStructureVO salaryStructureVO; // Declare final reference
-	    Map<String, Object> response = new LinkedHashMap<>(); // Preserve order
+			throws ApplicationException {
+		final SalaryStructureVO salaryStructureVO; // Declare final reference
+		Map<String, Object> response = new LinkedHashMap<>(); // Preserve order
 
-	    if (salaryStructureDTO.getId() != null) {
-	        // If ID is provided, check if it exists
-	        salaryStructureVO = salaryStructureRepo.findById(salaryStructureDTO.getId())
-	                .orElseThrow(() -> new ApplicationException(
-	                        "Error: Salary Structure ID " + salaryStructureDTO.getId() + " not found!"));
-	        salaryStructureVO.setUpdatedBy(salaryStructureDTO.getCreatedBy());
-	        response.put("message", "Salary Structure Updated Successfully");
-	    } else {
-	        // Creating new record
-	        salaryStructureVO = new SalaryStructureVO();
-	        salaryStructureVO.setCreatedBy(salaryStructureDTO.getCreatedBy());
-	        salaryStructureVO.setUpdatedBy(salaryStructureDTO.getCreatedBy());
-	        response.put("message", "Salary Structure Created Successfully");
-	    }
+		if (salaryStructureDTO.getId() != null) {
+			// If ID is provided, check if it exists
+			salaryStructureVO = salaryStructureRepo.findById(salaryStructureDTO.getId())
+					.orElseThrow(() -> new ApplicationException(
+							"Error: Salary Structure ID " + salaryStructureDTO.getId() + " not found!"));
+			salaryStructureVO.setUpdatedBy(salaryStructureDTO.getCreatedBy());
+			response.put("message", "Salary Structure Updated Successfully");
+		} else {
+			// Creating new record
+			salaryStructureVO = new SalaryStructureVO();
+			salaryStructureVO.setCreatedBy(salaryStructureDTO.getCreatedBy());
+			salaryStructureVO.setUpdatedBy(salaryStructureDTO.getCreatedBy());
+			response.put("message", "Salary Structure Created Successfully");
+		}
 
-	    // Set other fields
-	    salaryStructureVO.setEmployeeName(salaryStructureDTO.getEmployeeName());
-	    salaryStructureVO.setEmployeeCode(salaryStructureDTO.getEmployeeCode());
-	    salaryStructureVO.setDateOfBirth(salaryStructureDTO.getDateOfBirth());
-	    salaryStructureVO.setGrade(salaryStructureDTO.getGrade());
-	    salaryStructureVO.setDepartment(salaryStructureDTO.getDepartment());
-	    salaryStructureVO.setPanNo(salaryStructureDTO.getPanNo());
-	    salaryStructureVO.setBankAccountNo(salaryStructureDTO.getBankAccountNo());
-	    salaryStructureVO.setDateOfJoining(salaryStructureDTO.getDateOfJoining());
-	    salaryStructureVO.setOrgId(salaryStructureDTO.getOrgId());
-	    salaryStructureVO.setBranch(salaryStructureDTO.getBranch());
-	    salaryStructureVO.setBranchCode(salaryStructureDTO.getBranchCode());
-	    salaryStructureVO.setDesignation(salaryStructureDTO.getDesignation());
-	    salaryStructureVO.setPfPercentage(salaryStructureDTO.getPfPercentage());
-	    salaryStructureVO.setEsiPercentage(salaryStructureDTO.getEsiPercentage());
+		// Set other fields
+		salaryStructureVO.setEmployeeName(salaryStructureDTO.getEmployeeName());
+		salaryStructureVO.setEmployeeCode(salaryStructureDTO.getEmployeeCode());
+		salaryStructureVO.setDateOfBirth(salaryStructureDTO.getDateOfBirth());
+		salaryStructureVO.setGrade(salaryStructureDTO.getGrade());
+		salaryStructureVO.setDepartment(salaryStructureDTO.getDepartment());
+		salaryStructureVO.setPanNo(salaryStructureDTO.getPanNo());
+		salaryStructureVO.setBankAccountNo(salaryStructureDTO.getBankAccountNo());
+		salaryStructureVO.setDateOfJoining(salaryStructureDTO.getDateOfJoining());
+		salaryStructureVO.setOrgId(salaryStructureDTO.getOrgId());
+		salaryStructureVO.setBranch(salaryStructureDTO.getBranch());
+		salaryStructureVO.setBranchCode(salaryStructureDTO.getBranchCode());
+		salaryStructureVO.setDesignation(salaryStructureDTO.getDesignation());
+		salaryStructureVO.setPfPercentage(salaryStructureDTO.getPfPercentage());
+		salaryStructureVO.setEsiPercentage(salaryStructureDTO.getEsiPercentage());
 
+		// Save Parent Record
+		final SalaryStructureVO savedSalaryStructureVO = salaryStructureRepo.save(salaryStructureVO);
 
-	    // Save Parent Record
-	    final SalaryStructureVO savedSalaryStructureVO = salaryStructureRepo.save(salaryStructureVO);
+		if (salaryStructureDTO.getId() != null) {
+			salaryEarningDetailsRepo.deleteBySalaryStructureVO(savedSalaryStructureVO);
+			salaryDetectionDetailsRepo.deleteBySalaryStructureVO(savedSalaryStructureVO);
+		}
 
-	    if (salaryStructureDTO.getId() != null) {
-	    	salaryEarningDetailsRepo.deleteBySalaryStructureVO(savedSalaryStructureVO);
-	        salaryDetectionDetailsRepo.deleteBySalaryStructureVO(savedSalaryStructureVO);
-	    }
+		// Calculate total earnings
+		BigDecimal totalEarnings = salaryStructureDTO.getSalaryEarningDetailsDTO().stream()
+				.map(SalaryEarningDetailsDTO::getAmount).filter(Objects::nonNull)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-	    // Calculate total earnings
-	    BigDecimal totalEarnings = salaryStructureDTO.getSalaryEarningDetailsDTO().stream()
-	            .map(SalaryEarningDetailsDTO::getAmount)
-	            .filter(Objects::nonNull)
-	            .reduce(BigDecimal.ZERO, BigDecimal::add);
+		// Calculate total deductions
+		BigDecimal totalDeductions = salaryStructureDTO.getSalaryDetectionDetailsDTO().stream()
+				.map(SalaryDetectionDetailsDTO::getAmount).filter(Objects::nonNull)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-	    // Calculate total deductions
-	    BigDecimal totalDeductions = salaryStructureDTO.getSalaryDetectionDetailsDTO().stream()
-	            .map(SalaryDetectionDetailsDTO::getAmount)
-	            .filter(Objects::nonNull)
-	            .reduce(BigDecimal.ZERO, BigDecimal::add);
+		// Set total earnings and deductions in header
+		savedSalaryStructureVO.setSumOfEarning(totalEarnings);
+		savedSalaryStructureVO.setSumOfDetection(totalDeductions);
+		savedSalaryStructureVO.setAmount(totalEarnings.subtract(totalDeductions));
+		salaryStructureRepo.save(savedSalaryStructureVO);
 
-	    // Set total earnings and deductions in header
-	    savedSalaryStructureVO.setSumOfEarning(totalEarnings);
-	    savedSalaryStructureVO.setSumOfDetection(totalDeductions);
-	    savedSalaryStructureVO.setAmount(totalEarnings.subtract(totalDeductions));
-	    salaryStructureRepo.save(savedSalaryStructureVO);
+		// Validate duplicate earnings headings
+		Set<String> earningHeadings = new HashSet<>();
+		for (SalaryEarningDetailsDTO dto : salaryStructureDTO.getSalaryEarningDetailsDTO()) {
+			if (!earningHeadings.add(dto.getHeading().toUpperCase())) {
+				throw new ApplicationException(
+						"Duplicate heading found in salary earning details: " + dto.getHeading());
+			}
+		}
 
-	    // Validate duplicate earnings headings
-	    Set<String> earningHeadings = new HashSet<>();
-	    for (SalaryEarningDetailsDTO dto : salaryStructureDTO.getSalaryEarningDetailsDTO()) {
-	        if (!earningHeadings.add(dto.getHeading().toUpperCase())) {
-	            throw new ApplicationException("Duplicate heading found in salary earning details: " + dto.getHeading());
-	        }
-	    }
+		// Validate duplicate deductions headings
+		Set<String> deductionHeadings = new HashSet<>();
+		for (SalaryDetectionDetailsDTO dto : salaryStructureDTO.getSalaryDetectionDetailsDTO()) {
+			if (!deductionHeadings.add(dto.getHeading().toUpperCase())) {
+				throw new ApplicationException(
+						"Duplicate heading found in salary deduction details: " + dto.getHeading());
+			}
+		}
 
-	    // Validate duplicate deductions headings
-	    Set<String> deductionHeadings = new HashSet<>();
-	    for (SalaryDetectionDetailsDTO dto : salaryStructureDTO.getSalaryDetectionDetailsDTO()) {
-	        if (!deductionHeadings.add(dto.getHeading().toUpperCase())) {
-	            throw new ApplicationException("Duplicate heading found in salary deduction details: " + dto.getHeading());
-	        }
-	    }
+		// Save Salary Earning Details
+		List<SalaryEarningDetailsVO> salaryEarningDetailsVOs = salaryStructureDTO.getSalaryEarningDetailsDTO().stream()
+				.filter(dto -> dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0).map(dto -> {
+					SalaryEarningDetailsVO vo = new SalaryEarningDetailsVO();
+					vo.setHeading(dto.getHeading());
+					vo.setAmount(dto.getAmount());
+					vo.setSalaryStructureVO(savedSalaryStructureVO);
+					return vo;
+				}).collect(Collectors.toList());
 
-	    // Save Salary Earning Details
-	    List<SalaryEarningDetailsVO> salaryEarningDetailsVOs =
-	            salaryStructureDTO.getSalaryEarningDetailsDTO().stream()
-	                .filter(dto -> dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0)
-	                .map(dto -> {
-	                    SalaryEarningDetailsVO vo = new SalaryEarningDetailsVO();
-	                    vo.setHeading(dto.getHeading());
-	                    vo.setAmount(dto.getAmount());
-	                    vo.setSalaryStructureVO(savedSalaryStructureVO);
-	                    return vo;
-	                })
-	                .collect(Collectors.toList());
+		salaryEarningDetailsRepo.saveAll(salaryEarningDetailsVOs);
 
-	    salaryEarningDetailsRepo.saveAll(salaryEarningDetailsVOs);
+		salaryEarningDetailsRepo.saveAll(salaryEarningDetailsVOs);
 
-	    salaryEarningDetailsRepo.saveAll(salaryEarningDetailsVOs);
+		// Save Salary Deduction Details
+		List<SalaryDetectionDetailsVO> salaryDetectionDetailsVOs = salaryStructureDTO.getSalaryDetectionDetailsDTO()
+				.stream().filter(dto -> dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0)
+				.map(dto -> {
+					SalaryDetectionDetailsVO vo = new SalaryDetectionDetailsVO();
+					vo.setHeading(dto.getHeading());
+					vo.setAmount(dto.getAmount());
+					vo.setSalaryStructureVO(savedSalaryStructureVO);
+					return vo;
+				}).collect(Collectors.toList());
 
-	    // Save Salary Deduction Details
-	    List<SalaryDetectionDetailsVO> salaryDetectionDetailsVOs =
-	            salaryStructureDTO.getSalaryDetectionDetailsDTO().stream()
-	                .filter(dto -> dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0)
-	                .map(dto -> {
-	                    SalaryDetectionDetailsVO vo = new SalaryDetectionDetailsVO();
-	                    vo.setHeading(dto.getHeading());
-	                    vo.setAmount(dto.getAmount());
-	                    vo.setSalaryStructureVO(savedSalaryStructureVO);
-	                    return vo;
-	                })
-	                .collect(Collectors.toList());
+		salaryDetectionDetailsRepo.saveAll(salaryDetectionDetailsVOs);
 
-	    salaryDetectionDetailsRepo.saveAll(salaryDetectionDetailsVOs);
+		// Attach Parent and Child Data in Response
+		savedSalaryStructureVO.setSalaryEarningDetailsVO(salaryEarningDetailsVOs);
+		savedSalaryStructureVO.setSalaryDetectionDetailsVO(salaryDetectionDetailsVOs);
+		response.put("salaryStructure", savedSalaryStructureVO);
 
-	    // Attach Parent and Child Data in Response
-	    savedSalaryStructureVO.setSalaryEarningDetailsVO(salaryEarningDetailsVOs);
-	    savedSalaryStructureVO.setSalaryDetectionDetailsVO(salaryDetectionDetailsVOs);
-	    response.put("salaryStructure", savedSalaryStructureVO);
-
-	    return response;
+		return response;
 	}
 
 	@Override
 	public List<EmployeeVO> getAllEmployeeByActive(Long orgId) {
-		return Optional.ofNullable(employeeRepo.getAllEmployeeByActive(orgId))
-				.orElseGet(Collections::emptyList);
+		return Optional.ofNullable(employeeRepo.getAllEmployeeByActive(orgId)).orElseGet(Collections::emptyList);
 	}
 
 	// Permission Request
@@ -391,25 +383,26 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		permissionRequestVO.setEmployeeEmail(permissionRequestDTO.getEmployeeEmail());
 
 		if (permissionRequestDTO.getId() != null) {
-            List<PermissionRequestNotifyVO> permissionRequestNotifyVO = permissionRequestNotifyRepo.findByPermissionRequestVO(permissionRequestDTO);
-            permissionRequestNotifyRepo.deleteAll(permissionRequestNotifyVO);
-        }
+			List<PermissionRequestNotifyVO> permissionRequestNotifyVO = permissionRequestNotifyRepo
+					.findByPermissionRequestVO(permissionRequestDTO);
+			permissionRequestNotifyRepo.deleteAll(permissionRequestNotifyVO);
+		}
 
-        // Set Poll Details from PollDetailsDTO
-        List<PermissionRequestNotifyVO> permissionRequestNotifyVOs = new ArrayList<>();
-        for (PermissionRequestNotifyDTO permissionRequestNotifyDTO : permissionRequestDTO.getPermissionRequestNotifyDTO()) {
-        	PermissionRequestNotifyVO permissionRequestNotifyVO = new PermissionRequestNotifyVO();
-        	permissionRequestNotifyVO.setNotify2(permissionRequestNotifyDTO.getNotify2());
-        	permissionRequestNotifyVO.setNotify2Code(permissionRequestNotifyDTO.getNotify2Code());
-        	permissionRequestNotifyVO.setNotify2Email(permissionRequestNotifyDTO.getNotify2Email());
+		// Set Poll Details from PollDetailsDTO
+		List<PermissionRequestNotifyVO> permissionRequestNotifyVOs = new ArrayList<>();
+		for (PermissionRequestNotifyDTO permissionRequestNotifyDTO : permissionRequestDTO
+				.getPermissionRequestNotifyDTO()) {
+			PermissionRequestNotifyVO permissionRequestNotifyVO = new PermissionRequestNotifyVO();
+			permissionRequestNotifyVO.setNotify2(permissionRequestNotifyDTO.getNotify2());
+			permissionRequestNotifyVO.setNotify2Code(permissionRequestNotifyDTO.getNotify2Code());
+			permissionRequestNotifyVO.setNotify2Email(permissionRequestNotifyDTO.getNotify2Email());
 
-        	permissionRequestNotifyVO.setPermissionRequestVO(permissionRequestVO);  // Set parent reference in child
-        	permissionRequestNotifyVOs.add(permissionRequestNotifyVO);
-        }
-        permissionRequestVO.setPermissionRequestNotifyVO(permissionRequestNotifyVOs);
+			permissionRequestNotifyVO.setPermissionRequestVO(permissionRequestVO); // Set parent reference in child
+			permissionRequestNotifyVOs.add(permissionRequestNotifyVO);
+		}
+		permissionRequestVO.setPermissionRequestNotifyVO(permissionRequestNotifyVOs);
 
 		permissionRequestVO.setApproveStatus("PENDING");
-
 
 		// Save the entity
 		final PermissionRequestVO savedPermissionRequestVO = permissionRequestRepo.save(permissionRequestVO);
@@ -526,7 +519,6 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //		return response;
 //	}
 
-	
 	@Override
 	@Transactional
 	public Map<String, Object> createUpdateSalaryProcess(List<SalaryProcessDTO> salaryProcessDTOList)
@@ -556,39 +548,37 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			}
 
 			// Set other fields
-				salaryProcessVO.setMonth(salaryProcessDTO.getMonth());
-				salaryProcessVO.setYear(salaryProcessDTO.getYear());
-				salaryProcessVO.setEmployeeName(salaryProcessDTO.getEmployeeName());
-				salaryProcessVO.setEmployeeCode(salaryProcessDTO.getEmployeeCode());
-				salaryProcessVO.setTotalCompanyWorkingDays(salaryProcessDTO.getTotalCompanyWorkingDays());
-				salaryProcessVO.setTotalLeave(salaryProcessDTO.getTotalLeave());
-				salaryProcessVO.setLopLeave(salaryProcessDTO.getLopLeave());
-				salaryProcessVO.setEmpTotalWorkingDays(salaryProcessDTO.getEmpTotalWorkingDays());
-				salaryProcessVO.setEmpSalaryDays(salaryProcessDTO.getEmpSalaryDays());
-				salaryProcessVO.setApprovedStatus("PENDING");
+			salaryProcessVO.setMonth(salaryProcessDTO.getMonth());
+			salaryProcessVO.setYear(salaryProcessDTO.getYear());
+			salaryProcessVO.setEmployeeName(salaryProcessDTO.getEmployeeName());
+			salaryProcessVO.setEmployeeCode(salaryProcessDTO.getEmployeeCode());
+			salaryProcessVO.setTotalCompanyWorkingDays(salaryProcessDTO.getTotalCompanyWorkingDays());
+			salaryProcessVO.setTotalLeave(salaryProcessDTO.getTotalLeave());
+			salaryProcessVO.setLopLeave(salaryProcessDTO.getLopLeave());
+			salaryProcessVO.setEmpTotalWorkingDays(salaryProcessDTO.getEmpTotalWorkingDays());
+			salaryProcessVO.setEmpSalaryDays(salaryProcessDTO.getEmpSalaryDays());
+			salaryProcessVO.setApprovedStatus("PENDING");
 
-			
-				salaryProcessVO.setCashAmount(salaryProcessDTO.getCashAmount());
-				salaryProcessVO.setBankAmount(salaryProcessDTO.getBankAmount());
-				salaryProcessVO.setOtHours(salaryProcessDTO.getOtHours());
-				salaryProcessVO.setCashOtAmount(salaryProcessDTO.getCashOtAmount());
-				salaryProcessVO.setBankOtAmount(salaryProcessDTO.getBankOtAmount());
+			salaryProcessVO.setCashAmount(salaryProcessDTO.getCashAmount());
+			salaryProcessVO.setBankAmount(salaryProcessDTO.getBankAmount());
+			salaryProcessVO.setOtHours(salaryProcessDTO.getOtHours());
+			salaryProcessVO.setCashOtAmount(salaryProcessDTO.getCashOtAmount());
+			salaryProcessVO.setBankOtAmount(salaryProcessDTO.getBankOtAmount());
 
-				salaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
-				salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
-				salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
-				salaryProcessVO.setCashAdvance(salaryProcessDTO.getCashAdvance());
-				salaryProcessVO.setBankAdvance(salaryProcessDTO.getBankAdvance());
-				salaryProcessVO.setTotalEarnings(salaryProcessDTO.getTotalEarnings());
-				salaryProcessVO.setTotalDeductions(salaryProcessDTO.getTotalDeductions());
-				salaryProcessVO.setPfAmount(salaryProcessDTO.getPfAmount());
-				salaryProcessVO.setEsiAmount(salaryProcessDTO.getEsiAmount());
+			salaryProcessVO.setOrgId(salaryProcessDTO.getOrgId());
+			salaryProcessVO.setBranch(salaryProcessDTO.getBranch());
+			salaryProcessVO.setBranchCode(salaryProcessDTO.getBranchCode());
+			salaryProcessVO.setCashAdvance(salaryProcessDTO.getCashAdvance());
+			salaryProcessVO.setBankAdvance(salaryProcessDTO.getBankAdvance());
+			salaryProcessVO.setTotalEarnings(salaryProcessDTO.getTotalEarnings());
+			salaryProcessVO.setTotalDeductions(salaryProcessDTO.getTotalDeductions());
+			salaryProcessVO.setPfAmount(salaryProcessDTO.getPfAmount());
+			salaryProcessVO.setEsiAmount(salaryProcessDTO.getEsiAmount());
 
 //				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 //				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
 //				salaryProcessVO.setRequestDate(salaryProcessDTO.getRequestDate());
 //				salaryProcessVO.setLoanBalance(salaryProcessDTO.getLoanBalance());
-
 
 //				AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
 //				        salaryProcessDTO.getEmployeeCode(),
@@ -604,8 +594,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //				    // save back to DB
 //				    advanceRepo.save(advanceVO);
 //				}
-				
-				
+
 //				List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
 //						salaryProcessDTO.getEmployeeCode(), salaryProcessDTO.getOrgId(), salaryProcessDTO.getMonth(),
 //						salaryProcessDTO.getYear());
@@ -615,10 +604,10 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //				}
 //				leaveProcessRepo.saveAll(leaveProcessVOList);
 
-				// Save Parent Record
-				SalaryProcessVO savedSalaryProcessVO = salaryProcessRepo.save(salaryProcessVO);
-				savedSalaryProcessVOs.add(savedSalaryProcessVO);
-			
+			// Save Parent Record
+			SalaryProcessVO savedSalaryProcessVO = salaryProcessRepo.save(salaryProcessVO);
+			savedSalaryProcessVOs.add(savedSalaryProcessVO);
+
 		}
 
 		// Response map
@@ -634,10 +623,10 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		// TODO Auto-generated method stub
 		return salaryProcessRepo.getPendingSalaryProcessByOrgId(orgId, branch);
 	}
-	
+
 	@Override
-	public Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> ids, String action ,
-			String actionBy ) throws ApplicationException {
+	public Map<String, Object> createApprovalSalaryProcess(Long orgId, List<Long> ids, String action, String actionBy)
+			throws ApplicationException {
 		List<SalaryProcessVO> updatedList = new ArrayList<>();
 		String message = "";
 
@@ -657,10 +646,10 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
 					salaryProcessVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
 
-					List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo.findByEmployeeCodeAndOrgIdAndMonthAndYear(
-							salaryProcessVO.getEmployeeCode(), salaryProcessVO.getOrgId(), salaryProcessVO.getMonth(),
-							salaryProcessVO.getYear());
-					
+					List<LeaveProcessVO> leaveProcessVOList = leaveProcessRepo
+							.findByEmployeeCodeAndOrgIdAndMonthAndYear(salaryProcessVO.getEmployeeCode(),
+									salaryProcessVO.getOrgId(), salaryProcessVO.getMonth(), salaryProcessVO.getYear());
+
 //					if ("APPROVED".equalsIgnoreCase(action) ) {
 //
 //						AdvanceVO advanceVO = advanceRepo.findByEmployeeCodeAndBranchCodeAndOrgIdAndRequestDate(
@@ -679,12 +668,12 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //					    advanceRepo.save(advanceVO);
 //					}
 //					}
-					
+
 					for (LeaveProcessVO leaveProcessVO : leaveProcessVOList) {
 						leaveProcessVO.setApprovedStatus("APPROVED");
 					}
 					leaveProcessRepo.saveAll(leaveProcessVOList);
-					
+
 					updatedList.add(salaryProcessVO);
 				}
 			} else if ("APPROVED".equalsIgnoreCase(currentStatus)) {
@@ -710,7 +699,6 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		return response;
 	}
 
-	
 	@Override
 	public List<SalaryProcessVO> getAllSalaryProcessByOrgId(Long orgId) {
 		return Optional.ofNullable(salaryProcessRepo.getAllSalaryProcessByOrgId(orgId))
@@ -738,15 +726,16 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("sumOfDetectionAmount", record[2] != null ? record[2].toString() : "");
 //			map.put("otAmount", record[3] != null ? record[3].toString() : "");
 
-
 			detailsList.add(map);
 		}
 		return detailsList;
 	}
 
 	@Override
-	public List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year,String department,String branch, String type, String contractor) {
-		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsforSalaryProcess(orgId, month, year,department,branch, type,  contractor);
+	public List<Map<String, Object>> getLeaveDetailsforSalaryProcess(Long orgId, Long month, String year,
+			String department, String branch, String type, String contractor) {
+		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsforSalaryProcess(orgId, month, year, department, branch,
+				type, contractor);
 		return getLeaveDetailsforSalaryProcess(result);
 	}
 
@@ -793,40 +782,38 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 //	
 	@Override
 	public List<Map<String, Object>> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
-			BigDecimal empSalaryDays,BigDecimal sumOfDetection,BigDecimal otAmount) {
-		
+			BigDecimal empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount) {
+
 		Set<Object[]> result;
-		
+
 		if (empSalaryDays != null && empSalaryDays.compareTo(BigDecimal.ZERO) > 0) {
-		 result = salaryProcessRepo.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays, grossPay,
-				empSalaryDays,sumOfDetection, otAmount);
-		}else {
-			 result = new HashSet<>();
+			result = salaryProcessRepo.getPayOnHandsForSalaryProcess(totalCompanyWorkingDays, grossPay, empSalaryDays,
+					sumOfDetection, otAmount);
+		} else {
+			result = new HashSet<>();
 		}
 		return getPayOnHandsForSalaryProcess(result);
 	}
 
 	private List<Map<String, Object>> getPayOnHandsForSalaryProcess(Set<Object[]> result) {
-	    List<Map<String, Object>> detailsList = new ArrayList<>();
+		List<Map<String, Object>> detailsList = new ArrayList<>();
 
+		if (result.isEmpty()) {
+			// no records from DB → return default payOnHand = "0"
+			Map<String, Object> defaultMap = new HashMap<>();
+			defaultMap.put("payOnHand", "0");
+			detailsList.add(defaultMap);
+			return detailsList;
+		}
 
-	    if (result.isEmpty()) {
-	        // no records from DB → return default payOnHand = "0"
-	        Map<String, Object> defaultMap = new HashMap<>();
-	        defaultMap.put("payOnHand", "0");
-	        detailsList.add(defaultMap);
-	        return detailsList;
-	    }
-	    
-	    for (Object[] record : result) {
-	        Map<String, Object> map = new HashMap<>();
-	        map.put("payOnHand", record[0] != null ? record[0].toString() : "0"); // default 0
-	        detailsList.add(map);
-	    }
-	    
-	    return detailsList;
+		for (Object[] record : result) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("payOnHand", record[0] != null ? record[0].toString() : "0"); // default 0
+			detailsList.add(map);
+		}
+
+		return detailsList;
 	}
-	
 
 	@Override
 	public List<Map<String, Object>> getEmpDob(Long orgId) {
@@ -852,29 +839,28 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	// ApprovedSalaryProcess
 
 	@Override
-	public List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month,
-			String year) {
+	public List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year) {
 		return salaryProcessRepo.getApprovedSalaryProcessReport(orgId, month, year);
 	}
 
 	@Override
 	public List<Map<String, Object>> GetworkAniversary(Long Orgid) {
-		Set<Object[]> employeeVO = employeeRepo.findWorkaniversaryByOrgId(Orgid );
+		Set<Object[]> employeeVO = employeeRepo.findWorkaniversaryByOrgId(Orgid);
 		return GetworkAniversary(employeeVO);
 	}
 
-	private List<Map<String, Object>> GetworkAniversary(Set<Object[]>employeeVO) {
+	private List<Map<String, Object>> GetworkAniversary(Set<Object[]> employeeVO) {
 		List<Map<String, Object>> List1 = new ArrayList<>();
 		for (Object[] ch : employeeVO) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("employeeid", ch[0] != null ? ch[0].toString() : ""); 
-			map.put("department", ch[1] != null ? ch[1].toString() : ""); 
-			map.put("designation", ch[2] != null ? ch[2].toString() : ""); 
-			map.put("employeecode", ch[3] != null ? ch[3].toString() : ""); 
-			map.put("employee", ch[4] != null ? ch[4].toString() : ""); 
-			map.put("gender", ch[5] != null ? ch[5].toString() : ""); 
-			map.put("orgid", ch[6] != null ? ch[6].toString() : ""); 
-			
+			map.put("employeeid", ch[0] != null ? ch[0].toString() : "");
+			map.put("department", ch[1] != null ? ch[1].toString() : "");
+			map.put("designation", ch[2] != null ? ch[2].toString() : "");
+			map.put("employeecode", ch[3] != null ? ch[3].toString() : "");
+			map.put("employee", ch[4] != null ? ch[4].toString() : "");
+			map.put("gender", ch[5] != null ? ch[5].toString() : "");
+			map.put("orgid", ch[6] != null ? ch[6].toString() : "");
+
 			List1.add(map);
 		}
 		return List1;
@@ -883,78 +869,79 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 
 	@Override
 	public List<Map<String, Object>> GetnewJoineDetails(Long Orgid) {
-		Set<Object[]> employeeVO = employeeRepo.findNewJoinieDtailsByOrgId(Orgid );
+		Set<Object[]> employeeVO = employeeRepo.findNewJoinieDtailsByOrgId(Orgid);
 		return GetnewJoineDetails(employeeVO);
 	}
 
-	private List<Map<String, Object>> GetnewJoineDetails(Set<Object[]>employeeVO) {
+	private List<Map<String, Object>> GetnewJoineDetails(Set<Object[]> employeeVO) {
 		List<Map<String, Object>> List1 = new ArrayList<>();
 		for (Object[] ch : employeeVO) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("employeeid", ch[0] != null ? ch[0].toString() : ""); 
-			map.put("department", ch[1] != null ? ch[1].toString() : ""); 
-			map.put("designation", ch[2] != null ? ch[2].toString() : ""); 
-			map.put("employeecode", ch[3] != null ? ch[3].toString() : ""); 
-			map.put("employee", ch[4] != null ? ch[4].toString() : ""); 
-			map.put("gender", ch[5] != null ? ch[5].toString() : ""); 
-			map.put("orgid", ch[6] != null ? ch[6].toString() : ""); 
-			
-			
+			map.put("employeeid", ch[0] != null ? ch[0].toString() : "");
+			map.put("department", ch[1] != null ? ch[1].toString() : "");
+			map.put("designation", ch[2] != null ? ch[2].toString() : "");
+			map.put("employeecode", ch[3] != null ? ch[3].toString() : "");
+			map.put("employee", ch[4] != null ? ch[4].toString() : "");
+			map.put("gender", ch[5] != null ? ch[5].toString() : "");
+			map.put("orgid", ch[6] != null ? ch[6].toString() : "");
+
 			List1.add(map);
 		}
 		return List1;
 
 	}
-	
-	//approvedpermissionrequest
-	
+
+	// approvedpermissionrequest
+
 	@Override
-	public Map<String, Object> createApprovalPermissionRequest(Long orgId, Long id, String employeeCode, String action, String actionBy,String notifyCode, String notify, String screenName)
-	        throws ApplicationException {
+	public Map<String, Object> createApprovalPermissionRequest(Long orgId, Long id, String employeeCode, String action,
+			String actionBy, String notifyCode, String notify, String screenName) throws ApplicationException {
 
-	    PermissionRequestVO permissionRequestVO = permissionRequestRepo.findByOrgIdAndIdAndEmployeeCode(orgId, id, employeeCode);
-	    String message = "";
+		PermissionRequestVO permissionRequestVO = permissionRequestRepo.findByOrgIdAndIdAndEmployeeCode(orgId, id,
+				employeeCode);
+		String message = "";
 
-	    if (permissionRequestVO.getApproveStatus() == null
-	            || (!permissionRequestVO.getApproveStatus().equalsIgnoreCase("Approved")
-	            && !permissionRequestVO.getApproveStatus().equalsIgnoreCase("Rejected"))) {
+		if (permissionRequestVO.getApproveStatus() == null
+				|| (!permissionRequestVO.getApproveStatus().equalsIgnoreCase("Approved")
+						&& !permissionRequestVO.getApproveStatus().equalsIgnoreCase("Rejected"))) {
 
-	        if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
-	            permissionRequestVO.setApproveStatus(action);
-	            permissionRequestVO.setApproveBy(actionBy);
+			if ("APPROVED".equalsIgnoreCase(action) || "REJECTED".equalsIgnoreCase(action)) {
+				permissionRequestVO.setApproveStatus(action);
+				permissionRequestVO.setApproveBy(actionBy);
 
-	            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
-	            permissionRequestVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss a");
+				permissionRequestVO.setApproveOn(LocalDateTime.now().format(formatter).toUpperCase());
 
-	            permissionRequestRepo.save(permissionRequestVO);
-	            
-	            if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Approved")) {
-				    message = "Approved Successfully";
+				permissionRequestRepo.save(permissionRequestVO);
+
+				if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Approved")) {
+					message = "Approved Successfully";
 				} else if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Rejected")) {
-				    message = "Rejected Successfully";
+					message = "Rejected Successfully";
 				}
-	        }
-
-	    } else if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Approved")) {
-	        throw new ApplicationException("This PermissionRequest Already Approved");
-	    } else if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Rejected")) {
-	        throw new ApplicationException("This PermissionRequest Already Rejected");
-	    }
-
-		Map<String, Object> response = new HashMap<>();
-	    response.put("permissionRequestVO", permissionRequestVO);
-	    response.put("message", message);
-	    return response;
 			}
 
-	
+		} else if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Approved")) {
+			throw new ApplicationException("This PermissionRequest Already Approved");
+		} else if (permissionRequestVO.getApproveStatus().equalsIgnoreCase("Rejected")) {
+			throw new ApplicationException("This PermissionRequest Already Rejected");
+		}
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("permissionRequestVO", permissionRequestVO);
+		response.put("message", message);
+		return response;
+	}
+
 	@Override
-	public List<Map<String, Object>> getPendingPermissionRequest(Long orgId, String branchCode,String reportingPersonCode) {
-		Set<Object[]> permissionRequestVO = permissionRequestRepo.getPendingPermissionRequest(orgId, branchCode,reportingPersonCode);
+	public List<Map<String, Object>> getPendingPermissionRequest(Long orgId, String branchCode,
+			String reportingPersonCode) {
+		Set<Object[]> permissionRequestVO = permissionRequestRepo.getPendingPermissionRequest(orgId, branchCode,
+				reportingPersonCode);
 		return permissionRequestDetails(permissionRequestVO);
 	}
-	
-	private List<Map<String, Object>> permissionRequestDetails(Set<Object[]>permissionRequestVO) {
+
+	private List<Map<String, Object>> permissionRequestDetails(Set<Object[]> permissionRequestVO) {
 		List<Map<String, Object>> List1 = new ArrayList<>();
 		for (Object[] ch : permissionRequestVO) {
 			Map<String, Object> map = new HashMap<>();
@@ -974,7 +961,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("employeeName", ch[13] != null ? ch[13].toString() : "");
 			map.put("notifyCode", ch[14] != null ? ch[14].toString() : "");
 			map.put("employeeEmail", ch[15] != null ? ch[15].toString() : "");
- 
+
 			List1.add(map);
 		}
 		return List1;
@@ -982,12 +969,14 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getApprovedPermissionRequestforTeam(Long orgId, String branchCode,String reportingPersonCode) {
-		Set<Object[]> permissionRequestVO = permissionRequestRepo.getApprovedPermissionRequestforTeam(orgId, branchCode,reportingPersonCode);
+	public List<Map<String, Object>> getApprovedPermissionRequestforTeam(Long orgId, String branchCode,
+			String reportingPersonCode) {
+		Set<Object[]> permissionRequestVO = permissionRequestRepo.getApprovedPermissionRequestforTeam(orgId, branchCode,
+				reportingPersonCode);
 		return getApprovedPermissionRequestforTeam(permissionRequestVO);
 	}
 
-	private List<Map<String, Object>> getApprovedPermissionRequestforTeam(Set<Object[]>permissionRequestVO) {
+	private List<Map<String, Object>> getApprovedPermissionRequestforTeam(Set<Object[]> permissionRequestVO) {
 		List<Map<String, Object>> List1 = new ArrayList<>();
 		for (Object[] ch : permissionRequestVO) {
 			Map<String, Object> map = new HashMap<>();
@@ -1007,230 +996,248 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("employeename", ch[13] != null ? ch[13].toString() : "");
 			map.put("notifycode", ch[14] != null ? ch[14].toString() : "");
 			map.put("employeeemail", ch[15] != null ? ch[15].toString() : "");
- 
+
 			List1.add(map);
 		}
 		return List1;
 
 	}
-	
-	
-	
+
 	@Override
 	public String uploadSalaryStructureExcel(MultipartFile file, Long orgId, String createdBy) throws Exception {
-	    try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+		try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
-	        Map<Long, SalaryStructureVO> structureMap = new HashMap<>();
+			Map<Long, SalaryStructureVO> structureMap = new HashMap<>();
 
-	        // -------- SHEET 1: SalaryStructure (Header) --------
-	        Sheet sheet1 = workbook.getSheetAt(0);
-	        for (int i = 1; i <= sheet1.getLastRowNum(); i++) {
-	            Row row = sheet1.getRow(i);
-	            if (row == null) continue;
+			// -------- SHEET 1: SalaryStructure (Header) --------
+			Sheet sheet1 = workbook.getSheetAt(0);
+			for (int i = 1; i <= sheet1.getLastRowNum(); i++) {
+				Row row = sheet1.getRow(i);
+				if (row == null)
+					continue;
 
-	            Long id = getLongCellValue(row.getCell(0));
-	            if (id == null) continue;
+				Long id = getLongCellValue(row.getCell(0));
+				if (id == null)
+					continue;
 
-	            String empCode = getStringCellValue(row.getCell(1));
-	            String empName = getStringCellValue(row.getCell(2));
-	            String department = getStringCellValue(row.getCell(3));
-	            String designation = getStringCellValue(row.getCell(4));
-	            BigDecimal amount = getBigDecimalCellValue(row.getCell(5));
+				String empCode = getStringCellValue(row.getCell(1));
+				String empName = getStringCellValue(row.getCell(2));
+				String department = getStringCellValue(row.getCell(3));
+				String designation = getStringCellValue(row.getCell(4));
+				BigDecimal amount = getBigDecimalCellValue(row.getCell(5));
 
-	            // Validate employee
-	            EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndEmployeeNameAndOrgId(empCode, empName, orgId);
-	            if (employeeVO == null) {
-	                throw new RuntimeException("Employee not found in master: Code=" + empCode + ", Name=" + empName);
-	            }
+				// Validate employee
+				EmployeeVO employeeVO = employeeRepo.findByEmployeeCodeAndEmployeeNameAndOrgId(empCode, empName, orgId);
+				if (employeeVO == null) {
+					throw new RuntimeException("Employee not found in master: Code=" + empCode + ", Name=" + empName);
+				}
 
-	            SalaryStructureVO vo = new SalaryStructureVO();
-	            vo.setEmployeeCode(empCode);
-	            vo.setEmployeeName(empName);
-	            vo.setDateOfBirth(employeeVO.getDateOfBirth());
-	            vo.setGrade(employeeVO.getGrade());
-	            vo.setPanNo(employeeVO.getPanNo());
-	            vo.setBankAccountNo(employeeVO.getAccountNo());
-	            vo.setDateOfJoining(employeeVO.getJoiningDate());
-	            vo.setBranch(employeeVO.getBranch());
-	            vo.setBranchCode(employeeVO.getBranchCode());
+				SalaryStructureVO vo = new SalaryStructureVO();
+				vo.setEmployeeCode(empCode);
+				vo.setEmployeeName(empName);
+				vo.setDateOfBirth(employeeVO.getDateOfBirth());
+				vo.setGrade(employeeVO.getGrade());
+				vo.setPanNo(employeeVO.getPanNo());
+				vo.setBankAccountNo(employeeVO.getAccountNo());
+				vo.setDateOfJoining(employeeVO.getJoiningDate());
+				vo.setBranch(employeeVO.getBranch());
+				vo.setBranchCode(employeeVO.getBranchCode());
 
+				if (department.equals(employeeVO.getDepartment())) {
+					vo.setDepartment(department);
+				} else {
+					throw new RuntimeException(
+							"Department not matched in EmployeeDetails : Code=" + empCode + ", Name=" + empName);
+				}
 
-	            if (department.equals(employeeVO.getDepartment())) {
-	                vo.setDepartment(department);
-	            } else {
-	                throw new RuntimeException("Department not matched in EmployeeDetails : Code=" + empCode + ", Name=" + empName);
-	            }
+				if (designation.equals(employeeVO.getDesignation())) {
+					vo.setDesignation(designation);
+				} else {
+					throw new RuntimeException(
+							"Designation not matched in EmployeeDetails : Code=" + empCode + ", Name=" + empName);
+				}
 
-	            if (designation.equals(employeeVO.getDesignation())) {
-	                vo.setDesignation(designation);
-	            } else {
-	                throw new RuntimeException("Designation not matched in EmployeeDetails : Code=" + empCode + ", Name=" + empName);
-	            }
+				vo.setAmount(amount);
+				vo.setOrgId(orgId);
+				vo.setCreatedBy(createdBy);
 
-	            vo.setAmount(amount);
-	            vo.setOrgId(orgId);
-	            vo.setCreatedBy(createdBy);
+				vo.setSalaryEarningDetailsVO(new ArrayList<>());
+				vo.setSalaryDetectionDetailsVO(new ArrayList<>());
 
-	            vo.setSalaryEarningDetailsVO(new ArrayList<>());
-	            vo.setSalaryDetectionDetailsVO(new ArrayList<>());
+				structureMap.put(id, vo);
+			}
 
-	            structureMap.put(id, vo);
-	        }
+			// -------- SHEET 2: Earnings --------
+			Sheet sheet2 = workbook.getSheetAt(1);
+			for (int i = 1; i <= sheet2.getLastRowNum(); i++) {
+				Row row = sheet2.getRow(i);
+				if (row == null)
+					continue;
 
-	        // -------- SHEET 2: Earnings --------
-	        Sheet sheet2 = workbook.getSheetAt(1);
-	        for (int i = 1; i <= sheet2.getLastRowNum(); i++) {
-	            Row row = sheet2.getRow(i);
-	            if (row == null) continue;
+				Long id = getLongCellValue(row.getCell(0));
+				if (id == null)
+					continue;
 
-	            Long id = getLongCellValue(row.getCell(0));
-	            if (id == null) continue;
+				String heading = getStringCellValue(row.getCell(1));
+				BigDecimal amount = getBigDecimalCellValue(row.getCell(2));
 
-	            String heading = getStringCellValue(row.getCell(1));
-	            BigDecimal amount = getBigDecimalCellValue(row.getCell(2));
+				SalaryEarningDetailsVO earning = new SalaryEarningDetailsVO();
+				earning.setHeading(heading);
+				earning.setAmount(amount);
 
-	            SalaryEarningDetailsVO earning = new SalaryEarningDetailsVO();
-	            earning.setHeading(heading);
-	            earning.setAmount(amount);
+				SalaryStructureVO parent = structureMap.get(id);
+				if (parent != null) {
+					earning.setSalaryStructureVO(parent);
+					parent.getSalaryEarningDetailsVO().add(earning);
+				}
+			}
 
-	            SalaryStructureVO parent = structureMap.get(id);
-	            if (parent != null) {
-	                earning.setSalaryStructureVO(parent);
-	                parent.getSalaryEarningDetailsVO().add(earning);
-	            }
-	        }
+			// -------- SHEET 3: Deductions --------
+			Sheet sheet3 = workbook.getSheetAt(2);
+			for (int i = 1; i <= sheet3.getLastRowNum(); i++) {
+				Row row = sheet3.getRow(i);
+				if (row == null)
+					continue;
 
-	        // -------- SHEET 3: Deductions --------
-	        Sheet sheet3 = workbook.getSheetAt(2);
-	        for (int i = 1; i <= sheet3.getLastRowNum(); i++) {
-	            Row row = sheet3.getRow(i);
-	            if (row == null) continue;
+				Long id = getLongCellValue(row.getCell(0));
+				if (id == null)
+					continue;
 
-	            Long id = getLongCellValue(row.getCell(0));
-	            if (id == null) continue;
+				String heading = getStringCellValue(row.getCell(1));
+				BigDecimal amount = getBigDecimalCellValue(row.getCell(2));
 
-	            String heading = getStringCellValue(row.getCell(1));
-	            BigDecimal amount = getBigDecimalCellValue(row.getCell(2));
+				SalaryDetectionDetailsVO deduction = new SalaryDetectionDetailsVO();
+				deduction.setHeading(heading);
+				deduction.setAmount(amount);
 
-	            SalaryDetectionDetailsVO deduction = new SalaryDetectionDetailsVO();
-	            deduction.setHeading(heading);
-	            deduction.setAmount(amount);
+				SalaryStructureVO parent = structureMap.get(id);
+				if (parent != null) {
+					deduction.setSalaryStructureVO(parent);
+					parent.getSalaryDetectionDetailsVO().add(deduction);
+				}
+			}
 
-	            SalaryStructureVO parent = structureMap.get(id);
-	            if (parent != null) {
-	                deduction.setSalaryStructureVO(parent);
-	                parent.getSalaryDetectionDetailsVO().add(deduction);
-	            }
-	        }
+			// -------- CALCULATE TOTALS & SAVE --------
+			for (SalaryStructureVO vo : structureMap.values()) {
+				BigDecimal totalEarnings = vo.getSalaryEarningDetailsVO().stream()
+						.map(SalaryEarningDetailsVO::getAmount).filter(Objects::nonNull)
+						.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-	        // -------- CALCULATE TOTALS & SAVE --------
-	        for (SalaryStructureVO vo : structureMap.values()) {
-	            BigDecimal totalEarnings = vo.getSalaryEarningDetailsVO().stream()
-	                    .map(SalaryEarningDetailsVO::getAmount)
-	                    .filter(Objects::nonNull)
-	                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+				BigDecimal totalDeductions = vo.getSalaryDetectionDetailsVO().stream()
+						.map(SalaryDetectionDetailsVO::getAmount).filter(Objects::nonNull)
+						.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-	            BigDecimal totalDeductions = vo.getSalaryDetectionDetailsVO().stream()
-	                    .map(SalaryDetectionDetailsVO::getAmount)
-	                    .filter(Objects::nonNull)
-	                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+				vo.setSumOfEarning(totalEarnings);
+				vo.setSumOfDetection(totalDeductions);
 
-	            vo.setSumOfEarning(totalEarnings);
-	            vo.setSumOfDetection(totalDeductions);
+				salaryStructureRepo.save(vo); // Cascade saves earnings & deductions
+			}
 
-	            salaryStructureRepo.save(vo); // Cascade saves earnings & deductions
-	        }
-
-	        return " Upload successful. Records saved: " + structureMap.size();
-	    }
+			return " Upload successful. Records saved: " + structureMap.size();
+		}
 	}
 
 	// ---------- Helper Methods ----------
 	private String getStringCellValue(Cell cell) {
-	    if (cell == null) return "";
-	    cell.setCellType(CellType.STRING);
-	    return cell.getStringCellValue().trim();
+		if (cell == null)
+			return "";
+		cell.setCellType(CellType.STRING);
+		return cell.getStringCellValue().trim();
 	}
 
 	private Long getLongCellValue(Cell cell) {
-	    if (cell == null) return null;
-	    if (cell.getCellType() == CellType.NUMERIC) {
-	        return (long) cell.getNumericCellValue();
-	    } else if (cell.getCellType() == CellType.STRING && !cell.getStringCellValue().isEmpty()) {
-	        return Long.parseLong(cell.getStringCellValue());
-	    }
-	    return null;
+		if (cell == null)
+			return null;
+		if (cell.getCellType() == CellType.NUMERIC) {
+			return (long) cell.getNumericCellValue();
+		} else if (cell.getCellType() == CellType.STRING && !cell.getStringCellValue().isEmpty()) {
+			return Long.parseLong(cell.getStringCellValue());
+		}
+		return null;
 	}
 
 	private BigDecimal getBigDecimalCellValue(Cell cell) {
-	    if (cell == null) return BigDecimal.ZERO;
-	    if (cell.getCellType() == CellType.NUMERIC) {
-	        return BigDecimal.valueOf(cell.getNumericCellValue());
-	    } else if (cell.getCellType() == CellType.STRING && !cell.getStringCellValue().isEmpty()) {
-	        return new BigDecimal(cell.getStringCellValue());
-	    }
-	    return BigDecimal.ZERO;
+		if (cell == null)
+			return BigDecimal.ZERO;
+		if (cell.getCellType() == CellType.NUMERIC) {
+			return BigDecimal.valueOf(cell.getNumericCellValue());
+		} else if (cell.getCellType() == CellType.STRING && !cell.getStringCellValue().isEmpty()) {
+			return new BigDecimal(cell.getStringCellValue());
+		}
+		return BigDecimal.ZERO;
 	}
 
-	
-	
-	
 	@Override
 	public List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays,
-	        BigDecimal empSalaryDays, Long orgId, String employeeCode, String branchCode, Long month, Long year) {
+			BigDecimal empSalaryDays, Long orgId, String employeeCode, String branchCode, Long month, Long year) {
 
-	    List<Object[]> result;
+		List<Object[]> result;
 
-	    if (empSalaryDays != null && empSalaryDays.compareTo(BigDecimal.ZERO) > 0) {
-	        result = salaryProcessRepo.getBankAndCashAmtForSalaryProcess(
-	                totalCompanyWorkingDays, empSalaryDays, orgId, employeeCode, branchCode, month, year);
-	    } else {
-	        result = new ArrayList<>();
-	    }
+		if (empSalaryDays != null && empSalaryDays.compareTo(BigDecimal.ZERO) > 0) {
+			result = salaryProcessRepo.getBankAndCashAmtForSalaryProcess(totalCompanyWorkingDays, empSalaryDays, orgId,
+					employeeCode, branchCode, month, year);
+		} else {
+			result = new ArrayList<>();
+		}
 
-	    return buildBankAndCashAmtResponse(result);
+		return buildBankAndCashAmtResponse(result);
 	}
 
 	private List<Map<String, Object>> buildBankAndCashAmtResponse(List<Object[]> result) {
-	    List<Map<String, Object>> detailsList = new ArrayList<>();
+		List<Map<String, Object>> detailsList = new ArrayList<>();
 
-	    if (result.isEmpty()) {
-	        // no records from DB → return default all = 0
-	        Map<String, Object> defaultMap = new HashMap<>();
-	        defaultMap.put("totalEarnings", 0);
-	        defaultMap.put("totalDeductions", 0);
-	        defaultMap.put("bankAmount", 0);
-	        defaultMap.put("cashAmount", 0);
-	        defaultMap.put("bankOtAmount", 0);
-	        defaultMap.put("cashOtAmount", 0);
-	        defaultMap.put("bankAdvance", 0);
-	        defaultMap.put("cashAdvance", 0);
-	        defaultMap.put("pfAmount", 0);
-	        defaultMap.put("esiAmount", 0);
-	        detailsList.add(defaultMap);
-	        return detailsList;
-	    }
+		if (result.isEmpty()) {
+			// no records from DB → return default all = 0
+			Map<String, Object> defaultMap = new HashMap<>();
+			defaultMap.put("totalEarnings", 0);
+			defaultMap.put("totalDeductions", 0);
+			defaultMap.put("bankAmount", 0);
+			defaultMap.put("cashAmount", 0);
+			defaultMap.put("bankOtAmount", 0);
+			defaultMap.put("cashOtAmount", 0);
+			defaultMap.put("bankAdvance", 0);
+			defaultMap.put("cashAdvance", 0);
+			defaultMap.put("pfAmount", 0);
+			defaultMap.put("esiAmount", 0);
+			detailsList.add(defaultMap);
+			return detailsList;
+		}
 
-	    for (Object[] record : result) {
-	        Map<String, Object> map = new HashMap<>();
+		for (Object[] record : result) {
+			Map<String, Object> map = new HashMap<>();
 
-	        map.put("totalEarnings", record[0] != null ? record[0] : 0);
-	        map.put("totalDeductions", record[1] != null ? record[1] : 0);
-	        map.put("bankAmount", record[2] != null ? record[2] : 0);
-	        map.put("cashAmount", record[3] != null ? record[3] : 0);
-	        map.put("bankOtAmount", record[4] != null ? record[4] : 0);
-	        map.put("cashOtAmount", record[5] != null ? record[5] : 0);
-	        map.put("bankAdvance", record[6] != null ? record[6] : 0);
-	        map.put("cashAdvance", record[7] != null ? record[7] : 0);
-	        map.put("pfAmount", record[8] != null ? record[8] : 0);
-	        map.put("esiAmount", record[9] != null ? record[9] : 0);
-	        detailsList.add(map);
-	    }
+			map.put("totalEarnings", record[0] != null ? record[0] : 0);
+			map.put("totalDeductions", record[1] != null ? record[1] : 0);
+			map.put("bankAmount", record[2] != null ? record[2] : 0);
+			map.put("cashAmount", record[3] != null ? record[3] : 0);
+			map.put("bankOtAmount", record[4] != null ? record[4] : 0);
+			map.put("cashOtAmount", record[5] != null ? record[5] : 0);
+			map.put("bankAdvance", record[6] != null ? record[6] : 0);
+			map.put("cashAdvance", record[7] != null ? record[7] : 0);
+			map.put("pfAmount", record[8] != null ? record[8] : 0);
+			map.put("esiAmount", record[9] != null ? record[9] : 0);
+			detailsList.add(map);
+		}
 
-	    return detailsList;
+		return detailsList;
 	}
 
+	@Override
+	public List<Map<String, Object>> getYearAndMonthforSalaryProcess(Long orgId) {
 
-	
+		Set<Object[]> year = salaryProcessRepo.getYearAndMonth(orgId);
+		return getYear(year);
+	}
+
+	private List<Map<String, Object>> getYear(Set<Object[]> year) {
+		List<Map<String, Object>> yearList = new ArrayList<>();
+		for (Object[] ob : year) {
+			Map<String, Object> mp = new HashMap<String, Object>();
+			mp.put("year", ob[0] != null ? ob[0] : 0);
+			mp.put("month", ob[1] != null ? ob[1].toString(): null);
+			yearList.add(mp);
+			}
+		return yearList;
+	}
 
 }

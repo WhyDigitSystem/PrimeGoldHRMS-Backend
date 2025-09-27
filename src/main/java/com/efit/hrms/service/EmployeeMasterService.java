@@ -1,7 +1,6 @@
 package com.efit.hrms.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -104,6 +103,8 @@ public interface EmployeeMasterService {
 
 	List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 			Long orgId, String employeeCode, String branchCode, Long month, Long year);
+	
+	List<Map<String,Object>> getYearAndMonthforSalaryProcess(Long orgId);
 
 
 

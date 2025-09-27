@@ -630,8 +630,11 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 				)
 			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 					Long orgId, String employeeCode, String branchCode, Long month, Long year);
-
-
+			
+			
+			
+			@Query(nativeQuery = true, value = "select finyear,month as month from attendancesummary where (orgid,finyear,month,empcode,empname) not in(select orgid,year,month,employeecode,employeename from salaryprocess group by orgid,year,month,employeecode,employeename) and orgid=?1 group by finyear,month order by finyear,month asc")
+				Set<Object[]>getYearAndMonth(Long orgId);
 
 
 

@@ -981,6 +981,31 @@ public class EmployeeMasterController extends BaseController{
 	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 	    return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	@GetMapping("/getYearAndMonth")
+	public ResponseEntity<ResponseDTO> getYearAndMonth(@RequestParam Long orgId) {
+
+	    String methodName = "getYearAndMonth()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+	    List<Map<String, Object>> yearMonth;
+
+	    try {
+	    	yearMonth = employeeMasterService.getYearAndMonthforSalaryProcess(orgId);
+	    	responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Year and Month details retrieved successfully");
+	        responseObjectsMap.put("yearMonth", yearMonth); // ✅ Correct key name
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve Year and Month details", errorMsg);
+	    }
+
+	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	    return ResponseEntity.ok().body(responseDTO);
+	}
 
 }
 
