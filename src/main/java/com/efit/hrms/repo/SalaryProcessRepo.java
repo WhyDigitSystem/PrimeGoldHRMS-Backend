@@ -25,7 +25,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			+ "    a.amount, \r\n"
 			+ "    a.sumofearning, \r\n"
 			+ "    a.sumofdetection, \r\n"
-			+ "    COALESCE(SUM(ot.otamount), 0) AS totalotamount\r\n"
+			+ "    COALESCE(SUM(ot.bankotamount), 0) AS totalotamount\r\n"
 			+ "FROM salarystructure a\r\n"
 			+ "LEFT JOIN otcalculation ot\r\n"
 			+ "    ON a.employeecode = ot.empcode\r\n"
