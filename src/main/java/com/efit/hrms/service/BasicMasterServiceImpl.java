@@ -2393,27 +2393,26 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getpayslipdeductiondetails(Long orgId, String Employeecode, Long Month,
-			Long year) {
-		Set<Object[]> salaryprocessVO = salaryProcessRepo.findpayslipdeductionsdetails(orgId, Employeecode, Month,
-				year);
-		return getpayslipdeductiondetails(salaryprocessVO);
+	public List<Map<String, Object>> getpayslipdeductiondetails(Long orgId, String employeeCode, Long month, Long year) {
+	    // Use List instead of Set to preserve duplicates
+	    List<Object[]> salaryprocessVO = salaryProcessRepo.findpayslipdeductionsdetails(orgId, employeeCode, month, year);
+	    return mapPayslipDeductionDetails(salaryprocessVO);
 	}
 
-	private List<Map<String, Object>> getpayslipdeductiondetails(Set<Object[]> salaryprocessVO) {
-		List<Map<String, Object>> List1 = new ArrayList<>();
-		for (Object[] ch : salaryprocessVO) {
-			Map<String, Object> map = new HashMap<>();
-			map.put("employee", ch[0] != null ? ch[0].toString() : ""); // Empty string if null
-			map.put("orgid", ch[1] != null ? ch[1].toString() : "");
-			map.put("employeecode", ch[2] != null ? ch[2].toString() : "");
-			map.put("heading", ch[3] != null ? ch[3].toString() : "");
-			map.put("amount", ch[4] != null ? ch[4].toString() : "");
-
-			List1.add(map);
-		}
-		return List1;
+	private List<Map<String, Object>> mapPayslipDeductionDetails(List<Object[]> salaryprocessVO) {
+	    List<Map<String, Object>> list = new ArrayList<>();
+	    for (Object[] row : salaryprocessVO) {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("employee", row[0] != null ? row[0].toString() : "");
+	        map.put("orgid", row[1] != null ? row[1].toString() : "");
+	        map.put("employeecode", row[2] != null ? row[2].toString() : "");
+	        map.put("heading", row[3] != null ? row[3].toString() : "");
+	        map.put("amount", row[4] != null ? new BigDecimal(row[4].toString()) : BigDecimal.ZERO);
+	        list.add(map);
+	    }
+	    return list;
 	}
+
 
 	@Override
 	public List<Map<String, Object>> getpayslipCompanydetails(Long orgId) {
