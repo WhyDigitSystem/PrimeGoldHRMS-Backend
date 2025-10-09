@@ -696,7 +696,7 @@ public interface OtCalculationRepo extends JpaRepository<OtCalculationVO, Long>{
 		    		+ "    )\r\n"
 		    		+ "      AND (otc.status = 'PENDING' OR otc.status IS NULL OR otc.empcode IS NULL)\r\n"
 		    		+ ") final\r\n"
-		    		+ "WHERE final.bankOtAmount + final.cashOtAmount > 0\r\n"
+		    		+ "WHERE COALESCE(final.bankOtAmount, 0) + COALESCE(final.cashOtAmount, 0) > 0 \r\n"
 		    		+ "ORDER BY checkindate, empcode \r\n"
 		    		+ ""
 		    		+ "",

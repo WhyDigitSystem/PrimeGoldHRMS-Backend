@@ -67,6 +67,11 @@ public class AttendanceSummaryVO {
 	
 	@Column(name = "othours")
 	private Long otHours;
+	@Column(name = "bankotamount")
+	private BigDecimal bankOtAmount;
+	@Column(name = "cashotamount")
+	private BigDecimal cashOtAmount;
+	
 	
 	@Column(name = "approvestatus")
 	private String approveStatus;

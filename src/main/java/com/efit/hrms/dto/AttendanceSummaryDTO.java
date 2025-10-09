@@ -2,6 +2,8 @@ package com.efit.hrms.dto;
 
 import java.math.BigDecimal;
 
+import javax.persistence.Column;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +32,8 @@ public class AttendanceSummaryDTO {
 	private BigDecimal salarydays;
 	private String createdBy;
 	private Long otHours;
+	private BigDecimal bankOtAmount;
+	private BigDecimal cashOtAmount;
 
 	
 	private String approveStatus;

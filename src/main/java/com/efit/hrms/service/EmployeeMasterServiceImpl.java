@@ -755,6 +755,9 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("empTotalWorkingDays", record[7] != null ? record[7].toString() : "0");
 			map.put("empSalaryDays", record[8] != null ? record[8].toString() : "0");
 			map.put("otHours", record[9] != null ? record[9].toString() : "0");
+			map.put("bankOtAmount", record[10] != null ? record[10].toString() : "0");
+			map.put("cashOtAmount", record[11] != null ? record[11].toString() : "0");
+
 
 			detailsList.add(map);
 		}
