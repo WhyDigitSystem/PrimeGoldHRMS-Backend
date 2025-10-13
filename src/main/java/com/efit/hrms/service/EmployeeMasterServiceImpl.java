@@ -1210,15 +1210,15 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			Map<String, Object> map = new HashMap<>();
 
 			map.put("totalEarnings", record[0] != null ? record[0] : 0);
-			map.put("totalDeductions", record[1] != null ? record[1] : 0);
-			map.put("bankAmount", record[2] != null ? record[2] : 0);
-			map.put("cashAmount", record[3] != null ? record[3] : 0);
-			map.put("bankOtAmount", record[4] != null ? record[4] : 0);
-			map.put("cashOtAmount", record[5] != null ? record[5] : 0);
-			map.put("bankAdvance", record[6] != null ? record[6] : 0);
-			map.put("cashAdvance", record[7] != null ? record[7] : 0);
-			map.put("pfAmount", record[8] != null ? record[8] : 0);
-			map.put("esiAmount", record[9] != null ? record[9] : 0);
+			map.put("totalDeductions", record[3] != null ? record[3] : 0);
+			map.put("bankAmount", record[4] != null ? record[4] : 0);
+			map.put("cashAmount", record[5] != null ? record[5] : 0);
+			map.put("bankOtAmount", record[6] != null ? record[6] : 0);
+			map.put("cashOtAmount", record[7] != null ? record[7] : 0);
+			map.put("bankAdvance", record[8] != null ? record[8] : 0);
+			map.put("cashAdvance", record[9] != null ? record[9] : 0);
+			map.put("pfAmount", record[1] != null ? record[1] : 0);
+			map.put("esiAmount", record[2] != null ? record[2] : 0);
 			detailsList.add(map);
 		}
 
