@@ -86,6 +86,8 @@ public class SalaryProcessVO {
 	private BigDecimal cashAdvance;
 	@Column(name = "bankadvance")
 	private BigDecimal bankAdvance;
+	@Column(name = "earnings")
+	private BigDecimal earnings;
 //	@Column(name = "advancededuction")
 //	private BigDecimal advanceDeduction;
 //	@Column(name = "salaryamount")

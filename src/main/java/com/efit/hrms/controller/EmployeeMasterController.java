@@ -1,7 +1,6 @@
 package com.efit.hrms.controller;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +32,7 @@ import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
+import com.efit.hrms.entity.DepartmentVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.PermissionRequestVO;
 import com.efit.hrms.entity.SalaryHeadsVO;
@@ -744,7 +744,7 @@ public class EmployeeMasterController extends BaseController{
 	}
 
 	@GetMapping("/getApprovedSalaryProcessReport")
-	public ResponseEntity<ResponseDTO> getApprovedSalaryProcessReport(@RequestParam Long orgId,@RequestParam Long month ,@RequestParam String Year ) {
+	public ResponseEntity<ResponseDTO> getApprovedSalaryProcessReport(@RequestParam Long orgId,@RequestParam Long month ,@RequestParam String Year ,@RequestParam String employeeCode ,@RequestParam String department ) {
 	    String methodName = "getApprovedSalaryProcessReport()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 
@@ -753,11 +753,42 @@ public class EmployeeMasterController extends BaseController{
 
 	    try {
 	        // Fetch SalaryHeadsVO safely, preventing null
-	    	List<SalaryProcessVO> salaryProcessVO = employeeMasterService.getApprovedSalaryProcessReport(orgId,month,Year);
+	    	List<SalaryProcessVO> salaryProcessVO = employeeMasterService.getApprovedSalaryProcessReport(orgId,month,Year,employeeCode,department);
 
 	        // Success response
 	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "ApprovedsalaryProcessReport information retrieved successfully by OrgId");
 	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO);
+	        responseDTO = createServiceResponse(responseObjectsMap);
+
+	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	        return ResponseEntity.ok(responseDTO);
+
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+
+	        // Error response
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve ApprovedsalaryProcessReport information by ID", errorMsg);
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseDTO);
+	    }
+	}
+	
+	
+	@GetMapping("/getDepartmentForEmployeeCode")
+	public ResponseEntity<ResponseDTO> getDepartmentForEmployeeCode(@RequestParam Long orgId,@RequestParam String employeeCode) {
+	    String methodName = "getDepartmentForEmployeeCode()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+
+	    try {
+	        // Fetch SalaryHeadsVO safely, preventing null
+	    	List<DepartmentVO> departmentVO = employeeMasterService.getDepartmentForEmployeeCode(orgId,employeeCode);
+
+	        // Success response
+	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "ApprovedsalaryProcessReport information retrieved successfully by OrgId");
+	        responseObjectsMap.put("departmentVO", departmentVO);
 	        responseDTO = createServiceResponse(responseObjectsMap);
 
 	        LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);

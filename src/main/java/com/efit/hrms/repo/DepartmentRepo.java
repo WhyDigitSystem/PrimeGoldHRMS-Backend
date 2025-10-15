@@ -23,6 +23,9 @@ public interface DepartmentRepo extends JpaRepository<DepartmentVO, Long>{
 	
 	DepartmentVO findByOrgIdAndDepartmentName(Long orgId, String department);
 
+	@Query(nativeQuery = true,value = "select DISTINCT d.* from department d join employee e on e.department=d.departmentname where d.orgid=?1  AND (?2 = 'ALL' OR e.employeecode = ?2)")
+	List<DepartmentVO> getDepartmentForEmployeeCode(Long orgId, String employeeCode);
+
 
 
 }

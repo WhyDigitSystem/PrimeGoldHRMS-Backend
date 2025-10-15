@@ -51,6 +51,8 @@ public class SalaryProcessDTO {
 //	@Column(name = "loanbalance")
 //	private BigDecimal loanBalance;
 	
+	
+	private BigDecimal earnings;
 	private String createdBy;
 	private String branch;
 	private String branchCode;

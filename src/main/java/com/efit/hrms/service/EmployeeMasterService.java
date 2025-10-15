@@ -12,6 +12,7 @@ import com.efit.hrms.dto.PfEsiAmountDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
+import com.efit.hrms.entity.DepartmentVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.PermissionRequestVO;
 import com.efit.hrms.entity.SalaryHeadsVO;
@@ -71,7 +72,7 @@ public interface EmployeeMasterService {
 			BigDecimal empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
 	
 	//ApprovedSalaryProcess Report
-	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year);
+	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year, String employeeCode, String department);
 
 
 // Dashboard
@@ -105,6 +106,8 @@ public interface EmployeeMasterService {
 			Long orgId, String employeeCode, String branchCode, Long month, Long year);
 	
 	List<Map<String,Object>> getYearAndMonthforSalaryProcess(Long orgId);
+
+	List<DepartmentVO> getDepartmentForEmployeeCode(Long orgId, String employeeCode);
 
 
 

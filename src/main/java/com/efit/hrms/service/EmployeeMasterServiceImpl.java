@@ -1,7 +1,6 @@
 package com.efit.hrms.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ import com.efit.hrms.dto.SalaryEarningDetailsDTO;
 import com.efit.hrms.dto.SalaryHeadsDTO;
 import com.efit.hrms.dto.SalaryProcessDTO;
 import com.efit.hrms.dto.SalaryStructureDTO;
-import com.efit.hrms.entity.AdvanceVO;
+import com.efit.hrms.entity.DepartmentVO;
 import com.efit.hrms.entity.EmployeeVO;
 import com.efit.hrms.entity.LeaveProcessVO;
 import com.efit.hrms.entity.PermissionRequestNotifyVO;
@@ -50,6 +49,7 @@ import com.efit.hrms.entity.SalaryProcessVO;
 import com.efit.hrms.entity.SalaryStructureVO;
 import com.efit.hrms.exception.ApplicationException;
 import com.efit.hrms.repo.AdvanceRepo;
+import com.efit.hrms.repo.DepartmentRepo;
 import com.efit.hrms.repo.EmployeeRepo;
 import com.efit.hrms.repo.LeaveProcessRepo;
 import com.efit.hrms.repo.PermissionRequestNotifyRepo;
@@ -94,6 +94,9 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 
 	@Autowired
 	AdvanceRepo advanceRepo;
+	
+	@Autowired
+	DepartmentRepo departmentRepo;
 
 	@Override
 	@Transactional
@@ -574,6 +577,8 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			salaryProcessVO.setTotalDeductions(salaryProcessDTO.getTotalDeductions());
 			salaryProcessVO.setPfAmount(salaryProcessDTO.getPfAmount());
 			salaryProcessVO.setEsiAmount(salaryProcessDTO.getEsiAmount());
+			salaryProcessVO.setEarnings(salaryProcessDTO.getEarnings());
+
 
 //				salaryProcessVO.setAdvanceDeduction(salaryProcessDTO.getAdvanceDeduction());
 //				salaryProcessVO.setSalary(salaryProcessDTO.getSalary());
@@ -842,8 +847,14 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 	// ApprovedSalaryProcess
 
 	@Override
-	public List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year) {
-		return salaryProcessRepo.getApprovedSalaryProcessReport(orgId, month, year);
+	public List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year,String employeeCode,String department) {
+		return salaryProcessRepo.getApprovedSalaryProcessReport(orgId, month, year,employeeCode,department);
+	}
+
+	
+	@Override
+	public List<DepartmentVO> getDepartmentForEmployeeCode(Long orgId,String employeeCode) {
+		return departmentRepo.getDepartmentForEmployeeCode(orgId,employeeCode);
 	}
 
 	@Override
@@ -1202,6 +1213,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			defaultMap.put("cashAdvance", 0);
 			defaultMap.put("pfAmount", 0);
 			defaultMap.put("esiAmount", 0);
+			defaultMap.put("earnings", 0);
 			detailsList.add(defaultMap);
 			return detailsList;
 		}
@@ -1210,15 +1222,16 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			Map<String, Object> map = new HashMap<>();
 
 			map.put("totalEarnings", record[0] != null ? record[0] : 0);
-			map.put("totalDeductions", record[3] != null ? record[3] : 0);
-			map.put("bankAmount", record[4] != null ? record[4] : 0);
-			map.put("cashAmount", record[5] != null ? record[5] : 0);
-			map.put("bankOtAmount", record[6] != null ? record[6] : 0);
-			map.put("cashOtAmount", record[7] != null ? record[7] : 0);
-			map.put("bankAdvance", record[8] != null ? record[8] : 0);
-			map.put("cashAdvance", record[9] != null ? record[9] : 0);
-			map.put("pfAmount", record[1] != null ? record[1] : 0);
-			map.put("esiAmount", record[2] != null ? record[2] : 0);
+			map.put("earnings", record[1] != null ? record[1] : 0);
+			map.put("pfAmount", record[2] != null ? record[2] : 0);
+			map.put("esiAmount", record[3] != null ? record[3] : 0);
+			map.put("totalDeductions", record[4] != null ? record[4] : 0);
+			map.put("bankAmount", record[5] != null ? record[5] : 0);
+			map.put("cashAmount", record[6] != null ? record[6] : 0);
+			map.put("bankOtAmount", record[7] != null ? record[7] : 0);
+			map.put("cashOtAmount", record[8] != null ? record[8] : 0);
+			map.put("bankAdvance", record[9] != null ? record[9] : 0);
+			map.put("cashAdvance", record[10] != null ? record[10] : 0);
 			detailsList.add(map);
 		}
 
