@@ -40,6 +40,8 @@ public class OtherPaymentsVO {
 	private String employeeName;
 	@Column(name = "amount",length = 150)
 	private BigDecimal amount;
+	@Column(name = "allowance",length = 150)
+	private BigDecimal allowance;
 	
 	
 	@Column(name = "branch",length = 30)

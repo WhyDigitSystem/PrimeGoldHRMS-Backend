@@ -2779,12 +2779,15 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	                String empCode = formatter.formatCellValue(row.getCell(0)).trim();
 	                String empName = formatter.formatCellValue(row.getCell(1)).trim();
 	                String amountStr = formatter.formatCellValue(row.getCell(2)).trim();
+	                String allowanceStr = formatter.formatCellValue(row.getCell(3)).trim();
+
 
 	                if (empCode.isEmpty()) throw new IllegalArgumentException("Employee code is empty");
 	                if (empName.isEmpty()) throw new IllegalArgumentException("Employee name is empty");
 
 	                BigDecimal amount = amountStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(amountStr);
-
+	                BigDecimal allowance = amountStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(allowanceStr);
+	                
 	                if (month == null || year == null) throw new IllegalArgumentException("Month or Year is missing");
 
 	                // Check if employee exists
@@ -2798,6 +2801,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	                otherPaymentsVO.setEmployeeCode(empCode);
 	                otherPaymentsVO.setEmployeeName(empName);
 	                otherPaymentsVO.setAmount(amount);
+	                otherPaymentsVO.setAllowance(allowance);
 	                otherPaymentsVO.setBranch(branch);
 	                otherPaymentsVO.setBranchCode(branchCode);
 	                otherPaymentsVO.setOrgId(orgId);
@@ -2951,6 +2955,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    otherPaymentVO.setBranch(dto.getBranch());
 	    otherPaymentVO.setBranchCode(dto.getBranchCode());
 	    otherPaymentVO.setOrgId(dto.getOrgId());
+	    otherPaymentVO.setAllowance(dto.getAllowance());
 
 	    // Save record
 	    OtherPaymentsVO savedAdvance = otherPaymentsRepo.save(otherPaymentVO);
