@@ -26,8 +26,8 @@ import lombok.NoArgsConstructor;
 public class AdvanceUploadVO {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "advancegen")
-	@SequenceGenerator(name = "advancegen", sequenceName = "advanceseq", initialValue = 1000000001, allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "advanceuploadgen")
+	@SequenceGenerator(name = "advanceuploadgen", sequenceName = "advanceuploadseq", initialValue = 1000000001, allocationSize = 1)
 	@Column(name = "advanceid")
 	private Long id;
 	

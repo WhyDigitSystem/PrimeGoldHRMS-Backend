@@ -1215,7 +1215,7 @@ public class BasicMasterController extends BaseController {
 	}
 
 	@GetMapping("/getpayslipemployeedetails")
-	public ResponseEntity<ResponseDTO> getpayslipemployeedetails(@RequestParam Long orgId, String Employeecode) {
+	public ResponseEntity<ResponseDTO> getpayslipemployeedetails(@RequestParam Long orgId, String Employeecode,int month) {
 		String methodName = "getpayslipemployeedetails()";
 		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
 		String errorMsg = null;
@@ -1224,7 +1224,7 @@ public class BasicMasterController extends BaseController {
 		List<Map<String, Object>> mapp = new ArrayList<>();
 
 		try {
-			mapp = basicMasterService.getpayslipemployeedetails(orgId, Employeecode);
+			mapp = basicMasterService.getpayslipemployeedetails(orgId, Employeecode,month);
 		} catch (Exception e) {
 			errorMsg = e.getMessage();
 			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);

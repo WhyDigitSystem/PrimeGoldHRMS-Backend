@@ -2293,9 +2293,9 @@ public class BasicMasterServiceImpl implements BasicMasterService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getpayslipemployeedetails(Long orgId, String employeeCode) {
+	public List<Map<String, Object>> getpayslipemployeedetails(Long orgId, String employeeCode,int month) {
 		// Fetch the raw data (salary process details)
-		Set<Object[]> salaryProcessVO = salaryProcessRepo.findpayslipemployeeandearningsdetails(orgId, employeeCode);
+		Set<Object[]> salaryProcessVO = salaryProcessRepo.findpayslipemployeeandearningsdetails(orgId, employeeCode,month);
 
 		// Process the fetched data
 		return getPayslipEmployeeDetails(salaryProcessVO);

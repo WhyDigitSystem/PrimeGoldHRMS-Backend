@@ -20,6 +20,7 @@ public class OtherPaymentsDTO {
 	private String employeeCode;
 	private String employeeName;
 	private BigDecimal amount;
+	private BigDecimal allowance;
 
 	private String branch;
 	private String branchCode;
