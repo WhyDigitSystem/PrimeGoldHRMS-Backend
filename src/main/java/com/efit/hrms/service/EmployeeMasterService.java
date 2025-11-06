@@ -102,8 +102,7 @@ public interface EmployeeMasterService {
 
 	String uploadSalaryStructureExcel(MultipartFile file, Long orgId, String createdBy) throws Exception;
 
-	List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
-			Long orgId, String employeeCode, String branchCode, Long month, Long year);
+	List<Map<String, Object>> getBankAndCashAmtForSalaryProcess(Long orgId, String employeeCode, String branchCode, Long month, Long year);
 	
 	List<Map<String,Object>> getYearAndMonthforSalaryProcess(Long orgId);
 
