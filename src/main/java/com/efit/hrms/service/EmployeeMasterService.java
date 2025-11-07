@@ -108,6 +108,7 @@ public interface EmployeeMasterService {
 
 	List<DepartmentVO> getDepartmentForEmployeeCode(Long orgId, String employeeCode);
 
+	List<Map<String, Object>> getAllEmployeeLatesSalaryDetails(Long orgId);
 
 
 

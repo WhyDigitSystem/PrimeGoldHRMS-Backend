@@ -177,6 +177,26 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	EmployeeVO findByEmployeeCodeAndOrgIdAndBranchCode(String empCode, Long orgId, String branchCode);
 
+	@Query(nativeQuery = true, value = "with a as (SELECT ss.employeecode,ss.employeename,ss.sumofearning\r\n"
+			+ "    FROM salarystructure ss\r\n"
+			+ "    INNER JOIN (\r\n"
+			+ "        SELECT employeecode, MAX(salarystructureid) AS max_id\r\n"
+			+ "        FROM salarystructure\r\n"
+			+ "        GROUP BY employeecode\r\n"
+			+ "    ) latest ON ss.employeecode = latest.employeecode\r\n"
+			+ "            AND ss.salarystructureid = latest.max_id),           \r\n"
+			+ "            b as (SELECT op.employeecode,op.employee,amount,allowance\r\n"
+			+ "    FROM otherpayments op\r\n"
+			+ "    INNER JOIN (\r\n"
+			+ "        SELECT employeecode, MAX(otherpaymentsid) AS max_id\r\n"
+			+ "        FROM otherpayments\r\n"
+			+ "        GROUP BY employeecode\r\n"
+			+ "    ) latest ON op.employeecode = latest.employeecode\r\n"
+			+ "            AND op.otherpaymentsid = latest.max_id order by op.employeecode asc)\r\n"
+			+ "            select e.employeecode,e.employee,e.designation,e.department,round(coalesce(a.sumofearning,0)) fixedBank,round(coalesce(b.amount,0)) cash,round(coalesce(a.sumofearning,0))+round(coalesce(b.amount,0))totalfixedSalary,round(coalesce(b.allowance,0)) allowence,case when e.pfflag=1 then 'Yes' else 'No' end PF,case when e.esiflag=1 then 'Yes' else 'No' end ESI from employee e left join a on a.employeecode=e.employeecode\r\n"
+			+ "            left join b on b.employeecode=e.employeecode where e.type='EMPLOYEE' and e.orgid=?1 and e.active=1")
+	Set<Object[]> getLatestSalaryDetails(Long orgId);
+
 
 
 //	EmployeeVO findByEmployeeVO(String empCode);

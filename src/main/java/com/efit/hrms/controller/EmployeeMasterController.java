@@ -1036,6 +1036,31 @@ public class EmployeeMasterController extends BaseController{
 	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
 	    return ResponseEntity.ok().body(responseDTO);
 	}
+	
+	@GetMapping("/getLatestSalaryforAllEmployee")
+	public ResponseEntity<ResponseDTO> getLatestSalaryforAllEmployee(@RequestParam Long orgId) {
+
+	    String methodName = "getLatestSalaryforAllEmployee()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+	    List<Map<String, Object>> latestSalary;
+
+	    try {
+	    	latestSalary = employeeMasterService.getAllEmployeeLatesSalaryDetails(orgId);
+	    	responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Employee Latest Salary details retrieved successfully");
+	        responseObjectsMap.put("latestSalary", latestSalary); // ✅ Correct key name
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve Employee Latest Salary Details", errorMsg);
+	    }
+
+	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	    return ResponseEntity.ok().body(responseDTO);
+	}
 
 }
 

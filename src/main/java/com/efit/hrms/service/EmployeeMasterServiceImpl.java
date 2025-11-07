@@ -1266,4 +1266,32 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		return yearList;
 	}
 
+	@Override
+	public List<Map<String, Object>> getAllEmployeeLatesSalaryDetails(Long orgId) {
+
+		Set<Object[]> latestSalary = employeeRepo.getLatestSalaryDetails(orgId);
+		return getLatestSalary(latestSalary);
+	}
+
+	private List<Map<String, Object>> getLatestSalary(Set<Object[]> latestSalary) {
+		List<Map<String, Object>> salaryList = new ArrayList<>();
+		for (Object[] ob : latestSalary) {
+			Map<String, Object> mp = new HashMap<String, Object>();
+
+			mp.put("employeecode", ob[0] != null ? ob[0].toString() : null);
+		    mp.put("employee", ob[1] != null ? ob[1].toString() : null);
+		    mp.put("designation", ob[2] != null ? ob[2].toString() : null);
+		    mp.put("department", ob[3] != null ? ob[3].toString() : null);
+		    mp.put("fixedBank", ob[4] != null ? ob[4] : 0);
+		    mp.put("cash", ob[5] != null ? ob[5] : 0);
+		    mp.put("totalfixedSalary", ob[6] != null ? ob[6] : 0);
+		    mp.put("allowance", ob[7] != null ? ob[7] : 0);
+		    mp.put("PF", ob[8] != null ? ob[8].toString() : "No");
+		    mp.put("ESI", ob[9] != null ? ob[9].toString() : "No");
+		    
+		    salaryList.add(mp);
+		}
+		return salaryList;
+	}
+
 }
