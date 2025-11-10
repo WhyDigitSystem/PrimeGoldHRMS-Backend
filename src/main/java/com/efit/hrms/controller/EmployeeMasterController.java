@@ -988,8 +988,7 @@ public class EmployeeMasterController extends BaseController{
 
 	
 	@GetMapping("/getBankAndCashAmtForSalaryProcess")
-	public ResponseEntity<ResponseDTO> getBankAndCashAmtForSalaryProcess(
-	        @RequestParam Long totalCompanyWorkingDays,@RequestParam BigDecimal empSalaryDays,@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branchCode,@RequestParam Long month,@RequestParam Long year) {
+	public ResponseEntity<ResponseDTO> getBankAndCashAmtForSalaryProcess(@RequestParam Long orgId,@RequestParam String employeeCode,@RequestParam String branchCode,@RequestParam Long month,@RequestParam Long year) {
 
 	    String methodName = "getBankAndCashAmtForSalaryProcess()";
 	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
@@ -999,7 +998,7 @@ public class EmployeeMasterController extends BaseController{
 	    List<Map<String, Object>> salaryProcessVO;
 
 	    try {
-	    	salaryProcessVO = employeeMasterService.getBankAndCashAmtForSalaryProcess( totalCompanyWorkingDays,  empSalaryDays,  orgId,  employeeCode,  branchCode,month,year);
+	    	salaryProcessVO = employeeMasterService.getBankAndCashAmtForSalaryProcess( orgId,  employeeCode,  branchCode,month,year);
 	        responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "NetPay details retrieved successfully");
 	        responseObjectsMap.put("salaryProcessVO", salaryProcessVO); // ✅ Correct key name
 	        responseDTO = createServiceResponse(responseObjectsMap);
@@ -1032,6 +1031,31 @@ public class EmployeeMasterController extends BaseController{
 	        String errorMsg = e.getMessage();
 	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
 	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve Year and Month details", errorMsg);
+	    }
+
+	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+	    return ResponseEntity.ok().body(responseDTO);
+	}
+	
+	@GetMapping("/getLatestSalaryforAllEmployee")
+	public ResponseEntity<ResponseDTO> getLatestSalaryforAllEmployee(@RequestParam Long orgId) {
+
+	    String methodName = "getLatestSalaryforAllEmployee()";
+	    LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+
+	    Map<String, Object> responseObjectsMap = new HashMap<>();
+	    ResponseDTO responseDTO;
+	    List<Map<String, Object>> latestSalary;
+
+	    try {
+	    	latestSalary = employeeMasterService.getAllEmployeeLatesSalaryDetails(orgId);
+	    	responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Employee Latest Salary details retrieved successfully");
+	        responseObjectsMap.put("latestSalary", latestSalary); // ✅ Correct key name
+	        responseDTO = createServiceResponse(responseObjectsMap);
+	    } catch (Exception e) {
+	        String errorMsg = e.getMessage();
+	        LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+	        responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve Employee Latest Salary Details", errorMsg);
 	    }
 
 	    LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
