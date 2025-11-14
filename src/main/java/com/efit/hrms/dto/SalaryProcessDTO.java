@@ -57,4 +57,7 @@ public class SalaryProcessDTO {
 	private String branch;
 	private String branchCode;
 	private Long orgId;
+	private BigDecimal ptAmount;
+	private BigDecimal tdsAmount;
+	private BigDecimal fixedWages;
 }
