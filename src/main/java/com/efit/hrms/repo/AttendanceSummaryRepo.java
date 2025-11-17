@@ -23,11 +23,11 @@ public interface AttendanceSummaryRepo extends JpaRepository<AttendanceSummaryVO
 			String branch);
 
 	@Query(nativeQuery = true, value = " SELECT * FROM attendancesummary a\r\n"
-			+ "    WHERE (?1 = 'ALL' OR a.empcode = ?1)"
+			+ "    WHERE (?1 = 'All' OR a.empcode = ?1)"
 			+ "     AND (?2 IS NULL OR a.month = ?2)\r\n"
 			+ "      AND (?3 IS NULL OR a.finyear = ?3)\r\n"
 			+ "      AND a.orgid = ?4\r\n"
-			+ "      AND (?5 = 'ALL' OR UPPER(a.branch) = UPPER(?5))\r\n"
+			+ "      AND (?5 = 'All' OR UPPER(a.branch) = UPPER(?5))\r\n"
 			+ "      AND a.approvestatus = 'APPROVED'")   
 	List<AttendanceSummaryVO> getAttendanceSummaryByOrgId(String empCode,Integer month,String finYear,Long orgId, String branch);
 	

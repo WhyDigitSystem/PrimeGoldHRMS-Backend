@@ -1290,6 +1290,6 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 		    salaryList.add(mp);
 		}
 		return salaryList;
-	}
+	}	
 
 }

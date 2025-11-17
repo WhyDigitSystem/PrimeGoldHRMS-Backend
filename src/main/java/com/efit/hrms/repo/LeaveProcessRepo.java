@@ -326,7 +326,5 @@ public interface LeaveProcessRepo extends JpaRepository<LeaveProcessVO, Long>{
 
 
 
-//	List<LeaveProcessVO> findByEmployeeCode(String employeeCode, Long orgId, String selectMonth, String selectYear);
 
-//	List<LeaveProcessVO> findByEmployeeCode(String employeeCode, Long orgId, String month, String year);
 }

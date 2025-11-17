@@ -431,7 +431,7 @@ public class CheckInOutController extends BaseController{
 				ResponseDTO responseDTO = null;
 				List<AttendanceSummaryVO> attendanceSummaryVO = null;
 				try {
-					attendanceSummaryVO = checkInOutService.getAttendanceSummaryByOrgId(  empCode, month, finYear, orgId,  branch);
+					attendanceSummaryVO = checkInOutService.getAttendanceSummaryByOrgId(empCode, month, finYear, orgId,  branch);
 				} catch (Exception e) {
 					errorMsg = e.getMessage();
 					LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);

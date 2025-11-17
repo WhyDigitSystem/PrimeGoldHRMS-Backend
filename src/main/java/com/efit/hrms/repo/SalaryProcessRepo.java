@@ -1546,7 +1546,22 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 			
 			
 			
-			@Query(nativeQuery = true, value = "select finyear,month as month from attendancesummary where (orgid,finyear,month,empcode,empname) not in(select orgid,year,month,employeecode,employeename from salaryprocess group by orgid,year,month,employeecode,employeename) and orgid=?1 group by finyear,month order by finyear,month asc")
+			@Query(nativeQuery = true, value = "SELECT a.finyear,\r\n"
+					+ "       a.month AS month,a.empcode\r\n"
+					+ "FROM attendancesummary a\r\n"
+					+ "JOIN employee e ON a.empcode = e.employeecode and e.category=1\r\n"
+					+ "WHERE (a.orgid, a.finyear, a.month, a.empcode)\r\n"
+					+ "      NOT IN (\r\n"
+					+ "            SELECT sp.orgid,\r\n"
+					+ "                   sp.year,\r\n"
+					+ "                   sp.month,\r\n"
+					+ "                   sp.employeecode,\r\n"
+					+ "            FROM salaryprocess sp\r\n"
+					+ "            GROUP BY sp.orgid, sp.year, sp.month, sp.employeecode\r\n"
+					+ "      )\r\n"
+					+ "  AND a.orgid = ?1\r\n"
+					+ "GROUP BY a.finyear, a.month,a.empcode\r\n"
+					+ "ORDER BY a.finyear, a.month,a.empcode ASC")
 				Set<Object[]>getYearAndMonth(Long orgId);
 
 				
