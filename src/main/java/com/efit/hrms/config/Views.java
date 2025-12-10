@@ -125,6 +125,16 @@ public class Views {
     			+ "    ExpiryStartDate     DATE,\r\n"
     			+ "    ExpiryEndDate       DATE\r\n"
     			+ ")");
+    	
+    	jdbcTemplate.execute("DROP FUNCTION IF EXISTS isSunday");
+
+    	String sql =
+    	    "CREATE FUNCTION isSunday(inDate DATE) " +
+    	    "RETURNS VARCHAR(3) " +
+    	    "DETERMINISTIC " +
+    	    "RETURN (CASE WHEN DAYOFWEEK(inDate) = 1 THEN 'Yes' ELSE 'No' END)";
+
+    	jdbcTemplate.execute(sql);
     }
     
     

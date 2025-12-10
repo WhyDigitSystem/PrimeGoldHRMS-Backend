@@ -757,10 +757,12 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("totalCompanyWorkingDays",record[4] != null ? record[4].toString() : "0");
 			map.put("empTotalWorkingDays",record[5] != null ? record[5].toString() : "0");
 			map.put("lopLeave", record[14] != null ? record[14].toString() : "0");
+			map.put("lopAmount", record[15] != null ? record[15].toString() : "0");
 			map.put("totalLeave","0");
 			map.put("empSalaryDays", "0");
-			map.put("otHours",  "0");
-			map.put("bankOtAmount", "0");
+			map.put("sunday",  record[17] != null ? record[17].toString() : "0");
+			map.put("otHours",  record[18] != null ? record[18].toString() : "0");
+			map.put("bankOtAmount", record[19] != null ? record[19].toString() : "0");
 			map.put("cashOtAmount",  "0");
 			detailsList.add(map);
 		}
@@ -1223,6 +1225,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			defaultMap.put("pfAmount", 0);
 			defaultMap.put("esiAmount", 0);
 			defaultMap.put("earnings", 0);
+			defaultMap.put("bankOtAmount", 0);
 			detailsList.add(defaultMap);
 			return detailsList;
 		}
@@ -1240,6 +1243,7 @@ public class EmployeeMasterServiceImpl implements EmployeeMasterService {
 			map.put("bankAdvance", record[12] != null ? record[12] : 0);
 			map.put("earnings", 0);
 			map.put("netPay", record[13] != null ? record[13] : 0);
+			map.put("bankOtAmount", record[19] != null ? record[19] : 0);
 			detailsList.add(map);
 		}
 

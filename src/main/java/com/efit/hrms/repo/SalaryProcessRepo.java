@@ -21,21 +21,12 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 	@Query(nativeQuery = true, value = "select * from salaryprocess a where a.salaryprocessid=?1 ")
 	SalaryProcessVO getSalaryProcessById(Long id);
 
-	@Query(nativeQuery = true, value = "SELECT \r\n"
-			+ "    a.amount, \r\n"
-			+ "    a.sumofearning, \r\n"
-			+ "    a.sumofdetection, \r\n"
-			+ "    COALESCE(SUM(ot.bankotamount), 0) AS totalotamount\r\n"
-			+ "FROM salarystructure a\r\n"
-			+ "LEFT JOIN otcalculation ot\r\n"
-			+ "    ON a.employeecode = ot.empcode\r\n"
-			+ "    AND ot.status = 'APPROVED'\r\n"
-			+ "WHERE a.orgid = ?1\r\n"
-			+ "  AND a.employeecode = ?2\r\n"
-			+ "GROUP BY a.amount, a.sumofearning, a.sumofdetection, a.date\r\n"
-			+ "ORDER BY a.date DESC\r\n"
-			+ "LIMIT 1 \r\n"
-			+ " ")
+	@Query(nativeQuery = true, value = "SELECT \r\n" + "    a.amount, \r\n" + "    a.sumofearning, \r\n"
+			+ "    a.sumofdetection, \r\n" + "    COALESCE(SUM(ot.bankotamount), 0) AS totalotamount\r\n"
+			+ "FROM salarystructure a\r\n" + "LEFT JOIN otcalculation ot\r\n" + "    ON a.employeecode = ot.empcode\r\n"
+			+ "    AND ot.status = 'APPROVED'\r\n" + "WHERE a.orgid = ?1\r\n" + "  AND a.employeecode = ?2\r\n"
+			+ "GROUP BY a.amount, a.sumofearning, a.sumofdetection, a.date\r\n" + "ORDER BY a.date DESC\r\n"
+			+ "LIMIT 1 \r\n" + " ")
 	Set<Object[]> getSalaryStructureForSalaryProcess(Long orgId, String employeeCode);
 
 //	@Query(value = "            SELECT ROUND((?2 / ?1) * ?3) - ?4 AS netPay \r\n"
@@ -47,39 +38,25 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //		       nativeQuery = true)
 //		Set<Object[]> getNetPayForSalaryProcess(BigDecimal grossPay, BigDecimal sumOfDetection);
 
+	@Query(value = "	SELECT ROUND(\r\n" + "    ((CAST(?2 AS DECIMAL(10,2)) - CAST(?4 AS DECIMAL(10,2))) \r\n"
+			+ "     / CAST(?1 AS DECIMAL(10,2))) \r\n" + "     * CAST(?3 AS DECIMAL(10,2)) \r\n"
+			+ "     + CAST(?5 AS DECIMAL(10,2))\r\n" + ") AS payOnHand " + "", nativeQuery = true)
+	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay,
+			BigDecimal empSalaryDays, BigDecimal sumOfDetection, BigDecimal otAmount);
 
-	@Query(value = "	SELECT ROUND(\r\n"
-			+ "    ((CAST(?2 AS DECIMAL(10,2)) - CAST(?4 AS DECIMAL(10,2))) \r\n"
-			+ "     / CAST(?1 AS DECIMAL(10,2))) \r\n"
-			+ "     * CAST(?3 AS DECIMAL(10,2)) \r\n"
-			+ "     + CAST(?5 AS DECIMAL(10,2))\r\n"
-			+ ") AS payOnHand "
-			+ "", 
-		       nativeQuery = true)
-	Set<Object[]> getPayOnHandsForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal grossPay, BigDecimal empSalaryDays,
-			BigDecimal sumOfDetection, BigDecimal otAmount);
+	@Query(nativeQuery = true, value = " SELECT a.*\r\n" + "    FROM salaryprocess a\r\n" + "    JOIN employee e \r\n"
+			+ "        ON e.employeecode = a.employeecode \r\n" + "       AND e.orgid = a.orgid\r\n"
+			+ "    WHERE a.orgid = ?1\r\n" + "      AND (?2 = 0 OR a.month = ?2)\r\n"
+			+ "      AND (?3 = 'ALL' OR a.year = ?3)\r\n" + "      AND (?4 = 'ALL' OR a.employeecode = ?4)\r\n"
+			+ "      AND (?5 = 'ALL' OR e.department = ?5)\r\n" + "      AND a.approvedstatus = 'APPROVED'")
+	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year, String employeeCode,
+			String department);
 
-	
-
-	@Query(nativeQuery = true, value = " SELECT a.*\r\n"
-			+ "    FROM salaryprocess a\r\n"
-			+ "    JOIN employee e \r\n"
-			+ "        ON e.employeecode = a.employeecode \r\n"
-			+ "       AND e.orgid = a.orgid\r\n"
-			+ "    WHERE a.orgid = ?1\r\n"
-			+ "      AND (?2 = 0 OR a.month = ?2)\r\n"
-			+ "      AND (?3 = 'ALL' OR a.year = ?3)\r\n"
-			+ "      AND (?4 = 'ALL' OR a.employeecode = ?4)\r\n"
-			+ "      AND (?5 = 'ALL' OR e.department = ?5)\r\n"
-			+ "      AND a.approvedstatus = 'APPROVED'")
-	List<SalaryProcessVO> getApprovedSalaryProcessReport(Long orgId, Long month, String year, String employeeCode, String department);
-	
 	@Query(nativeQuery = true, value = "select distinct(a.employee),a.orgid,a.employeecode ,a.joiningdate, a.designation,a.department ,a.branch,a.branchcode,a.accountno,a.panno,a.uanno,empsalarydays as effectiveworkingdays,totalcompanyworkingdays as monthdays,a.bankname,s.lopleave,s.othours from employee a, salaryprocess s \r\n"
-			+ "where a.employeecode =?2\r\n"
-			+ " and a.employeecode = s.employeecode\r\n"
+			+ "where a.employeecode =?2\r\n" + " and a.employeecode = s.employeecode\r\n"
 			+ "and a.orgid=?1 and month=?3")
-	Set<Object[]> findpayslipemployeeandearningsdetails(Long orgId, String Employeecode, int month );
-	
+	Set<Object[]> findpayslipemployeeandearningsdetails(Long orgId, String Employeecode, int month);
+
 //	@Query(nativeQuery = true, value = "SELECT \r\n"
 //			+ "    employeename,\r\n"
 //			+ "    orgid,\r\n"
@@ -161,119 +138,55 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //			+ ") AS a\r\n"
 //			+ "")
 //	List<Object[]> findpayslipearningsdetails(Long orgId, String employeeCode, Long month, Long year);
-	
-	
-	
-	@Query(nativeQuery = true, value = " SELECT \r\n"
-			+ "    employeename,\r\n"
-			+ "    orgid,\r\n"
-			+ "    employeecode,\r\n"
-			+ "    heading,\r\n"
-			+ "    amount,\r\n"
-			+ "    totalcompanyworkingdays,\r\n"
-			+ "    empsalarydays,\r\n"
-			+ "    actuals,\r\n"
-			+ "    payslipeffectivedate\r\n"
-			+ "FROM (\r\n"
-			+ "    -- Individual earnings from latest salarystructure\r\n"
-			+ "    SELECT \r\n"
-			+ "        b.employeename,\r\n"
-			+ "        b.orgid,\r\n"
-			+ "        b.employeecode,\r\n"
-			+ "        d.heading,\r\n"
-			+ "        d.amount,\r\n"
-			+ "        s.totalcompanyworkingdays,\r\n"
+
+	@Query(nativeQuery = true, value = " SELECT \r\n" + "    employeename,\r\n" + "    orgid,\r\n"
+			+ "    employeecode,\r\n" + "    heading,\r\n" + "    amount,\r\n" + "    totalcompanyworkingdays,\r\n"
+			+ "    empsalarydays,\r\n" + "    actuals,\r\n" + "    payslipeffectivedate\r\n" + "FROM (\r\n"
+			+ "    -- Individual earnings from latest salarystructure\r\n" + "    SELECT \r\n"
+			+ "        b.employeename,\r\n" + "        b.orgid,\r\n" + "        b.employeecode,\r\n"
+			+ "        d.heading,\r\n" + "        d.amount,\r\n" + "        s.totalcompanyworkingdays,\r\n"
 			+ "        s.empsalarydays,\r\n"
 			+ "        ROUND((d.amount / s.totalcompanyworkingdays) * s.empsalarydays, 0) AS actuals,\r\n"
-			+ "        a.payslipeffectivedate\r\n"
-			+ "    FROM (\r\n"
-			+ "        SELECT * \r\n"
-			+ "        FROM salarystructure \r\n"
-			+ "        WHERE active = 1 AND employeecode = ?2 AND orgid = ?1\r\n"
-			+ "        ORDER BY createdon DESC\r\n"
-			+ "        LIMIT 1\r\n"
-			+ "    ) b\r\n"
+			+ "        a.payslipeffectivedate\r\n" + "    FROM (\r\n" + "        SELECT * \r\n"
+			+ "        FROM salarystructure \r\n" + "        WHERE active = 1 AND employeecode = ?2 AND orgid = ?1\r\n"
+			+ "        ORDER BY createdon DESC\r\n" + "        LIMIT 1\r\n" + "    ) b\r\n"
 			+ "    JOIN employee a ON a.employeecode = b.employeecode\r\n"
 			+ "    JOIN salaryearningdetails d ON b.salarystructureid = d.salarystructureid\r\n"
-			+ "    JOIN salaryprocess s ON b.employeecode = s.employeecode\r\n"
-			+ "    WHERE \r\n"
-			+ "        s.month = ?3\r\n"
-			+ "        AND s.year = ?4\r\n"
+			+ "    JOIN salaryprocess s ON b.employeecode = s.employeecode\r\n" + "    WHERE \r\n"
+			+ "        s.month = ?3\r\n" + "        AND s.year = ?4\r\n"
 			+ "        AND (?3 >= MONTH(a.payslipeffectivedate) OR YEAR(a.payslipeffectivedate) <= ?4)\r\n"
-			+ "    GROUP BY  \r\n"
-			+ "        b.employeename,\r\n"
-			+ "        b.orgid,\r\n"
-			+ "        b.employeecode,\r\n"
-			+ "        d.heading,\r\n"
-			+ "        d.amount,\r\n"
-			+ "        s.totalcompanyworkingdays,\r\n"
-			+ "        s.empsalarydays,\r\n"
-			+ "        a.payslipeffectivedate\r\n"
-			+ "\r\n"
-			+ "    UNION ALL\r\n"
-			+ "\r\n"
-			+ "    -- OT Amount as separate heading\r\n"
-			+ "    SELECT\r\n"
-			+ "        s.employeename,\r\n"
-			+ "        s.orgid,\r\n"
-			+ "        s.employeecode,\r\n"
-			+ "        'Other Allowance' AS heading,\r\n"
-			+ "        s.bankotamount AS amount,\r\n"
-			+ "        s.totalcompanyworkingdays,\r\n"
-			+ "        s.empsalarydays,\r\n"
-			+ "        s.bankotamount AS actuals,\r\n"
-			+ "        a.payslipeffectivedate\r\n"
-			+ "    FROM \r\n"
-			+ "        salaryprocess s\r\n"
-			+ "    JOIN employee a ON a.employeecode = s.employeecode\r\n"
-			+ "    WHERE \r\n"
-			+ "        s.employeecode = ?2\r\n"
-			+ "        AND s.orgid = ?1\r\n"
-			+ "        AND s.month = ?3\r\n"
-			+ "        AND s.year = ?4\r\n"
-			+ "        AND s.bankotamount > 0 \r\n"
-			+ "\r\n"
-			+ "    UNION ALL\r\n"
-			+ "\r\n"
-			+ "    -- Total earnings (including OT)\r\n"
-			+ "    SELECT \r\n"
-			+ "        '' AS employeename,\r\n"
-			+ "        '' AS orgid,\r\n"
-			+ "        '' AS employeecode,\r\n"
+			+ "    GROUP BY  \r\n" + "        b.employeename,\r\n" + "        b.orgid,\r\n"
+			+ "        b.employeecode,\r\n" + "        d.heading,\r\n" + "        d.amount,\r\n"
+			+ "        s.totalcompanyworkingdays,\r\n" + "        s.empsalarydays,\r\n"
+			+ "        a.payslipeffectivedate\r\n" + "\r\n" + "    UNION ALL\r\n" + "\r\n"
+			+ "    -- OT Amount as separate heading\r\n" + "    SELECT\r\n" + "        s.employeename,\r\n"
+			+ "        s.orgid,\r\n" + "        s.employeecode,\r\n" + "        'Other Allowance' AS heading,\r\n"
+			+ "        s.bankotamount AS amount,\r\n" + "        s.totalcompanyworkingdays,\r\n"
+			+ "        s.empsalarydays,\r\n" + "        s.bankotamount AS actuals,\r\n"
+			+ "        a.payslipeffectivedate\r\n" + "    FROM \r\n" + "        salaryprocess s\r\n"
+			+ "    JOIN employee a ON a.employeecode = s.employeecode\r\n" + "    WHERE \r\n"
+			+ "        s.employeecode = ?2\r\n" + "        AND s.orgid = ?1\r\n" + "        AND s.month = ?3\r\n"
+			+ "        AND s.year = ?4\r\n" + "        AND s.bankotamount > 0 \r\n" + "\r\n" + "    UNION ALL\r\n"
+			+ "\r\n" + "    -- Total earnings (including OT)\r\n" + "    SELECT \r\n"
+			+ "        '' AS employeename,\r\n" + "        '' AS orgid,\r\n" + "        '' AS employeecode,\r\n"
 			+ "        'Total Earnings' AS heading,\r\n"
 			+ "        SUM(d.amount) + COALESCE(MAX(s.bankotamount),0) AS amount,\r\n"
-			+ "        0 AS totalcompanyworkingdays,\r\n"
-			+ "        0 AS empsalarydays,\r\n"
+			+ "        0 AS totalcompanyworkingdays,\r\n" + "        0 AS empsalarydays,\r\n"
 			+ "        SUM(ROUND((d.amount / s.totalcompanyworkingdays) * s.empsalarydays, 0)) + COALESCE(MAX(s.bankotamount),0) AS actuals,\r\n"
-			+ "        a.payslipeffectivedate\r\n"
-			+ "    FROM (\r\n"
-			+ "        SELECT * \r\n"
-			+ "        FROM salarystructure \r\n"
-			+ "        WHERE active = 1 AND employeecode = ?2 AND orgid = ?1\r\n"
-			+ "        ORDER BY createdon DESC\r\n"
-			+ "        LIMIT 1\r\n"
-			+ "    ) b\r\n"
+			+ "        a.payslipeffectivedate\r\n" + "    FROM (\r\n" + "        SELECT * \r\n"
+			+ "        FROM salarystructure \r\n" + "        WHERE active = 1 AND employeecode = ?2 AND orgid = ?1\r\n"
+			+ "        ORDER BY createdon DESC\r\n" + "        LIMIT 1\r\n" + "    ) b\r\n"
 			+ "    JOIN employee a ON a.employeecode = b.employeecode\r\n"
 			+ "    JOIN salaryearningdetails d ON b.salarystructureid = d.salarystructureid\r\n"
-			+ "    JOIN salaryprocess s ON b.employeecode = s.employeecode\r\n"
-			+ "    WHERE \r\n"
-			+ "        s.month = ?3\r\n"
-			+ "        AND s.year = ?4\r\n"
+			+ "    JOIN salaryprocess s ON b.employeecode = s.employeecode\r\n" + "    WHERE \r\n"
+			+ "        s.month = ?3\r\n" + "        AND s.year = ?4\r\n"
 			+ "        AND (?3 >= MONTH(a.payslipeffectivedate) OR YEAR(a.payslipeffectivedate) <= ?4)\r\n"
-			+ "    GROUP BY \r\n"
-			+ "        a.payslipeffectivedate,\r\n"
-			+ "        s.totalcompanyworkingdays\r\n"
-			+ ") AS a "
-			+ "ORDER BY \r\n"
-			+ "    CASE \r\n"
-			+ "        WHEN heading = 'Basic Salary' THEN 1\r\n"
-			+ "        WHEN heading = 'House Rent Allowance' THEN 2\r\n"
-			+ "        WHEN heading = 'Other' THEN 3\r\n"
+			+ "    GROUP BY \r\n" + "        a.payslipeffectivedate,\r\n" + "        s.totalcompanyworkingdays\r\n"
+			+ ") AS a " + "ORDER BY \r\n" + "    CASE \r\n" + "        WHEN heading = 'Basic Salary' THEN 1\r\n"
+			+ "        WHEN heading = 'House Rent Allowance' THEN 2\r\n" + "        WHEN heading = 'Other' THEN 3\r\n"
 			+ "        WHEN heading = 'Other Allowance' THEN 4\r\n"
-			+ "        WHEN heading = 'Total Earnings' THEN 99  -- Always last\r\n"
-			+ "        ELSE 5\r\n"
-			+ "    END\r\n"
-			+ "")
+			+ "        WHEN heading = 'Total Earnings' THEN 99  -- Always last\r\n" + "        ELSE 5\r\n"
+			+ "    END\r\n" + "")
 	List<Object[]> findpayslipearningsdetails(Long orgId, String employeeCode, Long month, Long year);
 
 //	@Query(value = "WITH latest_structure AS (\r\n"
@@ -350,173 +263,77 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //			+ " \r\n"
 //			+ "", nativeQuery = true)
 //	List<Object[]> findpayslipdeductionsdetails(Long orgId, String Employeecode , Long Month,Long year);
-	
-	
-	@Query(value = "SELECT *\r\n"
-			+ "FROM (\r\n"
-			+ "    -- PF from salaryprocess\r\n"
-			+ "    SELECT \r\n"
-			+ "        sp.employeename AS employee,\r\n"
-			+ "        sp.orgid,\r\n"
-			+ "        sp.employeecode,\r\n"
-			+ "        'PF' AS heading,\r\n"
-			+ "        sp.pfamount AS amount\r\n"
-			+ "    FROM salaryprocess sp\r\n"
-			+ "    WHERE sp.orgid = ?1\r\n"
-			+ "      AND sp.employeecode = ?2\r\n"
-			+ "      AND sp.month = ?3\r\n"
-			+ "      AND sp.year = ?4\r\n"
-			+ "      AND sp.approvedstatus = 'APPROVED'\r\n"
-			+ "\r\n"
-			+ "    UNION ALL\r\n"
-			+ "\r\n"
-			+ "    -- ESI from salaryprocess\r\n"
-			+ "    SELECT \r\n"
-			+ "        sp.employeename AS employee,\r\n"
-			+ "        sp.orgid,\r\n"
-			+ "        sp.employeecode,\r\n"
-			+ "        'ESI' AS heading,\r\n"
-			+ "        sp.esiamount AS amount\r\n"
-			+ "    FROM salaryprocess sp\r\n"
-			+ "    WHERE sp.orgid = ?1\r\n"
-			+ "      AND sp.employeecode = ?2\r\n"
-			+ "      AND sp.month = ?3\r\n"
-			+ "      AND sp.year = ?4\r\n"
-			+ "      AND sp.approvedstatus = 'APPROVED'\r\n"
-			+ "\r\n"
-			+ "    UNION ALL\r\n"
-			+ "\r\n"
-			+ "    -- Advance (Bank Amount) from salaryprocess\r\n"
-			+ "    SELECT \r\n"
-			+ "        sp.employeename AS employee,\r\n"
-			+ "        sp.orgid,\r\n"
-			+ "        sp.employeecode,\r\n"
-			+ "        'Advance' AS heading,\r\n"
-			+ "        sp.bankadvance AS amount\r\n"
-			+ "    FROM salaryprocess sp\r\n"
-			+ "    WHERE sp.orgid = ?1\r\n"
-			+ "      AND sp.employeecode = ?2\r\n"
-			+ "      AND sp.month = ?3\r\n"
-			+ "      AND sp.year = ?4\r\n"
-			+ "      AND sp.approvedstatus = 'APPROVED'\r\n"
-			+ "\r\n"
-			+ "    UNION ALL\r\n"
-			+ "\r\n"
-			+ "    -- Total Deduction (PF + ESI + Advance)\r\n"
-			+ "    SELECT\r\n"
-			+ "        '' AS employee,\r\n"
-			+ "        '' AS orgid,\r\n"
-			+ "        '' AS employeecode,\r\n"
+
+	@Query(value = "SELECT *\r\n" + "FROM (\r\n" + "    -- PF from salaryprocess\r\n" + "    SELECT \r\n"
+			+ "        sp.employeename AS employee,\r\n" + "        sp.orgid,\r\n" + "        sp.employeecode,\r\n"
+			+ "        'PF' AS heading,\r\n" + "        sp.pfamount AS amount\r\n" + "    FROM salaryprocess sp\r\n"
+			+ "    WHERE sp.orgid = ?1\r\n" + "      AND sp.employeecode = ?2\r\n" + "      AND sp.month = ?3\r\n"
+			+ "      AND sp.year = ?4\r\n" + "      AND sp.approvedstatus = 'APPROVED'\r\n" + "\r\n"
+			+ "    UNION ALL\r\n" + "\r\n" + "    -- ESI from salaryprocess\r\n" + "    SELECT \r\n"
+			+ "        sp.employeename AS employee,\r\n" + "        sp.orgid,\r\n" + "        sp.employeecode,\r\n"
+			+ "        'ESI' AS heading,\r\n" + "        sp.esiamount AS amount\r\n" + "    FROM salaryprocess sp\r\n"
+			+ "    WHERE sp.orgid = ?1\r\n" + "      AND sp.employeecode = ?2\r\n" + "      AND sp.month = ?3\r\n"
+			+ "      AND sp.year = ?4\r\n" + "      AND sp.approvedstatus = 'APPROVED'\r\n" + "\r\n"
+			+ "    UNION ALL\r\n" + "\r\n" + "    -- Advance (Bank Amount) from salaryprocess\r\n" + "    SELECT \r\n"
+			+ "        sp.employeename AS employee,\r\n" + "        sp.orgid,\r\n" + "        sp.employeecode,\r\n"
+			+ "        'Advance' AS heading,\r\n" + "        sp.bankadvance AS amount\r\n"
+			+ "    FROM salaryprocess sp\r\n" + "    WHERE sp.orgid = ?1\r\n" + "      AND sp.employeecode = ?2\r\n"
+			+ "      AND sp.month = ?3\r\n" + "      AND sp.year = ?4\r\n"
+			+ "      AND sp.approvedstatus = 'APPROVED'\r\n" + "\r\n" + "    UNION ALL\r\n" + "\r\n"
+			+ "    -- Total Deduction (PF + ESI + Advance)\r\n" + "    SELECT\r\n" + "        '' AS employee,\r\n"
+			+ "        '' AS orgid,\r\n" + "        '' AS employeecode,\r\n"
 			+ "        'Total Deduction' AS heading,\r\n"
 			+ "        COALESCE(sp.pfamount,0) + COALESCE(sp.esiamount,0) + COALESCE(sp.bankadvance,0) AS amount\r\n"
-			+ "    FROM salaryprocess sp\r\n"
-			+ "    WHERE sp.orgid = ?1\r\n"
-			+ "      AND sp.employeecode = ?2\r\n"
-			+ "      AND sp.month = ?3\r\n"
-			+ "      AND sp.year = ?4\r\n"
-			+ "      AND sp.approvedstatus = 'APPROVED'\r\n"
-			+ ") AS a\r\n"
-			+ "WHERE amount > 0\r\n"
-			+ "ORDER BY \r\n"
-			+ "    CASE \r\n"
-			+ "        WHEN heading = 'PF' THEN 1\r\n"
-			+ "        WHEN heading = 'ESI' THEN 2\r\n"
+			+ "    FROM salaryprocess sp\r\n" + "    WHERE sp.orgid = ?1\r\n" + "      AND sp.employeecode = ?2\r\n"
+			+ "      AND sp.month = ?3\r\n" + "      AND sp.year = ?4\r\n"
+			+ "      AND sp.approvedstatus = 'APPROVED'\r\n" + ") AS a\r\n" + "WHERE amount > 0\r\n" + "ORDER BY \r\n"
+			+ "    CASE \r\n" + "        WHEN heading = 'PF' THEN 1\r\n" + "        WHEN heading = 'ESI' THEN 2\r\n"
 			+ "        WHEN heading = 'Advance' THEN 3\r\n"
-			+ "        WHEN heading = 'Total Deduction' THEN 99  -- Always last\r\n"
-			+ "        ELSE 4\r\n"
-			+ "    END\r\n"
-			+ "    ", nativeQuery = true)
-			List<Object[]> findpayslipdeductionsdetails(Long orgId, String employeecode, Long month, Long year);
+			+ "        WHEN heading = 'Total Deduction' THEN 99  -- Always last\r\n" + "        ELSE 4\r\n"
+			+ "    END\r\n" + "    ", nativeQuery = true)
+	List<Object[]> findpayslipdeductionsdetails(Long orgId, String employeecode, Long month, Long year);
 
-	
-	
-	
-	@Query(nativeQuery = true, value ="        SELECT \r\n"
-			+ "    employee,\r\n"
-			+ "    orgid,\r\n"
-			+ "    employeecode,\r\n"
-			+ "    SUM(CASE \r\n"
-			+ "            WHEN heading = 'Total Earnings' THEN total \r\n"
-			+ "            ELSE -total \r\n"
-			+ "        END) AS totalsum\r\n"
-			+ "FROM (\r\n"
-			+ "    SELECT \r\n"
-			+ "        a.employee,\r\n"
-			+ "        a.orgid,\r\n"
-			+ "        a.employeecode,\r\n"
-			+ "        'Total Earnings' AS heading,\r\n"
+	@Query(nativeQuery = true, value = "        SELECT \r\n" + "    employee,\r\n" + "    orgid,\r\n"
+			+ "    employeecode,\r\n" + "    SUM(CASE \r\n"
+			+ "            WHEN heading = 'Total Earnings' THEN total \r\n" + "            ELSE -total \r\n"
+			+ "        END) AS totalsum\r\n" + "FROM (\r\n" + "    SELECT \r\n" + "        a.employee,\r\n"
+			+ "        a.orgid,\r\n" + "        a.employeecode,\r\n" + "        'Total Earnings' AS heading,\r\n"
 			+ "        SUM(ROUND((d.amount / s.emptotalworkingdays) * s.empsalarydays, 0)) AS total\r\n"
-			+ "    FROM \r\n"
-			+ "        salarystructure b\r\n"
+			+ "    FROM \r\n" + "        salarystructure b\r\n"
 			+ "        JOIN salaryearningdetails d ON b.salarystructureid = d.salarystructureid\r\n"
 			+ "        JOIN salaryprocess s ON b.employeecode = s.employeecode\r\n"
-			+ "        JOIN employee a ON a.employeecode = s.employeecode\r\n"
-			+ "    WHERE \r\n"
-			+ "        b.active = 1\r\n"
-			+ "        AND b.employeecode = ?2\r\n"
-			+ "        AND b.orgid = ?1\r\n"
-			+ "        AND MONTH(a.payslipeffectivedate) >= ?3\r\n"
-			+ "        AND s.month = ?3\r\n"
-			+ "        AND s.year = ?4\r\n"
-			+ "    GROUP BY \r\n"
-			+ "        a.employee,\r\n"
-			+ "        a.orgid,\r\n"
-			+ "        a.employeecode\r\n"
-			+ "    UNION \r\n"
-			+ "    SELECT \r\n"
-			+ "        a.employee,\r\n"
-			+ "        a.orgid,\r\n"
-			+ "        a.employeecode,\r\n"
-			+ "        'Total Deduction' AS heading,\r\n"
-			+ "        SUM(c.amount)\r\n"
-			+ "    FROM \r\n"
-			+ "        employee a\r\n"
+			+ "        JOIN employee a ON a.employeecode = s.employeecode\r\n" + "    WHERE \r\n"
+			+ "        b.active = 1\r\n" + "        AND b.employeecode = ?2\r\n" + "        AND b.orgid = ?1\r\n"
+			+ "        AND MONTH(a.payslipeffectivedate) >= ?3\r\n" + "        AND s.month = ?3\r\n"
+			+ "        AND s.year = ?4\r\n" + "    GROUP BY \r\n" + "        a.employee,\r\n" + "        a.orgid,\r\n"
+			+ "        a.employeecode\r\n" + "    UNION \r\n" + "    SELECT \r\n" + "        a.employee,\r\n"
+			+ "        a.orgid,\r\n" + "        a.employeecode,\r\n" + "        'Total Deduction' AS heading,\r\n"
+			+ "        SUM(c.amount)\r\n" + "    FROM \r\n" + "        employee a\r\n"
 			+ "        JOIN salarystructure b ON a.employeecode = b.employeecode\r\n"
 			+ "        JOIN salarydetectiondetails c ON c.salarystructureid = b.salarystructureid\r\n"
-			+ "    WHERE \r\n"
-			+ "        b.active = 1\r\n"
-			+ "        AND b.employeecode = ?2\r\n"
-			+ "        AND b.orgid = ?1\r\n"
-			+ "        AND ?3 >= MONTH(a.payslipeffectivedate)\r\n"
-			+ "        AND ?4 >= YEAR(a.payslipeffectivedate)\r\n"
-			+ "    GROUP BY \r\n"
-			+ "        a.employee,\r\n"
-			+ "        a.orgid,\r\n"
-			+ "        a.employeecode\r\n"
-			+ ") a\r\n"
-			+ "GROUP BY \r\n"
-			+ "    employee,\r\n"
-			+ "    orgid,\r\n"
-			+ "    employeecode")
-			Set<Object[]> findpayslipshandsondetails(Long orgId, String employeecode, Long month, Long year);
+			+ "    WHERE \r\n" + "        b.active = 1\r\n" + "        AND b.employeecode = ?2\r\n"
+			+ "        AND b.orgid = ?1\r\n" + "        AND ?3 >= MONTH(a.payslipeffectivedate)\r\n"
+			+ "        AND ?4 >= YEAR(a.payslipeffectivedate)\r\n" + "    GROUP BY \r\n" + "        a.employee,\r\n"
+			+ "        a.orgid,\r\n" + "        a.employeecode\r\n" + ") a\r\n" + "GROUP BY \r\n" + "    employee,\r\n"
+			+ "    orgid,\r\n" + "    employeecode")
+	Set<Object[]> findpayslipshandsondetails(Long orgId, String employeecode, Long month, Long year);
 
+	@Query(nativeQuery = true, value = "select companyid,companycode,companyname,address,city,state,zipcode,companylogo from company c \r\n"
+			+ "where companyid =?1")
+	Set<Object[]> findpayslipcompanydetails(Long orgId);
 
-			@Query(nativeQuery = true, value = "select companyid,companycode,companyname,address,city,state,zipcode,companylogo from company c \r\n"
-					+ "where companyid =?1")
-			Set<Object[]> findpayslipcompanydetails (Long orgId );
+	@Query("SELECT s FROM SalaryProcessVO s WHERE s.orgId = ?1 AND s.employeeCode = ?2 AND s.month = ?3 AND s.year = ?4")
+	List<SalaryProcessVO> findByOrgIdAndEmployeeCodeAndMonthAndYear(Long orgId, String employeeCode, Long month,
+			String year);
 
-			@Query("SELECT s FROM SalaryProcessVO s WHERE s.orgId = ?1 AND s.employeeCode = ?2 AND s.month = ?3 AND s.year = ?4")
-			List<SalaryProcessVO> findByOrgIdAndEmployeeCodeAndMonthAndYear(Long orgId, String employeeCode, Long month, String year);
+	@Query(value = "SELECT s.bankamount " + "FROM salaryprocess s "
+			+ "WHERE s.orgid = ?1 AND s.employeecode = ?2 AND s.month = ?3 AND s.year = ?4", nativeQuery = true)
+	Set<BigDecimal> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long month, String year);
 
-			
-			@Query(value = "SELECT s.bankamount " +
-		               "FROM salaryprocess s " +
-		               "WHERE s.orgid = ?1 AND s.employeecode = ?2 AND s.month = ?3 AND s.year = ?4",
-		       nativeQuery = true)
-		Set<BigDecimal> getpayslipPayOnHandAmount(Long orgId, String employeeCode, Long month, String year);
+	@Query(nativeQuery = true, value = "SELECT * " + "FROM salaryprocess a " + "WHERE a.orgid = ?1 "
+			+ "  AND (UPPER(?2) = 'ALL' OR UPPER(a.branch) = UPPER(?2)) " + "AND a.approvedstatus = 'PENDING'")
+	List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
 
-			
-			@Query(nativeQuery = true, value = 
-				    "SELECT * " +
-				    "FROM salaryprocess a " +
-				    "WHERE a.orgid = ?1 " +
-				    "  AND (UPPER(?2) = 'ALL' OR UPPER(a.branch) = UPPER(?2)) " +
-				    "AND a.approvedstatus = 'PENDING'"
-				)
-			List<SalaryProcessVO> getPendingSalaryProcessByOrgId(Long orgId, String branch);
-
-			
-			
 //			@Query(nativeQuery = true, value = 
 //				    "SELECT\r\n"
 //				    + "    -- Total earnings including OT\r\n"
@@ -612,7 +429,6 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //				)
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 //					Long orgId, String employeeCode, String branchCode, Long month, Long year);
-
 
 //			@Query(nativeQuery = true, value = 
 //				    "SELECT\r\n"
@@ -743,9 +559,8 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //				)
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 //					Long orgId, String employeeCode, String branchCode, Long month, Long year);
-			
-			
-			// bank amount with ot ,lop
+
+	// bank amount with ot ,lop
 //			@Query(nativeQuery = true, value = 
 //				    "  SELECT\r\n"
 //				    + "            -- Total Earnings (Base + OT)\r\n"
@@ -922,9 +737,8 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 //					Long orgId, String employeeCode, String branchCode, Long month, Long year);
 //			
-			
-			
-			//bank amount with ot,lop
+
+	// bank amount with ot,lop
 //			@Query(nativeQuery = true, value = 
 //				    "  SELECT\r\n"
 //				    + "    -- Total Earnings (Base + OT)\r\n"
@@ -1112,9 +926,8 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //				)
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 //					Long orgId, String employeeCode, String branchCode, Long month, Long year);
-			
-			
-			// otherallowance INCLUDE HRA ,PETROL
+
+	// otherallowance INCLUDE HRA ,PETROL
 //			@Query(nativeQuery = true, value = 
 //				    "\r\n"
 //				    + "\r\n"
@@ -1303,9 +1116,7 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //				)
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 //					Long orgId, String employeeCode, String branchCode, Long month, Long year);
-			
-			
-			
+
 //			@Query(nativeQuery = true, value = 
 //				            "\r\n"
 //				            + "\r\n"
@@ -1542,29 +1353,18 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //				)
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long totalCompanyWorkingDays, BigDecimal empSalaryDays,
 //					Long orgId, String employeeCode, String branchCode, Long month, Long year);
-			
-			
-			
-			
-			@Query(nativeQuery = true, value = "SELECT a.finyear,\r\n"
-					+ "       a.month AS month,a.empcode\r\n"
-					+ "FROM attendancesummary a\r\n"
-					+ "JOIN employee e ON a.empcode = e.employeecode and e.category=1\r\n"
-					+ "WHERE (a.orgid, a.finyear, a.month, a.empcode)\r\n"
-					+ "      NOT IN (\r\n"
-					+ "            SELECT sp.orgid,\r\n"
-					+ "                   sp.year,\r\n"
-					+ "                   sp.month,\r\n"
-					+ "                   sp.employeecode,\r\n"
-					+ "            FROM salaryprocess sp\r\n"
-					+ "            GROUP BY sp.orgid, sp.year, sp.month, sp.employeecode\r\n"
-					+ "      )\r\n"
-					+ "  AND a.orgid = ?1\r\n"
-					+ "GROUP BY a.finyear, a.month,a.empcode\r\n"
-					+ "ORDER BY a.finyear, a.month,a.empcode ASC")
-				Set<Object[]>getYearAndMonth(Long orgId);
 
-				
+	@Query(nativeQuery = true, value = "SELECT \r\n" + "    a.finyear,\r\n" + "    a.month AS month\r\n"
+			+ "FROM attendancesummary a\r\n" + "JOIN employee e \r\n" + "    ON a.empcode = e.employeecode \r\n"
+			+ "    AND e.category = 1\r\n" + "WHERE (a.orgid, a.finyear, a.month, a.empcode)\r\n" + "      NOT IN (\r\n"
+			+ "            SELECT \r\n" + "                sp.orgid,\r\n" + "                sp.year,\r\n"
+			+ "                sp.month,\r\n" + "                sp.employeecode\r\n"
+			+ "            FROM salaryprocess sp\r\n"
+			+ "            GROUP BY sp.orgid, sp.year, sp.month, sp.employeecode\r\n" + "      )\r\n"
+			+ "  AND a.orgid = ?1\r\n" + "GROUP BY \r\n" + "    a.finyear, \r\n" + "    a.month,\r\n"
+			+ "    a.empcode\r\n" + "ORDER BY \r\n" + "    a.finyear, \r\n" + "    a.month asc")
+	Set<Object[]> getYearAndMonth(Long orgId);
+
 //				@Query(nativeQuery = true, value = "WITH attendance AS (\r\n"
 //						+ "    SELECT empcode employeecode,totaldays,ROUND(salarydays) salarydays,ROUND(othours/8) otdays\r\n"
 //						+ "    FROM attendancesummary\r\n"
@@ -1650,112 +1450,213 @@ public interface SalaryProcessRepo extends JpaRepository<SalaryProcessVO, Long> 
 //						+ "t.pf,t.esi,t.bankadvance,t.banksalary salarypaid,t.cashadvance,(t.totalearnings-(t.pf+t.esi+t.bankadvance+t.banksalary))-t.cashadvance netPay,t.pf+t.esi+t.bankadvance totalDeduction from t where t.employeecode=?2 and t.employeecode not in(select employeecode from salaryprocess where orgid=?1 and year=?5 and month=?4 order by employeecode asc) order by t.employeecode asc")
 //			List<Object[]> getBankAndCashAmtForSalaryProcess(Long orgId, String employeeCode, String branchCode,
 //					Long month, Long year);
-			
-			@Query(nativeQuery = true, value = "WITH attendance AS (\r\n"
-					+ "    SELECT empcode employeecode,totaldays,ROUND(salarydays) salarydays,ROUND(othours/8) otdays\r\n"
-					+ "    FROM attendancesummary\r\n"
-					+ "    WHERE orgid=?1 AND finyear=?5 AND branchcode=?3 AND month=?4\r\n"
-					+ "),\r\n"
-					+ "ss AS (\r\n"
-					+ "    SELECT ss.*\r\n"
-					+ "    FROM salarystructure ss\r\n"
-					+ "    INNER JOIN (\r\n"
-					+ "        SELECT employeecode, MAX(salarystructureid) AS max_id\r\n"
-					+ "        FROM salarystructure\r\n"
-					+ "        GROUP BY employeecode\r\n"
-					+ "    ) latest ON ss.employeecode = latest.employeecode\r\n"
-					+ "            AND ss.salarystructureid = latest.max_id\r\n"
-					+ "),\r\n"
-					+ "op AS (\r\n"
-					+ "    SELECT op.*\r\n"
-					+ "    FROM otherpayments op\r\n"
-					+ "    INNER JOIN (\r\n"
-					+ "        SELECT employeecode, MAX(otherpaymentsid) AS max_id\r\n"
-					+ "        FROM otherpayments\r\n"
-					+ "        GROUP BY employeecode\r\n"
-					+ "    ) latest ON op.employeecode = latest.employeecode\r\n"
-					+ "            AND op.otherpaymentsid = latest.max_id\r\n"
-					+ "),\r\n"
-					+ "advance AS (\r\n"
-					+ "    SELECT employeecode,COALESCE(bank,0)bank,COALESCE(cash,0)cash\r\n"
-					+ "    FROM advanceupload\r\n"
-					+ "    WHERE orgid=?1 AND year=?5 AND branchcode=?3 AND month=?4\r\n"
-					+ "),\r\n"
-					+ "j AS (\r\n"
-					+ "    SELECT ss.salarystructureid,e.employee,e.employeecode,e.branch,e.department,att.totaldays,att.salarydays,0 otdays,\r\n"
-					+ "           ROUND(COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) AS fixedsalary,\r\n"
-					+ "       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.salarydays) AS presentamount,\r\n"
-					+ "       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * 0) AS otamount,\r\n"
-					+ "       ROUND(COALESCE(op.allowance,0)) AS allowance,\r\n"
-					+ "       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.salarydays) \r\n"
-					+ "     + ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * 0)\r\n"
-					+ "     + ROUND(COALESCE(op.allowance,0)) AS totalearnings  \r\n"
-					+ "    FROM employee e\r\n"
-					+ "JOIN ss ON ss.employeecode = e.employeecode\r\n"
-					+ "LEFT JOIN op ON op.employeecode = e.employeecode\r\n"
-					+ " join attendance att on att.employeecode=e.employeecode\r\n"
-					+ "LEFT JOIN advance ad ON ad.employeecode = att.employeecode where  e.active=1 and e.type='EMPLOYEE' \r\n"
-					+ ") ,\r\n"
-					+ "t as(SELECT x.salarystructureid,x.employee,x.employeecode,x.branch,x.department,x.totaldays,x.salarydays,x.otdays,x.fixedsalary,x.presentamount,x.otamount,x.allowance,\r\n"
-					+ "       x.totalearnings,round(x.bankearnings)bankearnings,\r\n"
-					+ "       ROUND(\r\n"
-					+ "            CASE \r\n"
-					+ "                WHEN e.pfflag = 1 AND x.bankearnings >= 15000 THEN 1800\r\n"
-					+ "                WHEN e.pfflag = 1 AND x.bankearnings < 15000 THEN (x.bankearnings * 12) / 100\r\n"
-					+ "                ELSE 0\r\n"
-					+ "            END\r\n"
-					+ ") AS pf,ROUND(\r\n"
-					+ "            CASE\r\n"
-					+ "                WHEN e.esiflag = 1 AND x.sumofearning > 21000 THEN 0\r\n"
-					+ "                WHEN e.esiflag = 1 AND x.sumofearning <= 21000 THEN (x.sumofearning * 0.75) / 100\r\n"
-					+ "                ELSE 0\r\n"
-					+ "    END\r\n"
-					+ ") AS esi,CASE WHEN x.totalearnings = 0 THEN 0\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 42000 THEN 0\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 60000 THEN 30\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 90000 THEN 70\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 120000 THEN 155\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 150000 THEN 170\r\n"
-					+ "    ELSE 200\r\n"
-					+ "END AS pt \r\n"
-					+ ",round(x.bankadvance)bankadvance,round(round(x.bankearnings) - round(\r\n"
-					+ "       CASE \r\n"
-					+ "            WHEN e.pfflag=1 AND x.bankearnings >=15000 THEN 1800\r\n"
-					+ "            WHEN e.pfflag=1 AND x.bankearnings < 15000 THEN (x.bankearnings * 12)/100\r\n"
-					+ "            ELSE 0\r\n"
-					+ "       END)-round(\r\n"
-					+ "       CASE \r\n"
-					+ "            WHEN e.esiflag=1 AND x.sumofearning >=21000 THEN 0\r\n"
-					+ "            WHEN e.esiflag=1 AND x.sumofearning < 21000 THEN (x.sumofearning * 0.75)/100\r\n"
-					+ "            ELSE 0\r\n"
-					+ "       END)-x.bankadvance-CASE WHEN x.totalearnings = 0 THEN 0\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 42000 THEN 0\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 60000 THEN 30\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 90000 THEN 70\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 120000 THEN 155\r\n"
-					+ "    WHEN (x.sumofearning *12) <= 150000 THEN 170\r\n"
-					+ "    ELSE 200\r\n"
-					+ "END) banksalary,x.cashadvance\r\n"
-					+ "FROM (\r\n"
-					+ "    SELECT j.salarystructureid,j.employee,j.employeecode,j.branch,j.department,j.totaldays,j.salarydays,j.otdays,j.fixedsalary,j.presentamount,j.otamount,j.allowance,\r\n"
-					+ "           j.totalearnings,\r\n"
-					+ "           COALESCE(ss.sumofearning,0)sumofearning,\r\n"
-					+ "           CASE WHEN j.totalearnings > COALESCE(ss.sumofearning,0) THEN COALESCE(ss.sumofearning,0)  \r\n"
-					+ "                ELSE j.totalearnings \r\n"
-					+ "           END AS bankearnings,COALESCE(ad.bank,0)bankadvance,round(COALESCE(ad.cash,0))cashadvance           \r\n"
-					+ "    FROM j left\r\n"
-					+ "     JOIN ss ON j.employeecode = ss.employeecode \r\n"
-					+ "     left join advance ad on j.employeecode=ad.employeecode\r\n"
-					+ ") x\r\n"
-					+ "JOIN employee e ON x.employeecode = e.employeecode)\r\n"
-					+ "select t.employee,t.employeecode,t.branch,t.department,t.totaldays,t.salarydays,t.fixedsalary,t.totalearnings,\r\n"
-					+ "t.pf,t.esi,t.pt,t.pf+t.esi+t.bankadvance+t.pt totalDeduction,t.bankadvance,t.banksalary  netpay,(t.totaldays-t.salarydays)lopdays,round((t.fixedsalary/t.totaldays)*(t.totaldays-t.salarydays)) lopamount from t where t.employeecode=?2 and t.employeecode not in(select employeecode from salaryprocess where year=?5 and month=?4 group by employeecode) \r\n"
-					+ "group by t.employee,t.employeecode,t.branch,t.department,t.totaldays,t.salarydays,t.fixedsalary,t.totalearnings,\r\n"
-					+ "t.pf,t.esi,t.pt,t.bankadvance,t.banksalary ,t.cashadvance,(t.totalearnings-(t.pf+t.esi+t.bankadvance+t.banksalary))-t.cashadvance,t.pf+t.esi+t.bankadvance,(t.totaldays-t.salarydays),(t.fixedsalary/t.totaldays)*(t.totaldays-t.salarydays) order by t.employeecode asc")
-			List<Object[]> getBankAndCashAmtForSalaryProcess(Long orgId, String employeeCode, String branchCode,
-					Long month, Long year);
-			
 
+//			@Query(nativeQuery = true, value = "WITH attendance AS (\r\n"
+//					+ "    SELECT empcode employeecode,totaldays,ROUND(salarydays) salarydays,ROUND(othours/8) otdays\r\n"
+//					+ "    FROM attendancesummary\r\n"
+//					+ "    WHERE orgid=?1 AND finyear=?5 AND branchcode=?3 AND month=?4\r\n"
+//					+ "),\r\n"
+//					+ "ss AS (\r\n"
+//					+ "    SELECT ss.*\r\n"
+//					+ "    FROM salarystructure ss\r\n"
+//					+ "    INNER JOIN (\r\n"
+//					+ "        SELECT employeecode, MAX(salarystructureid) AS max_id\r\n"
+//					+ "        FROM salarystructure\r\n"
+//					+ "        GROUP BY employeecode\r\n"
+//					+ "    ) latest ON ss.employeecode = latest.employeecode\r\n"
+//					+ "            AND ss.salarystructureid = latest.max_id\r\n"
+//					+ "),\r\n"
+//					+ "op AS (\r\n"
+//					+ "    SELECT op.*\r\n"
+//					+ "    FROM otherpayments op\r\n"
+//					+ "    INNER JOIN (\r\n"
+//					+ "        SELECT employeecode, MAX(otherpaymentsid) AS max_id\r\n"
+//					+ "        FROM otherpayments\r\n"
+//					+ "        GROUP BY employeecode\r\n"
+//					+ "    ) latest ON op.employeecode = latest.employeecode\r\n"
+//					+ "            AND op.otherpaymentsid = latest.max_id\r\n"
+//					+ "),\r\n"
+//					+ "advance AS (\r\n"
+//					+ "    SELECT employeecode,COALESCE(bank,0)bank,COALESCE(cash,0)cash\r\n"
+//					+ "    FROM advanceupload\r\n"
+//					+ "    WHERE orgid=?1 AND year=?5 AND branchcode=?3 AND month=?4\r\n"
+//					+ "),\r\n"
+//					+ "j AS (\r\n"
+//					+ "    SELECT ss.salarystructureid,e.employee,e.employeecode,e.branch,e.department,att.totaldays,att.salarydays,0 otdays,\r\n"
+//					+ "           ROUND(COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) AS fixedsalary,\r\n"
+//					+ "       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.salarydays) AS presentamount,\r\n"
+//					+ "       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * 0) AS otamount,\r\n"
+//					+ "       ROUND(COALESCE(op.allowance,0)) AS allowance,\r\n"
+//					+ "       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.salarydays) \r\n"
+//					+ "     + ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * 0)\r\n"
+//					+ "     + ROUND(COALESCE(op.allowance,0)) AS totalearnings  \r\n"
+//					+ "    FROM employee e\r\n"
+//					+ "JOIN ss ON ss.employeecode = e.employeecode\r\n"
+//					+ "LEFT JOIN op ON op.employeecode = e.employeecode\r\n"
+//					+ " join attendance att on att.employeecode=e.employeecode\r\n"
+//					+ "LEFT JOIN advance ad ON ad.employeecode = att.employeecode where  e.active=1 and e.type='EMPLOYEE' \r\n"
+//					+ ") ,\r\n"
+//					+ "t as(SELECT x.salarystructureid,x.employee,x.employeecode,x.branch,x.department,x.totaldays,x.salarydays,x.otdays,x.fixedsalary,x.presentamount,x.otamount,x.allowance,\r\n"
+//					+ "       x.totalearnings,round(x.bankearnings)bankearnings,\r\n"
+//					+ "       ROUND(\r\n"
+//					+ "            CASE \r\n"
+//					+ "                WHEN e.pfflag = 1 AND x.bankearnings >= 15000 THEN 1800\r\n"
+//					+ "                WHEN e.pfflag = 1 AND x.bankearnings < 15000 THEN (x.bankearnings * 12) / 100\r\n"
+//					+ "                ELSE 0\r\n"
+//					+ "            END\r\n"
+//					+ ") AS pf,ROUND(\r\n"
+//					+ "            CASE\r\n"
+//					+ "                WHEN e.esiflag = 1 AND x.sumofearning > 21000 THEN 0\r\n"
+//					+ "                WHEN e.esiflag = 1 AND x.sumofearning <= 21000 THEN (x.sumofearning * 0.75) / 100\r\n"
+//					+ "                ELSE 0\r\n"
+//					+ "    END\r\n"
+//					+ ") AS esi,CASE WHEN x.totalearnings = 0 THEN 0\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 42000 THEN 0\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 60000 THEN 30\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 90000 THEN 70\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 120000 THEN 155\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 150000 THEN 170\r\n"
+//					+ "    ELSE 200\r\n"
+//					+ "END AS pt \r\n"
+//					+ ",round(x.bankadvance)bankadvance,round(round(x.bankearnings) - round(\r\n"
+//					+ "       CASE \r\n"
+//					+ "            WHEN e.pfflag=1 AND x.bankearnings >=15000 THEN 1800\r\n"
+//					+ "            WHEN e.pfflag=1 AND x.bankearnings < 15000 THEN (x.bankearnings * 12)/100\r\n"
+//					+ "            ELSE 0\r\n"
+//					+ "       END)-round(\r\n"
+//					+ "       CASE \r\n"
+//					+ "            WHEN e.esiflag=1 AND x.sumofearning >=21000 THEN 0\r\n"
+//					+ "            WHEN e.esiflag=1 AND x.sumofearning < 21000 THEN (x.sumofearning * 0.75)/100\r\n"
+//					+ "            ELSE 0\r\n"
+//					+ "       END)-x.bankadvance-CASE WHEN x.totalearnings = 0 THEN 0\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 42000 THEN 0\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 60000 THEN 30\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 90000 THEN 70\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 120000 THEN 155\r\n"
+//					+ "    WHEN (x.sumofearning *12) <= 150000 THEN 170\r\n"
+//					+ "    ELSE 200\r\n"
+//					+ "END) banksalary,x.cashadvance\r\n"
+//					+ "FROM (\r\n"
+//					+ "    SELECT j.salarystructureid,j.employee,j.employeecode,j.branch,j.department,j.totaldays,j.salarydays,j.otdays,j.fixedsalary,j.presentamount,j.otamount,j.allowance,\r\n"
+//					+ "           j.totalearnings,\r\n"
+//					+ "           COALESCE(ss.sumofearning,0)sumofearning,\r\n"
+//					+ "           CASE WHEN j.totalearnings > COALESCE(ss.sumofearning,0) THEN COALESCE(ss.sumofearning,0)  \r\n"
+//					+ "                ELSE j.totalearnings \r\n"
+//					+ "           END AS bankearnings,COALESCE(ad.bank,0)bankadvance,round(COALESCE(ad.cash,0))cashadvance           \r\n"
+//					+ "    FROM j left\r\n"
+//					+ "     JOIN ss ON j.employeecode = ss.employeecode \r\n"
+//					+ "     left join advance ad on j.employeecode=ad.employeecode\r\n"
+//					+ ") x\r\n"
+//					+ "JOIN employee e ON x.employeecode = e.employeecode)\r\n"
+//					+ "select t.employee,t.employeecode,t.branch,t.department,t.totaldays,t.salarydays,t.fixedsalary,t.totalearnings,\r\n"
+//					+ "t.pf,t.esi,t.pt,t.pf+t.esi+t.bankadvance+t.pt totalDeduction,t.bankadvance,t.banksalary  netpay,(t.totaldays-t.salarydays)lopdays,round((t.fixedsalary/t.totaldays)*(t.totaldays-t.salarydays)) lopamount from t where t.employeecode=?2 and t.employeecode not in(select employeecode from salaryprocess where year=?5 and month=?4 group by employeecode) \r\n"
+//					+ "group by t.employee,t.employeecode,t.branch,t.department,t.totaldays,t.salarydays,t.fixedsalary,t.totalearnings,\r\n"
+//					+ "t.pf,t.esi,t.pt,t.bankadvance,t.banksalary ,t.cashadvance,(t.totalearnings-(t.pf+t.esi+t.bankadvance+t.banksalary))-t.cashadvance,t.pf+t.esi+t.bankadvance,(t.totaldays-t.salarydays),(t.fixedsalary/t.totaldays)*(t.totaldays-t.salarydays) order by t.employeecode asc")
+//			List<Object[]> getBankAndCashAmtForSalaryProcess(Long orgId, String employeeCode, String branchCode,
+//					Long month, Long year);
 
+	@Query(nativeQuery = true, value = "WITH attendance AS (\r\n"
+			+ "			    SELECT empcode employeecode,totaldays,TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM FORMAT(salarydays, 2))) salarydays,ROUND(othours/8) otdays,TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM FORMAT(present, 2)))present,TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM FORMAT(sunday, 2)))sunday\r\n"
+			+ "			    FROM attendancesummary\r\n"
+			+ "			    WHERE orgid = ?1 AND finyear = ?5 AND branchcode = ?3  AND month = ?4\r\n"
+			+ "			),\r\n"
+			+ "			ss AS (\r\n"
+			+ "			    SELECT ss.*\r\n"
+			+ "			    FROM salarystructure ss\r\n"
+			+ "			    INNER JOIN (\r\n"
+			+ "			        SELECT employeecode, MAX(salarystructureid) AS max_id\r\n"
+			+ "			        FROM salarystructure\r\n"
+			+ "			        GROUP BY employeecode\r\n"
+			+ "			    ) latest ON ss.employeecode = latest.employeecode\r\n"
+			+ "			            AND ss.salarystructureid = latest.max_id\r\n"
+			+ "			),\r\n"
+			+ "			op AS (\r\n"
+			+ "			    SELECT op.*\r\n"
+			+ "			    FROM otherpayments op\r\n"
+			+ "			    INNER JOIN (\r\n"
+			+ "			        SELECT employeecode, MAX(otherpaymentsid) AS max_id\r\n"
+			+ "			        FROM otherpayments\r\n"
+			+ "			        GROUP BY employeecode\r\n"
+			+ "			    ) latest ON op.employeecode = latest.employeecode\r\n"
+			+ "			            AND op.otherpaymentsid = latest.max_id\r\n"
+			+ "			),\r\n"
+			+ "			advance AS (\r\n"
+			+ "			    SELECT employeecode,COALESCE(bank,0)bank,COALESCE(cash,0)cash\r\n"
+			+ "			    FROM advanceupload\r\n"
+			+ "			    WHERE orgid=?1 AND year = ?5 AND branchcode= ?3  AND month = ?4\r\n"
+			+ "			),\r\n"
+			+ "			j AS (\r\n"
+			+ "			    SELECT ss.salarystructureid,e.employee,e.employeecode,e.branch,e.department,att.totaldays,att.salarydays,att.otdays,\r\n"
+			+ "			           ROUND(COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) AS fixedsalary,\r\n"
+			+ "			       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.salarydays) AS presentamount,\r\n"
+			+ "			       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.otdays) AS otamount,\r\n"
+			+ "			       ROUND(COALESCE(op.allowance,0)) AS allowance,\r\n"
+			+ "			       ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.salarydays) \r\n"
+			+ "			     + ROUND(((COALESCE(ss.sumofearning,0) + COALESCE(op.amount,0)) / att.totaldays) * att.otdays)\r\n"
+			+ "			     + ROUND(COALESCE(op.allowance,0)) AS totalearnings ,att.present,att.sunday \r\n"
+			+ "			    FROM employee e\r\n"
+			+ "			JOIN ss ON ss.employeecode = e.employeecode\r\n"
+			+ "			LEFT JOIN op ON op.employeecode = e.employeecode\r\n"
+			+ "			 join attendance att on att.employeecode=e.employeecode\r\n"
+			+ "			LEFT JOIN advance ad ON ad.employeecode = att.employeecode where  e.active=1 and e.type='EMPLOYEE'\r\n"
+			+ "			) ,\r\n"
+			+ "			t as(SELECT x.salarystructureid,x.employee,x.employeecode,x.branch,x.department,x.totaldays,x.salarydays,x.otdays,x.fixedsalary,x.presentamount,x.otamount,x.allowance,\r\n"
+			+ "			       x.totalearnings,round(x.bankearnings)bankearnings,\r\n"
+			+ "			       ROUND(\r\n"
+			+ "			            CASE \r\n"
+			+ "			                WHEN e.pfflag = 1 AND x.bankearnings >= 15000 THEN 1800\r\n"
+			+ "			                WHEN e.pfflag = 1 AND x.bankearnings < 15000 THEN (x.bankearnings * 12) / 100\r\n"
+			+ "			                ELSE 0\r\n"
+			+ "			            END\r\n"
+			+ "			) AS pf,ROUND(\r\n"
+			+ "			            CASE\r\n"
+			+ "			                WHEN e.esiflag = 1 AND x.sumofearning > 21000 THEN 0\r\n"
+			+ "			                WHEN e.esiflag = 1 AND x.sumofearning <= 21000 THEN (x.sumofearning * 0.75) / 100\r\n"
+			+ "			                ELSE 0\r\n"
+			+ "			    END\r\n"
+			+ "			) AS esi,CASE WHEN x.totalearnings = 0 THEN 0\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 42000 THEN 0\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 60000 THEN 30\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 90000 THEN 70\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 120000 THEN 155\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 150000 THEN 170\r\n"
+			+ "			    ELSE 200\r\n"
+			+ "			END AS pt \r\n"
+			+ "			,round(x.bankadvance)bankadvance,round(round(x.bankearnings) - round(\r\n"
+			+ "			       CASE \r\n"
+			+ "			            WHEN e.pfflag=1 AND x.bankearnings >=15000 THEN 1800\r\n"
+			+ "			            WHEN e.pfflag=1 AND x.bankearnings < 15000 THEN (x.bankearnings * 12)/100\r\n"
+			+ "			            ELSE 0\r\n"
+			+ "			       END)-round(\r\n"
+			+ "			       CASE \r\n"
+			+ "			            WHEN e.esiflag=1 AND x.sumofearning >=21000 THEN 0\r\n"
+			+ "			            WHEN e.esiflag=1 AND x.sumofearning < 21000 THEN (x.sumofearning * 0.75)/100\r\n"
+			+ "			            ELSE 0\r\n"
+			+ "			       END)-x.bankadvance-CASE WHEN x.totalearnings = 0 THEN 0\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 42000 THEN 0\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 60000 THEN 30\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 90000 THEN 70\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 120000 THEN 155\r\n"
+			+ "			    WHEN (x.sumofearning *12) <= 150000 THEN 170\r\n"
+			+ "			    ELSE 200\r\n"
+			+ "			END) banksalary,x.cashadvance,x.present,x.sunday \r\n"
+			+ "			FROM (\r\n"
+			+ "			    SELECT j.salarystructureid,j.employee,j.employeecode,j.branch,j.department,j.totaldays,j.salarydays,j.otdays,j.fixedsalary,j.presentamount,j.otamount,j.allowance,\r\n"
+			+ "			           j.totalearnings,\r\n"
+			+ "			           COALESCE(ss.sumofearning,0)sumofearning,\r\n"
+			+ "			           CASE WHEN j.totalearnings > COALESCE(ss.sumofearning,0) THEN COALESCE(ss.sumofearning,0)  \r\n"
+			+ "			                ELSE j.totalearnings \r\n"
+			+ "			           END AS bankearnings,COALESCE(ad.bank,0)bankadvance,round(COALESCE(ad.cash,0))cashadvance,j.present,j.sunday            \r\n"
+			+ "			    FROM j left\r\n"
+			+ "			     JOIN ss ON j.employeecode = ss.employeecode \r\n"
+			+ "			     left join advance ad on j.employeecode=ad.employeecode\r\n"
+			+ "			) x\r\n"
+			+ "			JOIN employee e ON x.employeecode = e.employeecode)\r\n"
+			+ "			select t.employee,t.employeecode,t.branch,t.department,t.totaldays,t.salarydays,t.fixedsalary,t.totalearnings,\r\n"
+			+ "			t.pf,t.esi,t.pt,t.pf+t.esi+t.bankadvance+t.pt totalDeduction,t.bankadvance,t.banksalary  netpay,(t.totaldays-t.salarydays)lopdays,round((t.fixedsalary/t.totaldays)*(t.totaldays-t.salarydays)) lopamount,t.present,t.sunday,t.otdays,t.otamount  from t where t.employeecode = ?2 and t.employeecode not in(select employeecode from salaryprocess where year = ?5 and month = ?4 group by employeecode) \r\n"
+			+ "			group by t.employee,t.employeecode,t.branch,t.department,t.totaldays,t.salarydays,t.fixedsalary,t.totalearnings,\r\n"
+			+ "			t.pf,t.esi,t.pt,t.bankadvance,t.banksalary ,t.cashadvance,(t.totalearnings-(t.pf+t.esi+t.bankadvance+t.banksalary))-t.cashadvance,t.pf+t.esi+t.bankadvance,(t.totaldays-t.salarydays),(t.fixedsalary/t.totaldays)*(t.totaldays-t.salarydays),t.present,t.sunday,t.otdays,t.otamount  order by t.employeecode asc")
+	List<Object[]> getBankAndCashAmtForSalaryProcess(Long orgId, String employeeCode, String branchCode, Long month,
+			Long year);
 
 }
