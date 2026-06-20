@@ -1,16 +1,17 @@
 package com.efit.hrms.repo;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.efit.hrms.entity.CurrencyVO;
 import com.efit.hrms.entity.EmployeeVO;
-import com.efit.hrms.entity.ShiftAssignDetailsVO;
 
 public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
@@ -195,7 +196,8 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "            AND op.otherpaymentsid = latest.max_id order by op.employeecode asc)\r\n"
 			+ "            select e.employeecode,e.employee,e.designation,e.department,round(coalesce(a.sumofearning,0)) fixedBank,round(coalesce(b.amount,0)) cash,round(coalesce(a.sumofearning,0))+round(coalesce(b.amount,0))totalfixedSalary,round(coalesce(b.allowance,0)) allowence,case when e.pfflag=1 then 'Yes' else 'No' end PF,case when e.esiflag=1 then 'Yes' else 'No' end ESI from employee e left join a on a.employeecode=e.employeecode\r\n"
 			+ "            left join b on b.employeecode=e.employeecode where e.type='EMPLOYEE' and e.orgid=?1 and e.active=1")
-	Set<Object[]> getLatestSalaryDetails(Long orgId);
+	Set<Object[]> getLatestSalaryDetails(Long orgId);	
+
 
 
 

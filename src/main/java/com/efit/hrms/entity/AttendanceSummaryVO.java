@@ -65,6 +65,9 @@ public class AttendanceSummaryVO {
 	@Column(name = "modifiedBy")
 	private String updatedBy;
 	
+	@Column(name = "sunday")
+	private BigDecimal sunday;
+	
 	@Column(name = "othours")
 	private Long otHours;
 	@Column(name = "bankotamount")

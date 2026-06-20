@@ -34,6 +34,7 @@ public class AttendanceSummaryDTO {
 	private Long otHours;
 	private BigDecimal bankOtAmount;
 	private BigDecimal cashOtAmount;
+	private BigDecimal sunday;
 
 	
 	private String approveStatus;

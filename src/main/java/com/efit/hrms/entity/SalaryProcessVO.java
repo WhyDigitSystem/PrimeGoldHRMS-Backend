@@ -82,6 +82,14 @@ public class SalaryProcessVO {
 	@Column(name = "esiamount")
 	private BigDecimal esiAmount;
 	
+	@Column(name = "ptamount")
+	private BigDecimal ptAmount;
+	@Column(name = "tdsamount")
+	private BigDecimal tdsAmount;
+	
+	@Column(name = "fixedwages")
+	private BigDecimal fixedWages;
+	
 	@Column(name = "cashadvance")
 	private BigDecimal cashAdvance;
 	@Column(name = "bankadvance")

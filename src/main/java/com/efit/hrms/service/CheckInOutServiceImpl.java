@@ -1768,6 +1768,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 			map.put("otHours", record[15] != null ? record[15].toString() : "00:00");
 			map.put("bankOtAmounts", record[16] != null ? record[16].toString() : "00:00");
 			map.put("cashOtAmounts", record[17] != null ? record[17].toString() : "00:00");
+			map.put("sunday", record[18] != null ? record[18].toString() : "0");
 
 			detailsList.add(map);
 		}
@@ -2083,9 +2084,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		vo.setOtHours(dto.getOtHours());
 		vo.setBankOtAmount(dto.getBankOtAmount());
 		vo.setCashOtAmount(dto.getCashOtAmount());
-
-
-
+		vo.setSunday(dto.getSunday());
 		vo.setApproveStatus("PENDING"); // default
 	}
 
