@@ -45,6 +45,14 @@ public interface CompanyRepo extends JpaRepository<CompanyVO, Long> {
 
 	boolean existsByEmail(String email);
 
+	@Query(value = "SELECT companyid FROM company WHERE active = 1", nativeQuery = true)
+	List<Long> findActiveCompanyIds();
+
+	
+//	CompanyVO findByCompanyId(Long orgId);
+
+
+
 
 
 	

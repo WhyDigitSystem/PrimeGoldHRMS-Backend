@@ -38,7 +38,7 @@ public class CurrencyVO {
 	@Column(name = "orgid")
 	private Long orgId;
 	@Column(name = "active")
-	private boolean active;
+	private boolean active =true;
 	@Column(name = "createdby")
 	private String createdBy;
 	@Column(name = "modifiedby")

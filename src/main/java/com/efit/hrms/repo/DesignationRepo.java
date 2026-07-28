@@ -24,4 +24,7 @@ public interface DesignationRepo extends JpaRepository<DesignationVO, Long>{
 	boolean existsByDesignationNameAndDesignationCodeAndOrgId(String designationName, String designationCode,
 			Long orgId);
 
+
+	DesignationVO findByOrgIdAndDesignationName(Long orgId, String designation);
+
 }

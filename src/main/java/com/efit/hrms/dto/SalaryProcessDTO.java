@@ -1,6 +1,9 @@
 package com.efit.hrms.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import javax.persistence.Column;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,10 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SalaryProcessDTO {
 
+
 	private Long id;
 	private Long month;
 	private String year;
-//	private LocalDate date;
+
 	private String employeeName;
 	private String employeeCode;
 	private BigDecimal totalCompanyWorkingDays;
@@ -22,15 +26,38 @@ public class SalaryProcessDTO {
 	private BigDecimal lopLeave;
 	private BigDecimal empTotalWorkingDays;
 	private BigDecimal empSalaryDays;
-	private BigDecimal grossPay;
-	private BigDecimal netPay;
-	private BigDecimal payOnHand;
+//	private BigDecimal grossPay;
+//	private BigDecimal netPay;
+	private BigDecimal otHours;
+	private BigDecimal BankOtAmount;
+	private BigDecimal cashOtAmount;
+	private BigDecimal bankAmount;
+	private BigDecimal cashAmount;
 	private String approvedStatus;
-
+	private String approveBy;
+	private String approveOn;
+	private BigDecimal cashAdvance;
+	private BigDecimal bankAdvance;
+	private BigDecimal totalEarnings;
+	private BigDecimal totalDeductions;
+	
+	private BigDecimal pfAmount;
+	private BigDecimal esiAmount;
+//	private BigDecimal advanceDeduction;
+//	private BigDecimal salary;
+	
+//	@Column(name = "requestdate")
+//	private LocalDate requestDate;
+//	@Column(name = "loanbalance")
+//	private BigDecimal loanBalance;
 	
 	
+	private BigDecimal earnings;
 	private String createdBy;
 	private String branch;
 	private String branchCode;
 	private Long orgId;
+	private BigDecimal ptAmount;
+	private BigDecimal tdsAmount;
+	private BigDecimal fixedWages;
 }

@@ -40,6 +40,8 @@ public class EmployeeVO {
 	private String employeeCode;
 	@Column(name = "employee",length = 150)
 	private String employeeName;
+	@Column(name = "type",length = 150)
+	private String employeeType;
 	@Column(name = "employeeaddress",length = 150)
 	private String employeeAddress;
 	@Column(name = "gender",length = 30)
@@ -68,7 +70,7 @@ public class EmployeeVO {
 	private String bankName;
 	@Column(name = "ifsccode",length = 12)
 	private String ifscCode;
-	@Column(name = "department",length = 30)
+	@Column(name = "department")
 	private String department;
 	@Column(name = "grade",length = 12)
 	private String grade;
@@ -77,11 +79,11 @@ public class EmployeeVO {
 	@Column(name = "uanno",length = 50)
 	private Long uanNo;
 	@Column(name = "reportingperson",length = 150)
-	private String reportnigPerson;
+	private String reportingPerson;
 	@Column(name = "reportingpersonemail",length = 150)
-	private String reportnigPersonEmail;
+	private String reportingPersonEmail;
 	@Column(name = "reportingpersoncode",length = 150)
-	private String reportningPersonCode;
+	private String reportingPersonCode;
 //	@Column(name = "reportingname",length = 150)
 //	private String reportingName;
 	@Column(name = "reportingrole",length = 100)
@@ -90,7 +92,7 @@ public class EmployeeVO {
 //	private String role;
 	@Column(name = "resigndate")
 	private LocalDate resignDate;
-	@Column(name = "designation",length = 30)
+	@Column(name = "designation")
 	private String designation;
 	@Column(name = "dateofbirth")
 	private LocalDate dateOfBirth;
@@ -108,16 +110,44 @@ public class EmployeeVO {
 	private String cancelRemark;
 	@Column(name = "active")
 	private boolean active;
+	@Column(name = "payslipeffectivedate")
+	private LocalDate payslipEffectiveDate;
 	
+	@Column(name = "contractor",length = 30)
+	private String contractor;
+	@Column(name = "contactperson",length = 150)
+	private String contactPerson;
+	@Column(name = "contactnumber",length = 150)
+	private String contactNumber;
+	@Column(name = "contactgmail",length = 150)
+	private String contactEmail;
 	
-//	@Column(name = "pfflag")
-//	private boolean pfFlag;
-//	@Column(name = "esiflag")
-//	private boolean esiFlag;
-//	@Column(name = "pfpercentage")
-//	private BigDecimal pfPercentage;
-//	@Column(name = "esipercentage")
-//	private BigDecimal esiPercentage;
+	@Column(name = "pfflag")
+	private boolean pfFlag;
+	@Column(name = "esiflag")
+	private boolean esiFlag;
+	@Column(name = "pfpercentage")
+	private BigDecimal pfPercentage;
+	@Column(name = "esipercentage")
+	private BigDecimal esiPercentage;
+	@Column(name = "flagvalue")
+	private String flagValue;
+	@Column(name = "flag")
+	private boolean flag;
+	@Column(name = "weekoffeligible")
+	private boolean weekoffEligible;
+	
+	@Column(name = "otflag")
+	private OverTime otFlag;
+	
+	@Column(name = "bioid")
+	private String bioId;
+	
+//	@Column(name = "weekoffoteligible")
+//	private boolean weekoffOtEligible;
+	
+	@Column(name = "category")
+	private Category category;
 	
 	@Column(name = "profileimage", columnDefinition = "LONGBLOB")
 	private byte[] profileImage;
@@ -140,6 +170,19 @@ public class EmployeeVO {
 		return cancel ? "T" : "F";
 	}
 
+	
+	public OverTime getOtFlag() {
+	    return otFlag;
+	}
+	
+	public Category getCategory() {
+	    return category;
+	}
+
+	public void setOtFlag(OverTime otFlag) {
+	    this.otFlag = otFlag;
+	}
+	
 	@OneToMany(mappedBy = "employeeVO", cascade = CascadeType.ALL)
 	@JsonManagedReference
 	List<EmployeeLeaveVO> employeeLeaveVO;

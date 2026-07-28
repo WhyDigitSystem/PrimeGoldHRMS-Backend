@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.efit.hrms.entity.CurrencyVO;
 import com.efit.hrms.entity.EmployeeVO;
@@ -20,7 +22,6 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    e.employeeid AS employeeId,\r\n"
 			+ "    e.alternativemobileno AS alternativeMobileNo,\r\n"
 			+ "    e.aadharno AS aadharNo,\r\n"
-			+ "    e.accountholdername AS accountHolderName,\r\n"
 			+ "    e.accountno AS accountNo,\r\n"
 			+ "    e.active AS active,\r\n"
 			+ "    e.bloodgroup AS bloodGroup,\r\n"
@@ -54,12 +55,24 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 			+ "    e.modifiedby AS modifiedBy,\r\n"
 			+ "    e.reportingpersoncode AS reportingPersonCode,\r\n"
 			+ "    e.uanno AS uanNo,\r\n"
-			+ "    e.bankname AS bankName,\r\n"
+			+ "    e.bankname AS bankName,"
+			+ "    e.type AS type,\r\n"
+			+ "    e.esiflag AS esiFlag,\r\n"
+			+ "    e.esipercentage AS esiPercentage,\r\n"
+			+ "    e.pfflag AS pfFlag,\r\n"
+			+ "    e.pfpercentage AS pfPercentage,\r\n"
 			+ "    c.companyname AS companyName,\r\n"
-			+ "    c.companycode AS companyCode\r\n"
+			+ "    c.companycode AS companyCode,\r\n"
+			+ "e.contractor As contractor,\r\n"
+			+ "e.contactperson As contactPerson,\r\n"
+			+ "e.contactnumber As contactNumber,\r\n"
+			+ "e.email As contactEmail ,"
+			+ "e.otflag As otFlag,"
+			+ "e.bioid As bioId ,"
+			+ "e.payslipeffectivedate\r\n"
 			+ "FROM employee e\r\n"
 			+ "JOIN company c ON e.orgid = c.companyid\r\n"
-			+ "WHERE e.orgid = ?1\r\n"
+			+ "WHERE e.orgid = ?1 ORDER BY e.employee ASC \r\n"
 			+ "", nativeQuery = true)
 	List<Map<String, Object>> getEmployeesWithCompanyInfoByOrgId(Long orgId);
 
@@ -143,9 +156,52 @@ public interface EmployeeRepo extends JpaRepository<EmployeeVO,Long>{
 
 	EmployeeVO findByEmployeeCode(String employeecode);
 
-//	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND branchcode = ?3", nativeQuery = true)
-//	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branchCode);
+	boolean existsByEmployeeCode(String employeeCode);
+
+//	boolean existsByEmployeeName(String employeeName);
+
+//	boolean existsByEmail(String email);
+
+
+	@Query(value = "SELECT * FROM employee WHERE orgid = ?1 AND employeecode = ?2 AND  (?3 = 'ALL' OR branch = ?3)", nativeQuery = true)
+	EmployeeVO getPfAmountAndEsiAmountByEmployee(Long orgId, String employeeCode, String branch);
 //
+
+
+	EmployeeVO findByEmployeeCodeAndOrgId(String empCode, Long orgId);
+    List<EmployeeVO> findByEmployeeCodeInAndOrgId(Set<String> employeeCodes, Long orgId);
+
+	EmployeeVO findByEmployeeCodeAndEmployeeNameAndOrgId(String empCode, String empName, Long orgId);
+
+
+	EmployeeVO findByEmployeeCodeAndEmployeeName(String employeeCode, String employeeName);
+
+	EmployeeVO findByEmployeeCodeAndOrgIdAndBranchCode(String empCode, Long orgId, String branchCode);
+
+	@Query(nativeQuery = true, value = "with a as (SELECT ss.employeecode,ss.employeename,ss.sumofearning\r\n"
+			+ "    FROM salarystructure ss\r\n"
+			+ "    INNER JOIN (\r\n"
+			+ "        SELECT employeecode, MAX(salarystructureid) AS max_id\r\n"
+			+ "        FROM salarystructure\r\n"
+			+ "        GROUP BY employeecode\r\n"
+			+ "    ) latest ON ss.employeecode = latest.employeecode\r\n"
+			+ "            AND ss.salarystructureid = latest.max_id),           \r\n"
+			+ "            b as (SELECT op.employeecode,op.employee,amount,allowance\r\n"
+			+ "    FROM otherpayments op\r\n"
+			+ "    INNER JOIN (\r\n"
+			+ "        SELECT employeecode, MAX(otherpaymentsid) AS max_id\r\n"
+			+ "        FROM otherpayments\r\n"
+			+ "        GROUP BY employeecode\r\n"
+			+ "    ) latest ON op.employeecode = latest.employeecode\r\n"
+			+ "            AND op.otherpaymentsid = latest.max_id order by op.employeecode asc)\r\n"
+			+ "            select e.employeecode,e.employee,e.designation,e.department,round(coalesce(a.sumofearning,0)) fixedBank,round(coalesce(b.amount,0)) cash,round(coalesce(a.sumofearning,0))+round(coalesce(b.amount,0))totalfixedSalary,round(coalesce(b.allowance,0)) allowence,case when e.pfflag=1 then 'Yes' else 'No' end PF,case when e.esiflag=1 then 'Yes' else 'No' end ESI from employee e left join a on a.employeecode=e.employeecode\r\n"
+			+ "            left join b on b.employeecode=e.employeecode where e.type='EMPLOYEE' and e.orgid=?1 and e.active=1")
+	Set<Object[]> getLatestSalaryDetails(Long orgId);	
+
+
+
+
+//	EmployeeVO findByEmployeeVO(String empCode);
 
 
 

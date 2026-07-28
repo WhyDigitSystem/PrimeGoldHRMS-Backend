@@ -1,5 +1,6 @@
 package com.efit.hrms.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -92,6 +93,8 @@ public class CompanyVO {
 	private String employeeName;
 	@Column(name = "employeecode")
 	private String employeeCode;
+	@Column(name = "attendancemode")
+	private String attendanceMode;
 	
 	@Column(name = "shiftin")
 	private String shiftIn; 
@@ -106,6 +109,21 @@ public class CompanyVO {
 
 	@Column(name = "hybrid")
 	private boolean hybrid;
+	
+	@Column(name = "otflag")
+	private OverTime otFlag;
+	
+	@Column(name = "ottype")
+	private String otType;
+	
+	@Column(name = "shifthours")
+	private BigDecimal shiftHours;
+	
+	@Column(name = "oteligiblehours")
+	private BigDecimal otEligibleHours;
+	
+	@Column(name = "otpolicy")
+	private String otPolicy;
 
 	@Column(name = "locationaddress")
 	private String locationAddress;

@@ -348,31 +348,31 @@ public class LeaveProcessController extends BaseController {
 		return ResponseEntity.ok().body(responseDTO);
 	}
 
-	@GetMapping("/getLeaveDetailsForLeaveProcess")
-	public ResponseEntity<ResponseDTO> getLeaveDetailsForLeaveProcess(@RequestParam String fromDate,
-			@RequestParam String toDate, @RequestParam Long orgId) {
-
-		String methodName = "getLeaveDetailsForLeaveProcess()";
-		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
-
-		Map<String, Object> responseObjectsMap = new HashMap<>();
-		ResponseDTO responseDTO;
-		List<Map<String, Object>> leaveDetailsList;
-
-		try {
-			leaveDetailsList = leaveProcessService.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId);
-			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Leave details retrieved successfully");
-			responseObjectsMap.put("leaveProcessVO", leaveDetailsList); // ✅ Correct key name
-			responseDTO = createServiceResponse(responseObjectsMap);
-		} catch (Exception e) {
-			String errorMsg = e.getMessage();
-			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
-			responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve leave details", errorMsg);
-		}
-
-		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
-		return ResponseEntity.ok().body(responseDTO);
-	}
+//	@GetMapping("/getLeaveDetailsForLeaveProcess")
+//	public ResponseEntity<ResponseDTO> getLeaveDetailsForLeaveProcess(@RequestParam String fromDate,
+//			@RequestParam String toDate, @RequestParam Long orgId,@RequestParam String department,@RequestParam String branch) {
+//
+//		String methodName = "getLeaveDetailsForLeaveProcess()";
+//		LOGGER.debug(CommonConstant.STARTING_METHOD, methodName);
+//
+//		Map<String, Object> responseObjectsMap = new HashMap<>();
+//		ResponseDTO responseDTO;
+//		List<Map<String, Object>> leaveDetailsList;
+//
+//		try {
+//			leaveDetailsList = leaveProcessService.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId,department,branch);
+//			responseObjectsMap.put(CommonConstant.STRING_MESSAGE, "Leave details retrieved successfully");
+//			responseObjectsMap.put("leaveProcessVO", leaveDetailsList); // ✅ Correct key name
+//			responseDTO = createServiceResponse(responseObjectsMap);
+//		} catch (Exception e) {
+//			String errorMsg = e.getMessage();
+//			LOGGER.error(UserConstants.ERROR_MSG_METHOD_NAME, methodName, errorMsg);
+//			responseDTO = createServiceResponseError(responseObjectsMap, "Failed to retrieve leave details", errorMsg);
+//		}
+//
+//		LOGGER.debug(CommonConstant.ENDING_METHOD, methodName);
+//		return ResponseEntity.ok().body(responseDTO);
+//	}
 
 	@GetMapping("/getCheckInAndOutDaysForLeaveProcess")
 	public ResponseEntity<ResponseDTO> getCheckInAndOutDaysForLeaveProcess(@RequestParam String fromDate,
@@ -623,26 +623,29 @@ public class LeaveProcessController extends BaseController {
 	// checkin upload
 
 	@PostMapping("/uploadcheckin")
-	public ResponseEntity<Map<String, Object>> uploadExcelCheckIn(@RequestParam("files") MultipartFile files,
-			@RequestParam("orgId") Long orgId) {
-		String result = leaveProcessService.uploadExcelData(files, orgId);
+	public ResponseEntity<Map<String, Object>> uploadExcelCheckIn(
+	        @RequestParam("files") MultipartFile files,
+	        @RequestParam("orgId") Long orgId) {
 
-		Map<String, Object> response = new HashMap<>();
-		Map<String, String> paramObjectsMap = new HashMap<>();
-		paramObjectsMap.put("message", result);
+	    Map<String, Object> serviceResponse = leaveProcessService.uploadExcelData(files, orgId);
 
-		if (result.equals("CheckInOut data uploaded successfully")) {
-			response.put("statusFlag", "Ok");
-			response.put("status", true);
-			response.put("paramObjectsMap", paramObjectsMap);
-		} else {
-			response.put("statusFlag", "Error");
-			response.put("status", false);
-			response.put("paramObjectsMap", paramObjectsMap);
-		}
+	    Map<String, Object> response = new HashMap<>();
+	    Map<String, Object> paramObjectsMap = new HashMap<>();
 
-		return ResponseEntity.ok(response);
+	    paramObjectsMap.put("message", serviceResponse.get("message"));
+	    if (serviceResponse.containsKey("duplicates")) {
+	        paramObjectsMap.put("duplicates", serviceResponse.get("duplicates"));
+	    }
+
+	    boolean isSuccess = "CheckInOut data uploaded successfully".equals(serviceResponse.get("message"));
+
+	    response.put("statusFlag", isSuccess ? "Ok" : "Error");
+	    response.put("status", isSuccess);
+	    response.put("paramObjectsMap", paramObjectsMap);
+
+	    return ResponseEntity.ok(response);
 	}
+
 
 	// Attandance Report
 	@GetMapping("/getAttandanceReport")

@@ -31,14 +31,14 @@ public class DepartmentVO {
 		@Column(name = "departmentid")
 		private Long id;
 	    
-	    @Column(name = "departmentname", length = 100)
+	    @Column(name = "departmentname", length = 255)
 		private String departmentName;
 
 	    @Column(name = "departmentcode", length = 75)
 	    private String departmentCode;
 	    
 		@Column(name = "active")
-		private boolean active;
+		private boolean active= true;
 		@Column(name = "createdby")
 		private String createdBy;
 		@Column(name = "modifiedby")

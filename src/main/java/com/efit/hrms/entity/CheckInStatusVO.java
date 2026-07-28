@@ -36,6 +36,8 @@ public class CheckInStatusVO {
 	private String branch;
 	@Column(name = "orgid")
 	private long orgId;
+	private LocalDateTime createdOn;
+
 
 	
 }

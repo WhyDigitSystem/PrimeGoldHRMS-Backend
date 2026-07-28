@@ -23,4 +23,7 @@ public interface CheckInOutAdjustmentRepo extends JpaRepository<CheckInOutAdjust
 
 	List<CheckInOutAdjustmentVO> findByOrgIdAndNotifyCode(Long orgId, String notifyCode);
 
+	List<CheckInOutAdjustmentVO> findByOrgIdAndEmpCodeAndCheckInDateBetween(Long orgId, String employeeCode,
+			LocalDate localCheckInDate, LocalDate plusDays);
+
 }

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -938,55 +937,59 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 		return leaveProcessRepo.getLeaveProcessByOrgId(orgId);
 	}
 
-	@Override
-	public List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId) {
-		Set<Object[]> result = leaveProcessRepo.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId);
-		return mapLeaveDetails(result,fromDate,toDate);
-	}
-
-	private List<Map<String, Object>> mapLeaveDetails(Set<Object[]> result, String fromDate, String toDate) {
-		List<Map<String, Object>> detailsList = new ArrayList<>();
-		 if (result == null || result.isEmpty()) {
-		        // Compare fromDate and toDate
-		        String monthName = getMonthWithMoreDays(fromDate, toDate);
-		        throw new RuntimeException("Attendance process already done in " + monthName + " month.");
-		    }
-		for (Object[] record : result) {
-			Map<String, Object> map = new HashMap<>();
-			map.put("employeeName", record[0] != null ? record[0].toString() : "");
-			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
-			map.put("totalCompanyWorkingDays", record[2] != null ? record[2].toString() : "0");
-			map.put("month", record[3] != null ? record[3].toString() : "0");
-			map.put("year", record[4] != null ? record[4].toString() : "0");
-			map.put("totalLeave", record[5] != null ? record[5].toString() : "0");
-			map.put("lopLeave", record[6] != null ? record[6].toString() : "0");
-//			map.put("empTotalWorkingDays", record[7] != null ? record[7].toString() : "0");
-			map.put("empSalaryDays", record[7] != null ? record[7].toString() : "0");
-
-			detailsList.add(map);
-		}
-		return detailsList;
-	}
-
-	
-	private String getMonthWithMoreDays(String fromDate, String toDate) {
-	    try {
-	        LocalDate from = LocalDate.parse(fromDate);
-	        LocalDate to = LocalDate.parse(toDate);
-
-	        YearMonth fromMonth = YearMonth.from(from);
-	        YearMonth toMonth = YearMonth.from(to);
-
-	        int fromDays = fromMonth.lengthOfMonth();
-	        int toDays = toMonth.lengthOfMonth();
-
-	        YearMonth selectedMonth = (fromDays >= toDays) ? fromMonth : toMonth;
-
-	        return selectedMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-	    } catch (DateTimeParseException e) {
-	        return "Unknown";
-	    }
-	}
+//	@Override
+//	public List<Map<String, Object>> getLeaveDetailsForLeaveProcess(String fromDate, String toDate, Long orgId, String department, String branch) {
+//
+//	    Set<Object[]> result = leaveProcessRepo.getLeaveDetailsForLeaveProcess(fromDate, toDate, orgId, department, branch);
+//	    return mapLeaveDetails(result, fromDate, toDate);
+//	}
+//
+//
+//	private List<Map<String, Object>> mapLeaveDetails(Set<Object[]> result, String fromDate, String toDate) {
+//		List<Map<String, Object>> detailsList = new ArrayList<>();
+//		 if (result == null || result.isEmpty()) {
+//		        // Compare fromDate and toDate
+//		        String monthName = getMonthWithMoreDays(fromDate, toDate);
+//		        throw new RuntimeException("Attendance process already done in " + monthName + " month.");
+//		    }
+//		for (Object[] record : result) {
+//			Map<String, Object> map = new HashMap<>();
+//			map.put("employeeName", record[0] != null ? record[0].toString() : "");
+//			map.put("employeeCode", record[1] != null ? record[1].toString() : "");
+//			map.put("branch", record[2] != null ? record[2].toString() : "");
+//			map.put("department", record[3] != null ? record[3].toString() : "");
+//			map.put("totalCompanyWorkingDays", record[4] != null ? record[4].toString() : "0");
+//			map.put("month", record[5] != null ? record[5].toString() : "0");
+//			map.put("year", record[6] != null ? record[6].toString() : "0");
+//			map.put("totalLeave", record[7] != null ? record[7].toString() : "0");
+//			map.put("lopLeave", record[8] != null ? record[8].toString() : "0");
+//			map.put("empSalaryDays", record[9] != null ? record[9].toString() : "0");
+//			map.put("empTotalWorkingDays", record[10] != null ? record[10].toString() : "0");
+//
+//			detailsList.add(map);
+//		}
+//		return detailsList;
+//	}
+//
+//	
+//	private String getMonthWithMoreDays(String fromDate, String toDate) {
+//	    try {
+//	        LocalDate from = LocalDate.parse(fromDate);
+//	        LocalDate to = LocalDate.parse(toDate);
+//
+//	        YearMonth fromMonth = YearMonth.from(from);
+//	        YearMonth toMonth = YearMonth.from(to);
+//
+//	        int fromDays = fromMonth.lengthOfMonth();
+//	        int toDays = toMonth.lengthOfMonth();
+//
+//	        YearMonth selectedMonth = (fromDays >= toDays) ? fromMonth : toMonth;
+//
+//	        return selectedMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+//	    } catch (DateTimeParseException e) {
+//	        return "Unknown";
+//	    }
+//	}
 
 	
 //	@Override
@@ -1018,6 +1021,7 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 //		return detailsList;
 //	}
 
+	
 	@Override
 	public List<Map<String, Object>> getCheckInAndOutDaysForLeaveProcess(
 	        @RequestParam String fromDate,
@@ -1026,8 +1030,8 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 	        @RequestParam String branchCode,
 	        @RequestParam String empCode) {
 
-	    Set<Object[]> result = checkInRepo.getCheckInAndOutDaysForLeaveProcess(fromDate, toDate, orgId, branchCode,empCode);
-	    return processCheckInAndOutDays(result, fromDate, toDate, orgId, branchCode,empCode);
+	    Set<Object[]> result = checkInRepo.getCheckInAndOutDaysForLeaveProcess(fromDate, toDate, orgId, branchCode, empCode);
+	    return processCheckInAndOutDays(result, fromDate, toDate, orgId, branchCode, empCode);
 	}
 
 	private List<Map<String, Object>> processCheckInAndOutDays(
@@ -1040,60 +1044,53 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 
 	    List<Map<String, Object>> detailsList = new ArrayList<>();
 
-	 // Convert fromDate and toDate from String to LocalDate
-	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // or your actual format
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	    LocalDate from = LocalDate.parse(fromDate, formatter);
 	    LocalDate to = LocalDate.parse(toDate, formatter);
 
-	    // Total company working days = all calendar days between fromDate and toDate (inclusive)
 	    long totalCompanyWorkingDays = ChronoUnit.DAYS.between(from, to) + 1;
 
-	    
-	    // Fetching holiday list
 	    List<HolidayVO> holidayList = holidayRepo.findByFromDateAndToDateAndOrgIdAndBranchCode(
 	            fromDate, toDate, orgId, branchCode);
-	    
-	    List<ApprovalLeavesVO> approvalLeavesList = approvalLeavesRepo.findByFromDateAndToDateAndOrgIdAndBranchCodeAndEmployeeCode( fromDate, toDate, orgId, branchCode,empCode);
+
+	    List<ApprovalLeavesVO> approvalLeavesList = approvalLeavesRepo.findByFromDateAndToDateAndOrgIdAndBranchCodeAndEmployeeCode(
+	            fromDate, toDate, orgId, branchCode, empCode);
 
 	    int empLeaveCount = approvalLeavesList != null ? approvalLeavesList.size() : 0;
-	    
 	    int holidayCount = holidayList != null ? holidayList.size() : 0;
-	    
+
 	    List<Object[]> weekOffPattern = companyWeekOffRepo.findWeekOffDaysAndWeeks(orgId, branchCode);
 	    int weekOffCount = countWeekOffsBetweenDates(from, to, weekOffPattern);
 
-		  List<String> missingDates = checkInRepo.findByFromDateAndToDateAndEmpCodeAndOrgId( fromDate,toDate,empCode,orgId);
+	    List<String> missingDates = checkInRepo.findByFromDateAndToDateAndEmpCodeAndOrgId(fromDate, toDate, empCode, orgId);
 
 	    for (Object[] record : result) {
 	        Map<String, Object> map = new HashMap<>();
-	        int workingDays = record[0] != null ? (int) Double.parseDouble(record[0].toString()) : 0;
-	        
-	        int totalLeavedays1 = workingDays + holidayCount + empLeaveCount+weekOffCount;
-	        Long totalLeavedays2 = totalCompanyWorkingDays - empLeaveCount ;
-	        
+
+	        // ✅ FIX: Remove (int) cast to preserve decimal part (e.g. 29.5)
+	        double workingDays = record[0] != null ? Double.parseDouble(record[0].toString()) : 0.0;
+
+	        double totalLeavedays1 = workingDays + holidayCount + empLeaveCount + weekOffCount;
+	        long totalLeavedays2 = totalCompanyWorkingDays - empLeaveCount;
+
 	        map.put("empCode", empCode);
-	        map.put("EmpcheckInOutDays", workingDays);
+	        map.put("EmpcheckInOutDays", workingDays); // ✅ Now it shows 29.5 correctly
 	        map.put("holidaysCount", holidayCount);
 	        map.put("empLeaveCount", empLeaveCount);
 	        map.put("weekOffCount", weekOffCount);
-	        map.put("totalCheckInOutLeave",totalLeavedays1);
+	        map.put("totalCheckInOutLeave", totalLeavedays1);
 	        map.put("totalCompanyWorkingDays", totalCompanyWorkingDays);
-	        map.put("totalApprovedLeave", totalLeavedays2 );
-	        map.put("missingDates", missingDates );
+	        map.put("totalApprovedLeave", totalLeavedays2);
+	        map.put("missingDates", missingDates);
 
-	        if (missingDates == null || missingDates.isEmpty()) {
-	            map.put("status", "MATCHED");
-	        } else {
-	            map.put("status", "MISMATCHED");
-	        }
-
+	        map.put("status", (missingDates == null || missingDates.isEmpty()) ? "MATCHED" : "MISMATCHED");
 
 	        detailsList.add(map);
 	    }
 
 	    return detailsList;
 	}
-	
+
 	public int countWeekOffsBetweenDates(LocalDate from, LocalDate to, List<Object[]> weekOffPattern) {
 	    int count = 0;
 	    Map<DayOfWeek, Set<Integer>> weekMap = new HashMap<>();
@@ -1120,7 +1117,6 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 	    }
 	    return count;
 	}
-
 
 
 
@@ -1485,139 +1481,110 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 		return detailsList;
 	}
 	
-	@Override
-	 public String uploadExcelData(MultipartFile files, Long orgId) {
-	        try (Workbook workbook = WorkbookFactory.create(files.getInputStream())) {
-	            Sheet sheet = workbook.getSheetAt(0);
-	            List<CheckInVO> checkIns = new ArrayList<>();
-
-	            boolean isFirstRow = true;
-	            Set<String> uniqueKeys = new HashSet<>();
-
-	            for (Row row : sheet) {
-	                if (isFirstRow) {
-	                    isFirstRow = false;
-	                    continue;
-	                }
-
-	                String empCode = getCellValueAsString(row.getCell(1));
-	                LocalDate checkInDate = getCellValueAsDate(row.getCell(3));
-	                LocalTime entryTime = getCellValueAsTime(row.getCell(4));
-                    String status =getCellValueAsString(row.getCell(5));
-
-
-	                // Validate required fields
-	                if (empCode == null || checkInDate == null || entryTime == null || status == null) {
-	                    System.err.println("Skipping row: missing empCode, checkInDate, entryTime or status");
-	                    continue;
-	                }
-
-	                // Check for duplicates in Excel sheet itself
-	                String uniqueKey = empCode + "|" + checkInDate + "|" + entryTime + "|" + status;
-	                if (uniqueKeys.contains(uniqueKey)) {
-	                    System.err.println("Skipping duplicate row in Excel: " + uniqueKey);
-	                    continue;
-	                } else {
-	                    uniqueKeys.add(uniqueKey);
-	                }
-
-
-	                Optional<CheckInVO> existingOpt = checkInRepo.findMinOrMaxEntryTimeByEmpCodeAndCheckInDateAndStatus(empCode, checkInDate,status);
-
-	                CheckInVO checkIn;
-	                if (existingOpt.isPresent()) {
-	                    // Update existing record
-	                    checkIn = existingOpt.get();
-
-	                    checkIn.setBranch(getCellValueAsString(row.getCell(0)));
-	                    checkIn.setEmpName(getCellValueAsString(row.getCell(2)));
-	                    checkIn.setEntryTime(getCellValueAsTime(row.getCell(4)));
-	                    checkIn.setOrgId(orgId);
-	                    checkIn.setCreatedOn(LocalDateTime.now()); // update timestamp if you want
-
-	                } else {
-	                    // Create new record
-	                    checkIn = new CheckInVO();
-
-	                    checkIn.setBranch(getCellValueAsString(row.getCell(0)));
-	                    checkIn.setEmpCode(empCode);
-	                    checkIn.setEmpName(getCellValueAsString(row.getCell(2)));
-	                    checkIn.setCheckInDate(checkInDate);
-	                    checkIn.setEntryTime(getCellValueAsTime(row.getCell(4)));
-	                    checkIn.setStatus(status);
-	                    checkIn.setOrgId(orgId);
-	                    checkIn.setCreatedOn(LocalDateTime.now());
-	                }
-
-	                checkIns.add(checkIn);
-	            }
-
-	            checkInRepo.saveAll(checkIns);
-	            return "CheckInOut data uploaded successfully";
-
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	            return "Failed to process Excel file: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
-	        }
-	    }
-
-	    private String getCellValueAsString(Cell cell) {
-	        if (cell == null) return null;
-
-	        if (cell.getCellType() == CellType.STRING) {
-	            return cell.getStringCellValue().trim();
-	        } else if (cell.getCellType() == CellType.NUMERIC) {
-	            return String.valueOf((long) cell.getNumericCellValue());
-	        } else if (cell.getCellType() == CellType.BLANK) {
-	            return null;
-	        }
-	        return null;
-	    }
-
-	    private LocalDate getCellValueAsDate(Cell cell) {
-	        if (cell == null) return null;
-
-	        try {
-	            if (cell.getCellType() == CellType.NUMERIC) {
-	                if (DateUtil.isCellDateFormatted(cell)) {
-	                    return cell.getLocalDateTimeCellValue().toLocalDate();
-	                } else {
-	                    return null;
-	                }
-	            } else if (cell.getCellType() == CellType.STRING) {
-	                String dateStr = cell.getStringCellValue().trim();
-	                if (dateStr.isEmpty()) return null;
-	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yy");
-	                return LocalDate.parse(dateStr, formatter);
-	            }
-	        } catch (Exception e) {
-	            System.err.println("Error parsing date cell: " + e.getMessage());
-	        }
-	        return null;
-	    }
-
-	    private LocalTime getCellValueAsTime(Cell cell) {
-	        if (cell == null) return null;
-
-	        try {
-	            if (cell.getCellType() == CellType.NUMERIC) {
-	                if (DateUtil.isCellDateFormatted(cell)) {
-	                    return cell.getLocalDateTimeCellValue().toLocalTime();
-	                } else {
-	                    return null;
-	                }
-	            } else if (cell.getCellType() == CellType.STRING) {
-	                String timeStr = cell.getStringCellValue().trim();
-	                if (timeStr.isEmpty()) return null;
-	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-	                return LocalTime.parse(timeStr, formatter);
-	            }
-	        } catch (Exception e) {
-	            System.err.println("Error parsing time cell: " + e.getMessage());
-	        }
-	        return null;
-	    }
+	//uploadcheckin
 	
+	@Override
+	public Map<String, Object> uploadExcelData(MultipartFile files, Long orgId) {
+	    Map<String, Object> response = new HashMap<>();
+	    List<CheckInVO> checkIns = new ArrayList<>();
+
+	    try (Workbook workbook = WorkbookFactory.create(files.getInputStream())) {
+	        Sheet sheet = workbook.getSheetAt(0);
+	        boolean isFirstRow = true;
+
+	        for (Row row : sheet) {
+	            if (isFirstRow) {
+	                isFirstRow = false;
+	                continue;
+	            }
+
+	            String branch = getCellValueAsString(row.getCell(0));
+	            String empCode = getCellValueAsString(row.getCell(1));
+	            String empName = getCellValueAsString(row.getCell(2));
+	            LocalDate checkInDate = getCellValueAsDate(row.getCell(3));
+	            LocalTime entryTime = getCellValueAsTime(row.getCell(4));
+	            String status = getCellValueAsString(row.getCell(5));
+
+	            // Skip if required fields are missing
+	            if (empCode == null || checkInDate == null || entryTime == null || status == null) {
+	                continue;
+	            }
+
+	            CheckInVO checkIn = new CheckInVO();
+	            checkIn.setBranch(branch);
+	            checkIn.setEmpCode(empCode);
+	            checkIn.setEmpName(empName);
+	            checkIn.setCheckInDate(checkInDate);
+	            checkIn.setEntryTime(entryTime);
+	            checkIn.setStatus(status);
+	            checkIn.setOrgId(orgId);
+	            checkIn.setCreatedOn(LocalDateTime.of(checkInDate, LocalTime.now()));
+
+	            checkIns.add(checkIn);
+	        }
+
+	        checkInRepo.saveAll(checkIns);
+	        response.put("message", "CheckInOut data uploaded successfully");
+	        return response;
+
+	    } catch (Exception e) {
+	        response.put("message", "Failed to process Excel file: " + e.getMessage());
+	        return response;
+	    }
+	}
+
+	private String getCellValueAsString(Cell cell) {
+	    if (cell == null) return null;
+
+	    switch (cell.getCellType()) {
+	        case STRING:
+	            return cell.getStringCellValue().trim();
+	        case NUMERIC:
+	            return String.valueOf((long) cell.getNumericCellValue());
+	        case BLANK:
+	            return null;
+	        default:
+	            return null;
+	    }
+	}
+
+	private LocalDate getCellValueAsDate(Cell cell) {
+	    if (cell == null) return null;
+
+	    try {
+	        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+	            return cell.getLocalDateTimeCellValue().toLocalDate();
+	        } else if (cell.getCellType() == CellType.STRING) {
+	            String dateStr = cell.getStringCellValue().trim();
+	            if (dateStr.isEmpty()) return null;
+
+	            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy"); // ✅ FIXED
+	            return LocalDate.parse(dateStr, formatter);
+	        }
+	    } catch (Exception e) {
+	        System.err.println("Error parsing date cell: " + e.getMessage());
+	    }
+	    return null;
+	}
+
+	private LocalTime getCellValueAsTime(Cell cell) {
+	    if (cell == null) return null;
+
+	    try {
+	        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+	            return cell.getLocalDateTimeCellValue().toLocalTime();
+	        } else if (cell.getCellType() == CellType.STRING) {
+	            String timeStr = cell.getStringCellValue().trim();
+	            if (timeStr.isEmpty()) return null;
+	            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+	            return LocalTime.parse(timeStr, formatter);
+	        }
+	    } catch (Exception e) {
+	        System.err.println("Error parsing time cell: " + e.getMessage());
+	    }
+	    return null;
+	}
+
 	    //AttandanceReport
 	    
 		@Override
@@ -1647,6 +1614,9 @@ public class LeaveProcessServiceImpl implements LeaveProcessService {
 				map.put("checkInTime", record[3] != null ? record[3].toString() : " ");
 				map.put("checkOutTime", record[4] != null ? record[4].toString() : "0");
 				map.put("grossHours", record[5] != null ? record[5].toString() : " ");
+				map.put("effectiveHours", record[6] != null ? record[6].toString() : " ");
+				map.put("otHours",  record[7] != null ? record[7].toString() : " ");
+
 
 				detailsList.add(map);
 			}

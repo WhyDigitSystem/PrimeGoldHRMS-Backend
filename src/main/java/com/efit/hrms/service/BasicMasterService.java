@@ -14,6 +14,8 @@ import com.efit.hrms.dto.CalendarDTO;
 import com.efit.hrms.dto.CheckInOutAdjustmentDTO;
 import com.efit.hrms.dto.CheckinRequestDTO;
 import com.efit.hrms.dto.CircularDTO;
+import com.efit.hrms.dto.EmployeeCodeConfigDTO;
+import com.efit.hrms.dto.EmployeeDTOnew;
 import com.efit.hrms.dto.HolidayDTO;
 import com.efit.hrms.dto.PollVoteDTO;
 import com.efit.hrms.dto.PollsDTO;
@@ -22,9 +24,8 @@ import com.efit.hrms.dto.TaskDTO;
 import com.efit.hrms.dto.UserNameDTO;
 import com.efit.hrms.entity.AnnouncementVO;
 import com.efit.hrms.entity.CalendarVO;
-import com.efit.hrms.entity.CheckInOutAdjustmentVO;
-import com.efit.hrms.entity.CheckInVO;
 import com.efit.hrms.entity.CircularVO;
+import com.efit.hrms.entity.EmployeeCodeConfigVO;
 import com.efit.hrms.entity.HolidayVO;
 import com.efit.hrms.entity.PollsVO;
 import com.efit.hrms.exception.ApplicationException;
@@ -52,7 +53,7 @@ public interface BasicMasterService {
 
 	List<Map<String, Object>> getStatusByEmpcode(String empcode);
 
-	List<Map<String, Object>> getAttendanceByEmpcode(String empcode, int  month, String orgId, String branch, String branchCode);
+	List<Map<String, Object>> getAttendanceByEmpcode(String empcode, int  month, String orgId, String branchcode);
 
 	void excelUploadForHolidays(MultipartFile[] files, String createdBy, Long orgId)
 			throws EncryptedDocumentException, ApplicationException, java.io.IOException;
@@ -147,14 +148,13 @@ List<Map<String, Object>> GetCountofNewAssignedTask(Long Orgid,String Assignedby
 
 // payslip
 	
-	List<Map<String, Object>> getpayslipemployeedetails(Long orgId, String Employeecode);
+	List<Map<String, Object>> getpayslipemployeedetails(Long orgId, String Employeecode, int month);
 	
 	
 	List<Map<String, Object>> getpayslipearningdetails(Long orgId, String Employeecode,Long Month,Long year);
 	
 	List<Map<String, Object>> getpayslipdeductiondetails(Long orgId, String Employeecode, Long month, Long year);
 	
-
 	
 	List<Map<String, Object>> getpayslipCompanydetails (Long orgId);
 
@@ -179,19 +179,13 @@ List<Map<String, Object>> GetCountofNewAssignedTask(Long Orgid,String Assignedby
 
 
 
-	
+	EmployeeCodeConfigVO createEmployeeCodeConfig(EmployeeCodeConfigDTO employeeCodeConfigDTO);
 
 
+	String generateEmployeeCodeByOrgId(EmployeeDTOnew employeeDTOnew);
 
+	List<Map<String, Object>> getpayslipPayOnHandAmount(Long orgId, String employeecode, Long month, String year);
 
-
-
-
-
-	
-
-
-	
 	
 	
 }

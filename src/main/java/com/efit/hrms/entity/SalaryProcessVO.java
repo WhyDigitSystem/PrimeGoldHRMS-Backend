@@ -51,14 +51,60 @@ public class SalaryProcessVO {
 	private BigDecimal empTotalWorkingDays;
 	@Column(name = "empsalarydays")
 	private BigDecimal empSalaryDays;
-	@Column(name = "grosspay")
-	private BigDecimal grossPay;
-	@Column(name = "netpay")
-	private BigDecimal netPay;
-	@Column(name = "payonhand")
-	private BigDecimal payOnHand;
+//	@Column(name = "grosspay")
+//	private BigDecimal grossPay;
+//	@Column(name = "netpay")
+//	private BigDecimal netPay;
+	@Column(name = "othours")
+	private BigDecimal otHours;
+	@Column(name = "bankotamount")
+	private BigDecimal BankOtAmount;
+	@Column(name = "cashotamount")
+	private BigDecimal cashOtAmount;
+	@Column(name = "bankamount")
+	private BigDecimal bankAmount;
+	@Column(name = "cashamount")
+	private BigDecimal cashAmount;
 	@Column(name = "approvedstatus")
 	private String approvedStatus;
+	@Column(name = "approveby")
+	private String approveBy;
+	@Column(name = "approveon")
+	private String approveOn;
+
+	@Column(name = "totalearnings")
+	private BigDecimal totalEarnings;
+	@Column(name = "totaldeductions")
+	private BigDecimal totalDeductions;
+	
+	@Column(name = "pfamount")
+	private BigDecimal pfAmount;
+	@Column(name = "esiamount")
+	private BigDecimal esiAmount;
+	
+	@Column(name = "ptamount")
+	private BigDecimal ptAmount;
+	@Column(name = "tdsamount")
+	private BigDecimal tdsAmount;
+	
+	@Column(name = "fixedwages")
+	private BigDecimal fixedWages;
+	
+	@Column(name = "cashadvance")
+	private BigDecimal cashAdvance;
+	@Column(name = "bankadvance")
+	private BigDecimal bankAdvance;
+	@Column(name = "earnings")
+	private BigDecimal earnings;
+//	@Column(name = "advancededuction")
+//	private BigDecimal advanceDeduction;
+//	@Column(name = "salaryamount")
+//	private BigDecimal salary;
+	
+//	@Column(name = "requestdate")
+//	private LocalDate requestDate;
+//	@Column(name = "loanbalance")
+//	private BigDecimal loanBalance;
 	
 	@Column(name = "createdby")
 	private String createdBy;

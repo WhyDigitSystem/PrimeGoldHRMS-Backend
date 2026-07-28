@@ -6,6 +6,9 @@ import java.util.List;
 
 import javax.persistence.Column;
 
+import com.efit.hrms.entity.Category;
+import com.efit.hrms.entity.OverTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +21,7 @@ public class EmployeeDTO {
 	private Long id;
     private String employeeCode;
     private String employeeName;
+	private String employeeType;
 	private String employeeAddress;
     private String gender;
     private String branch;
@@ -37,10 +41,17 @@ public class EmployeeDTO {
     private String team;
     private String reportingPerson;
     private String reportingPersonEmail;
-	private String reportningPersonCode;
+	private String reportingPersonCode;
 	private Long uanNo;
+	private String flagValue;
+	private boolean flag;
+	private boolean weekoffEligible;
 
-
+	
+	private String contractor;
+	private String contactPerson;
+	private String contactNumber;
+	private String contactEmail;
 
 //    private String reportingName;
     private String reportingRole;
@@ -52,13 +63,28 @@ public class EmployeeDTO {
     private String createdBy;
     private Long orgId;
     private boolean active;
+	private String bioId;
+	private LocalDate payslipEffectiveDate;
 
-//    private boolean pfFlag;
-//	private boolean esiFlag;
-//	private BigDecimal pfPercentage;
-//	private BigDecimal esiPercentage;
+
+	private OverTime otFlag;
+	private Category category;
+
+
+    private boolean pfFlag;
+	private boolean esiFlag;
+	private BigDecimal pfPercentage;
+	private BigDecimal esiPercentage;
     
 	private List<EmployeeLeaveDTO> employeeLeaveDTO;
-    
+
+	
+	public OverTime getOtFlag() {
+	    return otFlag;
+	}
+
+	public void setOtFlag(OverTime otFlag) {
+	    this.otFlag = otFlag;
+	}
 
 }

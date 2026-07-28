@@ -61,6 +61,11 @@ public class SalaryStructureVO {
 	@Column(name = "date", nullable = false)
 	private LocalDate date = LocalDate.now();
 	
+	@Column(name = "pfpercentage")
+	private BigDecimal pfPercentage;
+	@Column(name = "esipercentage")
+	private BigDecimal esiPercentage;
+	
 	@Column(name = "active")
 	private boolean active = true;
 	@Column(name = "createdby")
