@@ -324,6 +324,8 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    }
 	}
 	
+	
+	
 //	AUG 14 CODE ATTENDANCEPULL
 //	@Override
 //	@Transactional(rollbackOn = Exception.class)
