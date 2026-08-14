@@ -324,253 +324,1223 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 	    }
 	}
 	
+//	AUG 14 CODE ATTENDANCEPULL
+//	@Override
+//	@Transactional(rollbackOn = Exception.class)
+//	public Map<String, Object> createCheckInOutBiometricDevice(Long orgId,
+//	                                                           String createdBy,
+//	                                                           LocalDate fromDate,
+//	                                                           LocalDate toDate,
+//	                                                           String branch,
+//	                                                           String branchCode) throws Exception {
+//
+//	    Map<String, Object> result = new LinkedHashMap<>();
+//	    Queue<CheckInOutBiometricVO> biometricQueue = new ConcurrentLinkedQueue<>();
+//	    Queue<AttendanceDailyVO> dailyListQueue = new ConcurrentLinkedQueue<>();
+//	    AtomicInteger successCount = new AtomicInteger(0);
+//
+//	    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//	    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+//	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+//
+//	    // 1️⃣ Fetch logs
+//	    List<AttendanceLogVO> logs = attendanceLogRepo.findByAttendanceDateBetween(fromDate, toDate);
+//	    if (logs.isEmpty()) {
+//	        throw new RuntimeException("No attendance logs found.");
+//	    }
+//
+//	    // 2️⃣ Fetch existing biometric records once (to skip duplicates)
+//	    Set<String> existingKeys = checkInOutBiometricRepo
+//	            .findKeysByDateRange(fromDate, toDate, orgId, branchCode)
+//	            .stream()
+//	            .map(r -> r[0] + "|" + r[1] + "|" + r[2]) // r[0]=empCode, r[1]=checkInDate, r[2]=entryTime
+//	            .collect(Collectors.toSet());
+//
+//
+//	    // 3️⃣ Process logs in parallel
+//	    logs.parallelStream().forEach(log -> {
+//	        try {
+//	            LocalDate inDate = null;
+//	            LocalTime inTime = null;
+//	            LocalDate outDate = null;
+//	            LocalTime outTime = null;
+//
+//	            // Parse IN
+//	            if (log.getInTime() != null && !log.getInTime().isEmpty() && !log.getInTime().equals("00:00")) {
+//	                try {
+//	                    LocalDateTime dt = LocalDateTime.parse(log.getInTime(), dateTimeFormatter);
+//	                    inDate = dt.toLocalDate();
+//	                    inTime = dt.toLocalTime();
+//	                } catch (Exception e) {
+//	                    inDate = LocalDate.parse(log.getAttendanceDate(), dateFormatter);
+//	                    inTime = LocalTime.parse(log.getInTime(), timeFormatter);
+//	                }
+//	            }
+//
+//	            // Parse OUT
+//	            if (log.getOutTime() != null && !log.getOutTime().isEmpty() && !log.getOutTime().equals("00:00")) {
+//	                try {
+//	                    LocalDateTime dt = LocalDateTime.parse(log.getOutTime(), dateTimeFormatter);
+//	                    outDate = dt.toLocalDate();
+//	                    outTime = dt.toLocalTime();
+//	                } catch (Exception e) {
+//	                    outDate = LocalDate.parse(log.getAttendanceDate(), dateFormatter);
+//	                    outTime = LocalTime.parse(log.getOutTime(), timeFormatter);
+//	                }
+//	            }
+//
+//	            // Skip rows without valid IN/OUT
+//	            if (inTime == null && outTime == null) return;
+//
+//	            // Add IN (if not duplicate)
+//	            if (inTime != null) {
+//	                String key = log.getEmployeeCode() + "|" + inDate + "|" + inTime;
+//	                if (!existingKeys.contains(key)) {
+//	                    CheckInOutBiometricVO inVo = new CheckInOutBiometricVO();
+//	                    inVo.setAttendanceMode("BIOMETRIC");
+//	                    inVo.setCheckInDate(inDate);
+//	                    inVo.setCreatedBy(createdBy);
+//	                    inVo.setBranch(branch);
+//	                    inVo.setBranchCode(branchCode);
+//	                    inVo.setEmpCode(log.getEmployeeCode());
+//	                    inVo.setEmpName(log.getEmployeeName());
+//	                    inVo.setEntryTime(inTime);
+//	                    inVo.setFinyear(String.valueOf(inDate.getYear()));
+//	                    inVo.setOrgId(orgId);
+//	                    inVo.setScreenCode("CIOB");
+//	                    inVo.setScreenName("CHECKINOUTBIOMETRIC");
+//	                    inVo.setStatus("In");
+//	                    biometricQueue.add(inVo);
+//	                    successCount.incrementAndGet();
+//	                }
+//	            }
+//
+//	            // Add OUT (if not duplicate)
+//	            if (outTime != null) {
+//	                String key = log.getEmployeeCode() + "|" + outDate + "|" + outTime;
+//	                if (!existingKeys.contains(key)) {
+//	                    CheckInOutBiometricVO outVo = new CheckInOutBiometricVO();
+//	                    outVo.setAttendanceMode("BIOMETRIC");
+//	                    outVo.setCheckInDate(outDate);
+//	                    outVo.setCreatedBy(createdBy);
+//	                    outVo.setBranch(branch);
+//	                    outVo.setBranchCode(branchCode);
+//	                    outVo.setEmpCode(log.getEmployeeCode());
+//	                    outVo.setEmpName(log.getEmployeeName());
+//	                    outVo.setEntryTime(outTime);
+//	                    outVo.setFinyear(String.valueOf(outDate.getYear()));
+//	                    outVo.setOrgId(orgId);
+//	                    outVo.setScreenCode("CIOB");
+//	                    outVo.setScreenName("CHECKINOUTBIOMETRIC");
+//	                    outVo.setStatus("Out");
+//	                    biometricQueue.add(outVo);
+//	                    successCount.incrementAndGet();
+//	                }
+//	            }
+//	        } catch (Exception e) {
+//	            e.printStackTrace();
+//	        }
+//	    });
+//
+//	    if (biometricQueue.isEmpty()) {
+//	        throw new RuntimeException("No valid biometric records found in the logs.");
+//	    }
+//
+//	    // 4️⃣ Save biometrics in batch
+//	    List<CheckInOutBiometricVO> savedBiometric = checkInOutBiometricRepo.saveAll(biometricQueue);
+//	    List<Long> currentIds = savedBiometric.stream()
+//	            .map(CheckInOutBiometricVO::getId)
+//	            .collect(Collectors.toList());
+//
+//	    if (currentIds.isEmpty()) {
+//	        throw new RuntimeException("No biometric records saved.");
+//	    }
+//
+//	    // 5️⃣ Insert AttendanceProcess in batch
+//	    BigInteger currentSeq = (BigInteger) entityManager.createNativeQuery(
+//	            "SELECT next_val FROM attendanceprocessseq").getSingleResult();
+//
+//	    entityManager.createNativeQuery(
+//	            "INSERT INTO attendanceprocess (" +
+//	                    "attendanceprocessid, empcode, empname, orgid, branchcode, branch, finyear, " +
+//	                    "checkindate, entrytime, status, sourceid, attendancemode, createdby, createdon, modifiedon, screencode, screenname" +
+//	                    ") " +
+//	                    "SELECT (:seq + ROW_NUMBER() OVER (ORDER BY checkinoutbiometricid)) AS new_id, " +
+//	                    "empcode, empname, orgid, branchcode, branch, finyear, " +
+//	                    "checkindate, entrytime, status, checkinoutbiometricid, attendancemode, createdby, NOW(), NOW(), 'AM', 'ATTENDANCE MODE' " +
+//	                    "FROM checkinoutbiometric WHERE checkinoutbiometricid IN (:ids)")
+//	            .setParameter("seq", currentSeq)
+//	            .setParameter("ids", currentIds)
+//	            .executeUpdate();
+//
+//	    entityManager.createNativeQuery(
+//	            "UPDATE attendanceprocessseq SET next_val = next_val + " +
+//	                    "(SELECT COUNT(*) FROM checkinoutbiometric WHERE checkinoutbiometricid IN (:ids))")
+//	            .setParameter("ids", currentIds)
+//	            .executeUpdate();
+//
+//	    // 6️⃣ Build AttendanceDaily (parallel per employee)
+//	    List<AttendanceProcessVO> attendanceList = attendanceProcessRepo.findBySourceIdIn(currentIds);
+//	    Map<String, List<AttendanceProcessVO>> groupedByEmp = attendanceList.stream()
+//	            .collect(Collectors.groupingBy(a -> a.getEmpCode() + "_" + a.getOrgId() + "_" + a.getBranchCode()));
+//
+//	    groupedByEmp.values().parallelStream().forEach(empRecords -> {
+//	        empRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
+//	                .thenComparing(AttendanceProcessVO::getEntryTime));
+//
+//	        Map<LocalDate, List<AttendanceProcessVO>> recordsByDay = new LinkedHashMap<>();
+//
+//	        for (int i = 0; i < empRecords.size(); i++) {
+//	            AttendanceProcessVO rec = empRecords.get(i);
+//	            LocalDate workDate = rec.getCheckInDate();
+//
+//	            // Night shift OUT adjustment
+//	            if ("Out".equalsIgnoreCase(rec.getStatus()) && i > 0) {
+//	                AttendanceProcessVO prev = empRecords.get(i - 1);
+//	                if ("In".equalsIgnoreCase(prev.getStatus()) &&
+//	                        rec.getEntryTime().isBefore(prev.getEntryTime())) {
+//	                    workDate = prev.getCheckInDate();
+//	                }
+//	            }
+//
+//	            recordsByDay.computeIfAbsent(workDate, k -> new ArrayList<>()).add(rec);
+//	        }
+//
+//	        // Create AttendanceDaily per day
+//	        for (Map.Entry<LocalDate, List<AttendanceProcessVO>> entry : recordsByDay.entrySet()) {
+//	            LocalDate workDate = entry.getKey();
+//	            List<AttendanceProcessVO> dayRecords = entry.getValue();
+//	            dayRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
+//	                    .thenComparing(AttendanceProcessVO::getEntryTime));
+//
+//	            Deque<AttendanceProcessVO> inQueue = new ArrayDeque<>();
+//	            LocalDateTime mergedIn = null;
+//	            LocalDateTime mergedOut = null;
+//	            int effectiveHours = 0;
+//
+//	            for (AttendanceProcessVO rec : dayRecords) {
+//	                if ("In".equalsIgnoreCase(rec.getStatus())) {
+//	                    inQueue.add(rec);
+//	                    if (mergedIn == null)
+//	                        mergedIn = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
+//	                } else if ("Out".equalsIgnoreCase(rec.getStatus()) && !inQueue.isEmpty()) {
+//	                    AttendanceProcessVO firstIn = inQueue.removeFirst();
+//	                    LocalDateTime inDT = LocalDateTime.of(firstIn.getCheckInDate(), firstIn.getEntryTime());
+//	                    LocalDateTime outDT = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
+//	                    if (outDT.isBefore(inDT)) outDT = outDT.plusDays(1);
+//
+//	                    if (mergedOut == null || outDT.isAfter(mergedOut))
+//	                        mergedOut = outDT;
+//
+//	                    effectiveHours += (int) Duration.between(inDT, outDT).toHours();
+//	                }
+//	            }
+//
+//	            if (mergedIn != null && mergedOut != null) {
+//	                AttendanceProcessVO first = dayRecords.get(0);
+//	                AttendanceDailyVO ad = new AttendanceDailyVO();
+//	                ad.setEmpCode(first.getEmpCode());
+//	                ad.setEmpName(first.getEmpName());
+//	                ad.setOrgId(first.getOrgId());
+//	                ad.setBranch(first.getBranch());
+//	                ad.setBranchCode(first.getBranchCode());
+//	                ad.setCheckInDate(mergedIn.toLocalDate());
+//	                ad.setCheckOutDate(mergedOut.toLocalDate());
+//	                ad.setFinyear(first.getFinyear());
+//	                ad.setAttendanceMode("BIOMETRIC");
+//	                ad.setInTime(mergedIn.toLocalTime());
+//	                ad.setOutTime(mergedOut.toLocalTime());
+//	                ad.setGrossHours((int) Duration.between(mergedIn, mergedOut).toHours());
+//	                ad.setEffectiveHours(effectiveHours);
+//	                ad.setCreatedBy(createdBy);
+//
+//	                dailyListQueue.add(ad);
+//	            }
+//	        }
+//	    });
+//
+//	    // 7️⃣ Save AttendanceDaily in batch
+//	    attendanceDailyRepo.saveAll(dailyListQueue);
+//
+//	    result.put("successCount", successCount.get());
+//	    result.put("message", "Attendance processed successfully (optimized with parallel processing).");
+//	    return result;
+//	}
+
+//chaNGES aug 14
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	public Map<String, Object> createCheckInOutBiometricDevice(Long orgId,
-	                                                           String createdBy,
-	                                                           LocalDate fromDate,
-	                                                           LocalDate toDate,
-	                                                           String branch,
-	                                                           String branchCode) throws Exception {
+	public Map<String, Object> createCheckInOutBiometricDevice(
+	        Long orgId,
+	        String createdBy,
+	        LocalDate fromDate,
+	        LocalDate toDate,
+	        String branch,
+	        String branchCode) throws Exception {
 
 	    Map<String, Object> result = new LinkedHashMap<>();
-	    Queue<CheckInOutBiometricVO> biometricQueue = new ConcurrentLinkedQueue<>();
-	    Queue<AttendanceDailyVO> dailyListQueue = new ConcurrentLinkedQueue<>();
-	    AtomicInteger successCount = new AtomicInteger(0);
 
-	    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-	    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+	    Queue<CheckInOutBiometricVO> biometricQueue =
+	            new ConcurrentLinkedQueue<>();
 
-	    // 1️⃣ Fetch logs
-	    List<AttendanceLogVO> logs = attendanceLogRepo.findByAttendanceDateBetween(fromDate, toDate);
+	    Queue<AttendanceDailyVO> dailyListQueue =
+	            new ConcurrentLinkedQueue<>();
+
+	    AtomicInteger successCount =
+	            new AtomicInteger(0);
+
+
+	    DateTimeFormatter dateFormatter =
+	            DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+	    DateTimeFormatter dateTimeFormatter =
+	            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+	    DateTimeFormatter timeFormatter =
+	            DateTimeFormatter.ofPattern("HH:mm:ss");
+
+
+	    /* ============================================================
+	       1. FETCH ATTENDANCE LOGS
+	       ============================================================ */
+
+	    List<AttendanceLogVO> logs =
+	            attendanceLogRepo.findByAttendanceDateBetween(
+	                    fromDate,
+	                    toDate
+	            );
+
 	    if (logs.isEmpty()) {
-	        throw new RuntimeException("No attendance logs found.");
+
+	        throw new RuntimeException(
+	                "No attendance logs found."
+	        );
 	    }
 
-	    // 2️⃣ Fetch existing biometric records once (to skip duplicates)
-	    Set<String> existingKeys = checkInOutBiometricRepo
-	            .findKeysByDateRange(fromDate, toDate, orgId, branchCode)
-	            .stream()
-	            .map(r -> r[0] + "|" + r[1] + "|" + r[2]) // r[0]=empCode, r[1]=checkInDate, r[2]=entryTime
-	            .collect(Collectors.toSet());
+
+	    /* ============================================================
+	       2. FETCH EXISTING BIOMETRIC RECORDS
+	       ============================================================ */
+
+	    Set<String> existingKeys =
+	            checkInOutBiometricRepo
+	                    .findKeysByDateRange(
+	                            fromDate,
+	                            toDate,
+	                            orgId,
+	                            branchCode
+	                    )
+	                    .stream()
+	                    .map(r ->
+	                            r[0]
+	                            + "|"
+	                            + r[1]
+	                            + "|"
+	                            + r[2]
+	                    )
+	                    .collect(Collectors.toSet());
 
 
-	    // 3️⃣ Process logs in parallel
+	    /* ============================================================
+	       3. PROCESS ATTENDANCE LOGS
+
+	       KEEPING YOUR EXISTING LOGIC
+	       ============================================================ */
+
 	    logs.parallelStream().forEach(log -> {
+
 	        try {
+
 	            LocalDate inDate = null;
 	            LocalTime inTime = null;
+
 	            LocalDate outDate = null;
 	            LocalTime outTime = null;
 
-	            // Parse IN
-	            if (log.getInTime() != null && !log.getInTime().isEmpty() && !log.getInTime().equals("00:00")) {
+
+	            /* ====================================================
+	               PARSE IN
+	               ==================================================== */
+
+	            if (
+	                    log.getInTime() != null
+	                    && !log.getInTime().isEmpty()
+	                    && !log.getInTime().equals("00:00")
+	            ) {
+
 	                try {
-	                    LocalDateTime dt = LocalDateTime.parse(log.getInTime(), dateTimeFormatter);
-	                    inDate = dt.toLocalDate();
-	                    inTime = dt.toLocalTime();
+
+	                    LocalDateTime dt =
+	                            LocalDateTime.parse(
+	                                    log.getInTime(),
+	                                    dateTimeFormatter
+	                            );
+
+	                    inDate =
+	                            dt.toLocalDate();
+
+	                    inTime =
+	                            dt.toLocalTime();
+
 	                } catch (Exception e) {
-	                    inDate = LocalDate.parse(log.getAttendanceDate(), dateFormatter);
-	                    inTime = LocalTime.parse(log.getInTime(), timeFormatter);
+
+	                    inDate =
+	                            LocalDate.parse(
+	                                    log.getAttendanceDate(),
+	                                    dateFormatter
+	                            );
+
+	                    inTime =
+	                            LocalTime.parse(
+	                                    log.getInTime(),
+	                                    timeFormatter
+	                            );
 	                }
 	            }
 
-	            // Parse OUT
-	            if (log.getOutTime() != null && !log.getOutTime().isEmpty() && !log.getOutTime().equals("00:00")) {
+
+	            /* ====================================================
+	               PARSE OUT
+	               ==================================================== */
+
+	            if (
+	                    log.getOutTime() != null
+	                    && !log.getOutTime().isEmpty()
+	                    && !log.getOutTime().equals("00:00")
+	            ) {
+
 	                try {
-	                    LocalDateTime dt = LocalDateTime.parse(log.getOutTime(), dateTimeFormatter);
-	                    outDate = dt.toLocalDate();
-	                    outTime = dt.toLocalTime();
+
+	                    LocalDateTime dt =
+	                            LocalDateTime.parse(
+	                                    log.getOutTime(),
+	                                    dateTimeFormatter
+	                            );
+
+	                    outDate =
+	                            dt.toLocalDate();
+
+	                    outTime =
+	                            dt.toLocalTime();
+
 	                } catch (Exception e) {
-	                    outDate = LocalDate.parse(log.getAttendanceDate(), dateFormatter);
-	                    outTime = LocalTime.parse(log.getOutTime(), timeFormatter);
+
+	                    outDate =
+	                            LocalDate.parse(
+	                                    log.getAttendanceDate(),
+	                                    dateFormatter
+	                            );
+
+	                    outTime =
+	                            LocalTime.parse(
+	                                    log.getOutTime(),
+	                                    timeFormatter
+	                            );
 	                }
 	            }
 
-	            // Skip rows without valid IN/OUT
-	            if (inTime == null && outTime == null) return;
 
-	            // Add IN (if not duplicate)
+	            /* ====================================================
+	               SKIP INVALID RECORD
+	               ==================================================== */
+
+	            if (
+	                    inTime == null
+	                    && outTime == null
+	            ) {
+
+	                return;
+	            }
+
+
+	            /* ====================================================
+	               ADD IN
+	               ==================================================== */
+
 	            if (inTime != null) {
-	                String key = log.getEmployeeCode() + "|" + inDate + "|" + inTime;
+
+	                String key =
+	                        log.getEmployeeCode()
+	                        + "|"
+	                        + inDate
+	                        + "|"
+	                        + inTime;
+
+
 	                if (!existingKeys.contains(key)) {
-	                    CheckInOutBiometricVO inVo = new CheckInOutBiometricVO();
-	                    inVo.setAttendanceMode("BIOMETRIC");
-	                    inVo.setCheckInDate(inDate);
-	                    inVo.setCreatedBy(createdBy);
-	                    inVo.setBranch(branch);
-	                    inVo.setBranchCode(branchCode);
-	                    inVo.setEmpCode(log.getEmployeeCode());
-	                    inVo.setEmpName(log.getEmployeeName());
-	                    inVo.setEntryTime(inTime);
-	                    inVo.setFinyear(String.valueOf(inDate.getYear()));
-	                    inVo.setOrgId(orgId);
-	                    inVo.setScreenCode("CIOB");
-	                    inVo.setScreenName("CHECKINOUTBIOMETRIC");
-	                    inVo.setStatus("In");
-	                    biometricQueue.add(inVo);
+
+	                    CheckInOutBiometricVO inVo =
+	                            new CheckInOutBiometricVO();
+
+	                    inVo.setAttendanceMode(
+	                            "BIOMETRIC"
+	                    );
+
+	                    inVo.setCheckInDate(
+	                            inDate
+	                    );
+
+	                    inVo.setCreatedBy(
+	                            createdBy
+	                    );
+
+	                    inVo.setBranch(
+	                            branch
+	                    );
+
+	                    inVo.setBranchCode(
+	                            branchCode
+	                    );
+
+	                    inVo.setEmpCode(
+	                            log.getEmployeeCode()
+	                    );
+
+	                    inVo.setEmpName(
+	                            log.getEmployeeName()
+	                    );
+
+	                    inVo.setEntryTime(
+	                            inTime
+	                    );
+
+	                    inVo.setFinyear(
+	                            String.valueOf(
+	                                    inDate.getYear()
+	                            )
+	                    );
+
+	                    inVo.setOrgId(
+	                            orgId
+	                    );
+
+	                    inVo.setScreenCode(
+	                            "CIOB"
+	                    );
+
+	                    inVo.setScreenName(
+	                            "CHECKINOUTBIOMETRIC"
+	                    );
+
+	                    inVo.setStatus(
+	                            "In"
+	                    );
+
+	                    biometricQueue.add(
+	                            inVo
+	                    );
+
 	                    successCount.incrementAndGet();
 	                }
 	            }
 
-	            // Add OUT (if not duplicate)
+
+	            /* ====================================================
+	               ADD OUT
+	               ==================================================== */
+
 	            if (outTime != null) {
-	                String key = log.getEmployeeCode() + "|" + outDate + "|" + outTime;
+
+	                String key =
+	                        log.getEmployeeCode()
+	                        + "|"
+	                        + outDate
+	                        + "|"
+	                        + outTime;
+
+
 	                if (!existingKeys.contains(key)) {
-	                    CheckInOutBiometricVO outVo = new CheckInOutBiometricVO();
-	                    outVo.setAttendanceMode("BIOMETRIC");
-	                    outVo.setCheckInDate(outDate);
-	                    outVo.setCreatedBy(createdBy);
-	                    outVo.setBranch(branch);
-	                    outVo.setBranchCode(branchCode);
-	                    outVo.setEmpCode(log.getEmployeeCode());
-	                    outVo.setEmpName(log.getEmployeeName());
-	                    outVo.setEntryTime(outTime);
-	                    outVo.setFinyear(String.valueOf(outDate.getYear()));
-	                    outVo.setOrgId(orgId);
-	                    outVo.setScreenCode("CIOB");
-	                    outVo.setScreenName("CHECKINOUTBIOMETRIC");
-	                    outVo.setStatus("Out");
-	                    biometricQueue.add(outVo);
+
+	                    CheckInOutBiometricVO outVo =
+	                            new CheckInOutBiometricVO();
+
+	                    outVo.setAttendanceMode(
+	                            "BIOMETRIC"
+	                    );
+
+	                    outVo.setCheckInDate(
+	                            outDate
+	                    );
+
+	                    outVo.setCreatedBy(
+	                            createdBy
+	                    );
+
+	                    outVo.setBranch(
+	                            branch
+	                    );
+
+	                    outVo.setBranchCode(
+	                            branchCode
+	                    );
+
+	                    outVo.setEmpCode(
+	                            log.getEmployeeCode()
+	                    );
+
+	                    outVo.setEmpName(
+	                            log.getEmployeeName()
+	                    );
+
+	                    outVo.setEntryTime(
+	                            outTime
+	                    );
+
+	                    outVo.setFinyear(
+	                            String.valueOf(
+	                                    outDate.getYear()
+	                            )
+	                    );
+
+	                    outVo.setOrgId(
+	                            orgId
+	                    );
+
+	                    outVo.setScreenCode(
+	                            "CIOB"
+	                    );
+
+	                    outVo.setScreenName(
+	                            "CHECKINOUTBIOMETRIC"
+	                    );
+
+	                    outVo.setStatus(
+	                            "Out"
+	                    );
+
+	                    biometricQueue.add(
+	                            outVo
+	                    );
+
 	                    successCount.incrementAndGet();
 	                }
 	            }
+
 	        } catch (Exception e) {
+
 	            e.printStackTrace();
 	        }
 	    });
 
+
+	    /* ============================================================
+	       4. VALIDATE BIOMETRIC DATA
+	       ============================================================ */
+
 	    if (biometricQueue.isEmpty()) {
-	        throw new RuntimeException("No valid biometric records found in the logs.");
+
+	        throw new RuntimeException(
+	                "No valid biometric records found in the logs."
+	        );
 	    }
 
-	    // 4️⃣ Save biometrics in batch
-	    List<CheckInOutBiometricVO> savedBiometric = checkInOutBiometricRepo.saveAll(biometricQueue);
-	    List<Long> currentIds = savedBiometric.stream()
-	            .map(CheckInOutBiometricVO::getId)
-	            .collect(Collectors.toList());
+
+	    /* ============================================================
+	       5. SAVE BIOMETRIC
+	       ============================================================ */
+
+	    List<CheckInOutBiometricVO> savedBiometric =
+	            checkInOutBiometricRepo.saveAll(
+	                    biometricQueue
+	            );
+
+
+	    List<Long> currentIds =
+	            savedBiometric
+	                    .stream()
+	                    .map(
+	                            CheckInOutBiometricVO::getId
+	                    )
+	                    .collect(
+	                            Collectors.toList()
+	                    );
+
 
 	    if (currentIds.isEmpty()) {
-	        throw new RuntimeException("No biometric records saved.");
+
+	        throw new RuntimeException(
+	                "No biometric records saved."
+	        );
 	    }
 
-	    // 5️⃣ Insert AttendanceProcess in batch
-	    BigInteger currentSeq = (BigInteger) entityManager.createNativeQuery(
-	            "SELECT next_val FROM attendanceprocessseq").getSingleResult();
 
-	    entityManager.createNativeQuery(
-	            "INSERT INTO attendanceprocess (" +
-	                    "attendanceprocessid, empcode, empname, orgid, branchcode, branch, finyear, " +
-	                    "checkindate, entrytime, status, sourceid, attendancemode, createdby, createdon, modifiedon, screencode, screenname" +
+	    /* ============================================================
+	       6. INSERT ATTENDANCE PROCESS
+	       ============================================================ */
+
+	    BigInteger currentSeq =
+	            (BigInteger) entityManager
+	                    .createNativeQuery(
+	                            "SELECT next_val " +
+	                            "FROM attendanceprocessseq"
+	                    )
+	                    .getSingleResult();
+
+
+	    entityManager
+	            .createNativeQuery(
+	                    "INSERT INTO attendanceprocess (" +
+	                    "attendanceprocessid, " +
+	                    "empcode, " +
+	                    "empname, " +
+	                    "orgid, " +
+	                    "branchcode, " +
+	                    "branch, " +
+	                    "finyear, " +
+	                    "checkindate, " +
+	                    "entrytime, " +
+	                    "status, " +
+	                    "sourceid, " +
+	                    "attendancemode, " +
+	                    "createdby, " +
+	                    "createdon, " +
+	                    "modifiedon, " +
+	                    "screencode, " +
+	                    "screenname" +
 	                    ") " +
-	                    "SELECT (:seq + ROW_NUMBER() OVER (ORDER BY checkinoutbiometricid)) AS new_id, " +
-	                    "empcode, empname, orgid, branchcode, branch, finyear, " +
-	                    "checkindate, entrytime, status, checkinoutbiometricid, attendancemode, createdby, NOW(), NOW(), 'AM', 'ATTENDANCE MODE' " +
-	                    "FROM checkinoutbiometric WHERE checkinoutbiometricid IN (:ids)")
-	            .setParameter("seq", currentSeq)
-	            .setParameter("ids", currentIds)
+
+	                    "SELECT " +
+	                    "(:seq + ROW_NUMBER() OVER " +
+	                    "(ORDER BY checkinoutbiometricid)) " +
+	                    "AS new_id, " +
+
+	                    "empcode, " +
+	                    "empname, " +
+	                    "orgid, " +
+	                    "branchcode, " +
+	                    "branch, " +
+	                    "finyear, " +
+	                    "checkindate, " +
+	                    "entrytime, " +
+	                    "status, " +
+	                    "checkinoutbiometricid, " +
+	                    "attendancemode, " +
+	                    "createdby, " +
+	                    "NOW(), " +
+	                    "NOW(), " +
+	                    "'AM', " +
+	                    "'ATTENDANCE MODE' " +
+
+	                    "FROM checkinoutbiometric " +
+
+	                    "WHERE checkinoutbiometricid " +
+	                    "IN (:ids)"
+	            )
+	            .setParameter(
+	                    "seq",
+	                    currentSeq
+	            )
+	            .setParameter(
+	                    "ids",
+	                    currentIds
+	            )
 	            .executeUpdate();
 
-	    entityManager.createNativeQuery(
-	            "UPDATE attendanceprocessseq SET next_val = next_val + " +
-	                    "(SELECT COUNT(*) FROM checkinoutbiometric WHERE checkinoutbiometricid IN (:ids))")
-	            .setParameter("ids", currentIds)
+
+	    /* ============================================================
+	       7. UPDATE SEQUENCE
+	       ============================================================ */
+
+	    entityManager
+	            .createNativeQuery(
+	                    "UPDATE attendanceprocessseq " +
+	                    "SET next_val = next_val + " +
+	                    "(" +
+	                    "SELECT COUNT(*) " +
+	                    "FROM checkinoutbiometric " +
+	                    "WHERE checkinoutbiometricid IN (:ids)" +
+	                    ")"
+	            )
+	            .setParameter(
+	                    "ids",
+	                    currentIds
+	            )
 	            .executeUpdate();
 
-	    // 6️⃣ Build AttendanceDaily (parallel per employee)
-	    List<AttendanceProcessVO> attendanceList = attendanceProcessRepo.findBySourceIdIn(currentIds);
-	    Map<String, List<AttendanceProcessVO>> groupedByEmp = attendanceList.stream()
-	            .collect(Collectors.groupingBy(a -> a.getEmpCode() + "_" + a.getOrgId() + "_" + a.getBranchCode()));
 
-	    groupedByEmp.values().parallelStream().forEach(empRecords -> {
-	        empRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-	                .thenComparing(AttendanceProcessVO::getEntryTime));
+	    /* ============================================================
+	       8. FETCH ATTENDANCE PROCESS
 
-	        Map<LocalDate, List<AttendanceProcessVO>> recordsByDay = new LinkedHashMap<>();
+	       IMPORTANT CHANGE:
 
-	        for (int i = 0; i < empRecords.size(); i++) {
-	            AttendanceProcessVO rec = empRecords.get(i);
-	            LocalDate workDate = rec.getCheckInDate();
+	       We don't build AttendanceDaily only from currentIds.
 
-	            // Night shift OUT adjustment
-	            if ("Out".equalsIgnoreCase(rec.getStatus()) && i > 0) {
-	                AttendanceProcessVO prev = empRecords.get(i - 1);
-	                if ("In".equalsIgnoreCase(prev.getStatus()) &&
-	                        rec.getEntryTime().isBefore(prev.getEntryTime())) {
-	                    workDate = prev.getCheckInDate();
+	       We need all attendance-process records for the affected
+	       employees/date range because an IN and OUT may come from
+	       different uploads.
+	       ============================================================ */
+
+	    List<String> employeeCodes =
+	            savedBiometric
+	                    .stream()
+	                    .map(
+	                            CheckInOutBiometricVO
+	                                    ::getEmpCode
+	                    )
+	                    .filter(
+	                            Objects::nonNull
+	                    )
+	                    .distinct()
+	                    .collect(
+	                            Collectors.toList()
+	                    );
+
+
+	    if (employeeCodes.isEmpty()) {
+
+	        throw new RuntimeException(
+	                "No employee codes found."
+	        );
+	    }
+
+
+	    /* ============================================================
+	       FETCH ALL PROCESS RECORDS FOR AFFECTED EMPLOYEES
+
+	       IMPORTANT:
+
+	       Use your repository method if you already have one.
+
+	       Example repository method:
+
+	       findByEmpCodeInAndCheckInDateBetweenAndOrgIdAndBranchCode
+	       ============================================================ */
+
+	    List<AttendanceProcessVO> attendanceList =
+	            attendanceProcessRepo
+	                    .findByEmpCodeInAndCheckInDateBetweenAndOrgIdAndBranchCode(
+	                            employeeCodes,
+	                            fromDate,
+	                            toDate,
+	                            orgId,
+	                            branchCode
+	                    );
+
+
+	    /* ============================================================
+	       9. GROUP BY EMPLOYEE
+	       ============================================================ */
+
+	    Map<String, List<AttendanceProcessVO>>
+	            groupedByEmp =
+	            attendanceList
+	                    .stream()
+	                    .collect(
+	                            Collectors.groupingBy(
+	                                    a ->
+	                                            a.getEmpCode()
+	                                            + "_"
+	                                            + a.getOrgId()
+	                                            + "_"
+	                                            + a.getBranchCode()
+	                            )
+	                    );
+
+
+	    /* ============================================================
+	       10. PROCESS EACH EMPLOYEE
+	       ============================================================ */
+
+	    groupedByEmp.values()
+	            .forEach(empRecords -> {
+
+
+	                /* =================================================
+	                   SORT BY DATE + TIME
+	                   ================================================= */
+
+	                empRecords.sort(
+	                        Comparator
+	                                .comparing(
+	                                        AttendanceProcessVO
+	                                                ::getCheckInDate
+	                                )
+	                                .thenComparing(
+	                                        AttendanceProcessVO
+	                                                ::getEntryTime
+	                                )
+	                );
+
+
+	                /* =================================================
+	                   GROUP BY ATTENDANCE DATE
+	                   ================================================= */
+
+	                Map<LocalDate,
+	                        List<AttendanceProcessVO>>
+	                        recordsByDay =
+	                        new LinkedHashMap<>();
+
+
+	                for (
+	                        AttendanceProcessVO rec
+	                        : empRecords
+	                ) {
+
+	                    LocalDate workDate =
+	                            rec.getCheckInDate();
+
+
+	                    /*
+	                     * IMPORTANT:
+	                     *
+	                     * DO NOT move OUT to next day here.
+	                     *
+	                     * We will decide that only while pairing
+	                     * IN -> OUT.
+	                     */
+
+
+	                    recordsByDay
+	                            .computeIfAbsent(
+	                                    workDate,
+	                                    k -> new ArrayList<>()
+	                            )
+	                            .add(rec);
 	                }
-	            }
 
-	            recordsByDay.computeIfAbsent(workDate, k -> new ArrayList<>()).add(rec);
-	        }
 
-	        // Create AttendanceDaily per day
-	        for (Map.Entry<LocalDate, List<AttendanceProcessVO>> entry : recordsByDay.entrySet()) {
-	            LocalDate workDate = entry.getKey();
-	            List<AttendanceProcessVO> dayRecords = entry.getValue();
-	            dayRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-	                    .thenComparing(AttendanceProcessVO::getEntryTime));
+	                /* =================================================
+	                   11. CREATE ATTENDANCE DAILY PER DAY
+	                   ================================================= */
 
-	            Deque<AttendanceProcessVO> inQueue = new ArrayDeque<>();
-	            LocalDateTime mergedIn = null;
-	            LocalDateTime mergedOut = null;
-	            int effectiveHours = 0;
+	                for (
+	                        Map.Entry<
+	                                LocalDate,
+	                                List<AttendanceProcessVO>
+	                                > entry
+	                        : recordsByDay.entrySet()
+	                ) {
 
-	            for (AttendanceProcessVO rec : dayRecords) {
-	                if ("In".equalsIgnoreCase(rec.getStatus())) {
-	                    inQueue.add(rec);
-	                    if (mergedIn == null)
-	                        mergedIn = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
-	                } else if ("Out".equalsIgnoreCase(rec.getStatus()) && !inQueue.isEmpty()) {
-	                    AttendanceProcessVO firstIn = inQueue.removeFirst();
-	                    LocalDateTime inDT = LocalDateTime.of(firstIn.getCheckInDate(), firstIn.getEntryTime());
-	                    LocalDateTime outDT = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
-	                    if (outDT.isBefore(inDT)) outDT = outDT.plusDays(1);
+	                    LocalDate workDate =
+	                            entry.getKey();
 
-	                    if (mergedOut == null || outDT.isAfter(mergedOut))
-	                        mergedOut = outDT;
+	                    List<AttendanceProcessVO>
+	                            dayRecords =
+	                            entry.getValue();
 
-	                    effectiveHours += (int) Duration.between(inDT, outDT).toHours();
+
+	                    dayRecords.sort(
+	                            Comparator
+	                                    .comparing(
+	                                            AttendanceProcessVO
+	                                                    ::getCheckInDate
+	                                    )
+	                                    .thenComparing(
+	                                            AttendanceProcessVO
+	                                                    ::getEntryTime
+	                                    )
+	                    );
+
+
+	                    /* =================================================
+	                       IN QUEUE
+	                       ================================================= */
+
+	                    Deque<AttendanceProcessVO>
+	                            inQueue =
+	                            new ArrayDeque<>();
+
+
+	                    LocalDateTime mergedIn =
+	                            null;
+
+	                    LocalDateTime mergedOut =
+	                            null;
+
+	                    int effectiveHours = 0;
+
+
+	                    /* =================================================
+	                       12. PAIR IN -> OUT
+	                       ================================================= */
+
+	                    for (
+	                            AttendanceProcessVO rec
+	                            : dayRecords
+	                    ) {
+
+
+	                        /* =============================================
+	                           IN
+	                           ============================================= */
+
+	                        if (
+	                                "In".equalsIgnoreCase(
+	                                        rec.getStatus()
+	                                )
+	                        ) {
+
+	                            inQueue.addLast(
+	                                    rec
+	                            );
+
+
+	                            if (mergedIn == null) {
+
+	                                mergedIn =
+	                                        LocalDateTime.of(
+	                                                rec.getCheckInDate(),
+	                                                rec.getEntryTime()
+	                                        );
+	                            }
+
+
+	                            continue;
+	                        }
+
+
+	                        /* =============================================
+	                           OUT
+	                           ============================================= */
+
+	                        if (
+	                                "Out".equalsIgnoreCase(
+	                                        rec.getStatus()
+	                                )
+	                                && !inQueue.isEmpty()
+	                        ) {
+
+	                            /*
+	                             * Get the oldest unmatched IN.
+	                             */
+
+	                            AttendanceProcessVO firstIn =
+	                                    inQueue.removeFirst();
+
+
+	                            LocalDateTime inDT =
+	                                    LocalDateTime.of(
+	                                            firstIn.getCheckInDate(),
+	                                            firstIn.getEntryTime()
+	                                    );
+
+
+	                            LocalDateTime outDT =
+	                                    LocalDateTime.of(
+	                                            rec.getCheckInDate(),
+	                                            rec.getEntryTime()
+	                                    );
+
+
+	                            /* =========================================
+	                               IMPORTANT FIX
+
+	                               DO NOT blindly do:
+
+	                               outDT.plusDays(1)
+
+	                               when OUT < IN.
+
+	                               Only allow overnight when the actual
+	                               OUT record belongs to the next date.
+	                               ========================================= */
+
+	                            if (
+	                                    outDT.isBefore(inDT)
+	                            ) {
+
+	                                /*
+	                                 * If OUT is earlier than IN on the
+	                                 * same date, this is not a valid pair.
+	                                 *
+	                                 * Do NOT convert it into next-day
+	                                 * attendance automatically.
+	                                 */
+
+	                                continue;
+	                            }
+
+
+	                            /* =========================================
+	                               MERGED IN
+	                               ========================================= */
+
+	                            if (
+	                                    mergedIn == null
+	                                    || inDT.isBefore(
+	                                            mergedIn
+	                                    )
+	                            ) {
+
+	                                mergedIn =
+	                                        inDT;
+	                            }
+
+
+	                            /* =========================================
+	                               MERGED OUT
+	                               ========================================= */
+
+	                            if (
+	                                    mergedOut == null
+	                                    || outDT.isAfter(
+	                                            mergedOut
+	                                    )
+	                            ) {
+
+	                                mergedOut =
+	                                        outDT;
+	                            }
+
+
+	                            /* =========================================
+	                               EFFECTIVE HOURS
+	                               ========================================= */
+
+	                            effectiveHours +=
+	                                    (int) Duration
+	                                            .between(
+	                                                    inDT,
+	                                                    outDT
+	                                            )
+	                                            .toHours();
+	                        }
+	                    }
+
+
+	                    /* =================================================
+	                       13. CREATE ATTENDANCE DAILY
+	                       ================================================= */
+
+	                    if (
+	                            mergedIn != null
+	                            && mergedOut != null
+	                    ) {
+
+	                        AttendanceProcessVO first =
+	                                dayRecords.get(0);
+
+
+	                        AttendanceDailyVO ad =
+	                                new AttendanceDailyVO();
+
+
+	                        ad.setEmpCode(
+	                                first.getEmpCode()
+	                        );
+
+	                        ad.setEmpName(
+	                                first.getEmpName()
+	                        );
+
+	                        ad.setOrgId(
+	                                first.getOrgId()
+	                        );
+
+	                        ad.setBranch(
+	                                first.getBranch()
+	                        );
+
+	                        ad.setBranchCode(
+	                                first.getBranchCode()
+	                        );
+
+
+	                        /* =============================================
+	                           CHECK-IN DATE
+	                           ============================================= */
+
+	                        ad.setCheckInDate(
+	                                mergedIn.toLocalDate()
+	                        );
+
+
+	                        /* =============================================
+	                           CHECK-OUT DATE
+	                           ============================================= */
+
+	                        ad.setCheckOutDate(
+	                                mergedOut.toLocalDate()
+	                        );
+
+
+	                        ad.setFinyear(
+	                                first.getFinyear()
+	                        );
+
+	                        ad.setAttendanceMode(
+	                                "BIOMETRIC"
+	                        );
+
+
+	                        ad.setInTime(
+	                                mergedIn.toLocalTime()
+	                        );
+
+	                        ad.setOutTime(
+	                                mergedOut.toLocalTime()
+	                        );
+
+
+	                        /* =============================================
+	                           GROSS HOURS
+	                           ============================================= */
+
+	                        ad.setGrossHours(
+	                                (int) Duration
+	                                        .between(
+	                                                mergedIn,
+	                                                mergedOut
+	                                        )
+	                                        .toHours()
+	                        );
+
+
+	                        /* =============================================
+	                           EFFECTIVE HOURS
+	                           ============================================= */
+
+	                        ad.setEffectiveHours(
+	                                effectiveHours
+	                        );
+
+
+	                        ad.setCreatedBy(
+	                                createdBy
+	                        );
+
+
+	                        dailyListQueue.add(
+	                                ad
+	                        );
+	                    }
 	                }
-	            }
+	            });
 
-	            if (mergedIn != null && mergedOut != null) {
-	                AttendanceProcessVO first = dayRecords.get(0);
-	                AttendanceDailyVO ad = new AttendanceDailyVO();
-	                ad.setEmpCode(first.getEmpCode());
-	                ad.setEmpName(first.getEmpName());
-	                ad.setOrgId(first.getOrgId());
-	                ad.setBranch(first.getBranch());
-	                ad.setBranchCode(first.getBranchCode());
-	                ad.setCheckInDate(mergedIn.toLocalDate());
-	                ad.setCheckOutDate(mergedOut.toLocalDate());
-	                ad.setFinyear(first.getFinyear());
-	                ad.setAttendanceMode("BIOMETRIC");
-	                ad.setInTime(mergedIn.toLocalTime());
-	                ad.setOutTime(mergedOut.toLocalTime());
-	                ad.setGrossHours((int) Duration.between(mergedIn, mergedOut).toHours());
-	                ad.setEffectiveHours(effectiveHours);
-	                ad.setCreatedBy(createdBy);
 
-	                dailyListQueue.add(ad);
-	            }
-	        }
-	    });
+	    /* ============================================================
+	       14. SAVE ATTENDANCE DAILY
+	       ============================================================ */
 
-	    // 7️⃣ Save AttendanceDaily in batch
-	    attendanceDailyRepo.saveAll(dailyListQueue);
+	    if (!dailyListQueue.isEmpty()) {
 
-	    result.put("successCount", successCount.get());
-	    result.put("message", "Attendance processed successfully (optimized with parallel processing).");
+	        attendanceDailyRepo.saveAll(
+	                dailyListQueue
+	        );
+	    }
+
+
+	    /* ============================================================
+	       15. RESPONSE
+	       ============================================================ */
+
+	    result.put(
+	            "successCount",
+	            successCount.get()
+	    );
+
+	    result.put(
+	            "message",
+	            "Attendance processed successfully."
+	    );
+
+
 	    return result;
 	}
-
-
 	
 	
-	
-	
+//	---------------------------------------
 	// Run every day at 12 PM
 ////	@Scheduled(cron = "0 0 12 * * ?")
 //	@Scheduled(cron = "0 0/10 * * * ?")   // every 10 minutes

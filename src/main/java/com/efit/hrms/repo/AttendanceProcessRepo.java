@@ -1019,6 +1019,11 @@ public interface AttendanceProcessRepo extends JpaRepository<AttendanceProcessVO
 
 
 
+	List<AttendanceProcessVO> findByEmpCodeInAndCheckInDateBetweenAndOrgIdAndBranchCode(List<String> employeeCodes,
+			LocalDate fromDate, LocalDate toDate, Long orgId, String branchCode);
+
+
+
 
 
 
