@@ -42,11 +42,21 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 	public List<AttendanceLogVO> getAllAttendanceLogDetails(String startDate, String endDate) {
 		RestTemplate restTemplate = new RestTemplate();
 		List<AttendanceLogVO> savedLogs = new ArrayList<>();
+		
+		//manual
+//		String start ="2025-12-26";
+//		String end ="2025-12-31";
 
 		try {
+			//auto
 			String url = "http://localhost:8082/api/WebAPI/GetAttendanceInOutProcessedET" + "?AppKey=2716110845479"
 					+ "&StartDate=" + startDate + "&EndDate=" + endDate;
-
+			
+//			//manual
+//			String url = "http://localhost:8082/api/WebAPI/GetAttendanceInOutProcessedET" + "?AppKey=2716110845479"
+//					+ "&StartDate=" + start + "&EndDate=" + end;
+//			System.out.println("API URL: " + url);
+//			
 			String response = restTemplate.getForObject(url, String.class);
 			System.out.println("Raw JSON Response: " + response);
 
@@ -207,6 +217,18 @@ public class AttendanceLogServiceImpl implements AttendanceLogService {
 		return "ADMIN";
 	}
 
+	
+//	manual
+//	@Scheduled(cron = "0 05 17 * * ?")
+//	public void scheduledFetchAndSaveDeviceLog() {
+//
+//	    String startDate = "2025-12-26";
+//	    String endDate = "2025-12-31";
+//
+//	    fetchAndSaveDeviceLog(startDate, endDate);
+//	}
+	
+	//auto
 	@Scheduled(cron = "0 0 11 * * ?")
 	public void scheduledFetchAndSaveDeviceLog() {
 	    // Step 1: get current date

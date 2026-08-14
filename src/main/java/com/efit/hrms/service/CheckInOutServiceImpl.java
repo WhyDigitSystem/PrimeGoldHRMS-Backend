@@ -162,7 +162,6 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		// Save to CheckInOutBiometricVO
 		CheckInOutBiometricVO todayCheck = new CheckInOutBiometricVO();
 		todayCheck.setEmpCode(checkInOutBiometricDTO.getEmpCode());
-		todayCheck.setEmpName(checkInOutBiometricDTO.getEmpName());
 		todayCheck.setBranch(checkInOutBiometricDTO.getBranch());
 		todayCheck.setBranchCode(checkInOutBiometricDTO.getBranchCode());
 		todayCheck.setCheckInDate(today);
@@ -300,6 +299,29 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 		response.put("checkInBiometricVO", todayCheck);
 
 		return response;
+	}
+	
+	@Scheduled(cron = "0 */10 * * * ?")   // every 10 minutes
+	public void fetchAttendanceLogsAtNoon() {
+	    try {
+	        // Yesterday's date
+	        LocalDate yesterday = LocalDate.now()
+	                .minusDays(1);
+	        
+            Long orgId= 1000000001L;
+            String createdBy="AUTO SCHEDULAR";
+            String branch="HOSUR";
+            String branchCode="HOS";
+	        
+	        // Call your method with yesterday as both from and to date
+//	        createCheckInOutBiometricDeviceSchedular(orgId,createdBy,yesterday, yesterday,branch,branchCode);
+            createCheckInOutBiometricDevice(orgId,createdBy,yesterday, yesterday,branch,branchCode);
+
+	        
+	        System.out.println("Scheduler executed for date: " + yesterday);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 	}
 	
 	@Override
