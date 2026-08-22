@@ -1,15 +1,15 @@
 package com.efit.hrms.controller;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.efit.hrms.common.CommonConstant;
+import com.efit.hrms.common.UserConstants;
+import com.efit.hrms.dto.ResponseDTO;
 import com.efit.hrms.service.OvertimeService;
 
 @CrossOrigin
@@ -24,54 +27,114 @@ import com.efit.hrms.service.OvertimeService;
 @RequestMapping("/api/otdetails")
 public class OTDetailsController extends BaseController {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(OTDetailsController.class);
+    public static final Logger LOGGER =
+            LoggerFactory.getLogger(OTDetailsController.class);
 
-	@Autowired
-	private OvertimeService overtimeService;
+    @Autowired
+    private OvertimeService overtimeService;
 
-	@GetMapping("/report")
-	public ResponseEntity<Map<String, Object>> getOvertimeReport(
+    @GetMapping("OTDetailsForAttendance")
+    public ResponseEntity<ResponseDTO> getOvertimeReport(
 
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
 
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate,
 
-			@RequestParam Long orgId
+            @RequestParam Long orgId) {
 
-	) {
+        String methodName = "getOvertimeReport()";
 
-		Map<String, Object> response = new LinkedHashMap<>();
+        LOGGER.debug(
+                CommonConstant.STARTING_METHOD,
+                methodName
+        );
 
-		try {
+        String errorMsg = null;
 
-			List<Map<String, Object>> data = overtimeService.getOvertimeReport(fromDate, toDate, orgId);
+        Map<String, Object> responseObjectsMap =
+                new HashMap<>();
 
-			response.put("message", "OT Report Loaded Successfully");
+        ResponseDTO responseDTO = null;
 
-			response.put("fromDate", fromDate);
+        List<Map<String, Object>> data = null;
 
-			response.put("toDate", toDate);
+        try {
 
-			response.put("data", data);
+            data = overtimeService.getOvertimeReport(
+                    fromDate,
+                    toDate,
+                    orgId
+            );
 
-			response.put("count", data.size());
+        } catch (Exception e) {
 
-			return ResponseEntity.ok(response);
+            errorMsg = e.getMessage();
 
-		} catch (IllegalArgumentException e) {
+            LOGGER.error(
+                    UserConstants.ERROR_MSG_METHOD_NAME,
+                    methodName,
+                    errorMsg
+            );
+        }
 
-			response.put("message", e.getMessage());
+        if (StringUtils.isEmpty(errorMsg)) {
 
-			return ResponseEntity.badRequest().body(response);
+            responseObjectsMap.put(
+                    CommonConstant.STRING_MESSAGE,
+                    "OT Report Loaded Successfully"
+            );
 
-		} catch (Exception e) {
+            responseObjectsMap.put(
+                    "fromDate",
+                    fromDate
+            );
 
-			response.put("message", "Failed to load OT report");
+            responseObjectsMap.put(
+                    "toDate",
+                    toDate
+            );
 
-			response.put("error", e.getMessage());
+            responseObjectsMap.put(
+                    "orgId",
+                    orgId
+            );
 
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-		}
-	}
+            responseObjectsMap.put(
+                    "data",
+                    data
+            );
 
+            responseObjectsMap.put(
+                    "count",
+                    data != null ? data.size() : 0
+            );
+
+            responseDTO = createServiceResponse(
+                    responseObjectsMap
+            );
+
+        } else {
+
+            errorMsg = "Failed to load OT report: " + errorMsg;
+
+            responseDTO = createServiceResponseError(
+                    responseObjectsMap,
+                    "OT Report not found",
+                    errorMsg
+            );
+        }
+
+        LOGGER.debug(
+                CommonConstant.ENDING_METHOD,
+                methodName
+        );
+
+        return ResponseEntity
+                .ok()
+                .body(responseDTO);
+    }
 }

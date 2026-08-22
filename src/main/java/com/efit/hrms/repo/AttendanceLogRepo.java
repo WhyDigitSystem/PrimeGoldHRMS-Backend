@@ -87,5 +87,8 @@ public interface AttendanceLogRepo extends JpaRepository<AttendanceLogVO, Long> 
 
 	@Query(nativeQuery = true, value = "SELECT * FROM attendancelog a WHERE a.attendanceDate BETWEEN ?1 AND ?2")
 	List<AttendanceLogVO> findByAttendanceDateBetween(LocalDate fromDate, LocalDate toDate);
+	
+	@Query(nativeQuery = true, value = "SELECT * FROM attendancelog a WHERE a.attendanceDate BETWEEN ?1 AND ?2")
+	List<AttendanceLogVO> findByAttendanceDate(String string, String string2);
 
 }

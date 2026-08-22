@@ -35,226 +35,492 @@ List<Object[]> getEmployeeNameForApprovalOtProcess(Long orgId, String branch, St
 
     @Query(
         value =
-            "WITH " +
-
-            "report_period AS ( " +
-            "    SELECT " +
-            "        CAST(:fromDate AS DATE) AS from_date, " +
-            "        CAST(:toDate AS DATE) AS to_date " +
-            "), " +
-
-            "company_settings AS ( " +
-            "    SELECT " +
-            "        c.companyid, " +
-            "        c.shifthours, " +
-            "        c.oteligiblehours " +
-            "    FROM company c " +
-            "    WHERE c.companyid = :orgId " +
-            "), " +
-
-            "attendance_raw AS ( " +
-            "    SELECT " +
-            "        ad.attendancedailyid, " +
-            "        ad.checkindate, " +
-            "        ad.checkoutdate, " +
-            "        ad.empcode, " +
-            "        ad.empname, " +
-            "        ad.intime, " +
-            "        ad.outtime, " +
-            "        TIMESTAMP(ad.checkindate, ad.intime) AS in_datetime, " +
-            "        TIMESTAMP(ad.checkoutdate, ad.outtime) AS out_datetime " +
-            "    FROM attendancedaily ad " +
-            "    CROSS JOIN report_period rp " +
-            "    WHERE ad.checkindate >= rp.from_date " +
-            "      AND ad.checkindate < DATE_ADD(rp.to_date, INTERVAL 1 DAY) " +
-            "      AND ad.empcode IS NOT NULL " +
-            "      AND TRIM(ad.empcode) <> '' " +
-            "      AND ad.intime IS NOT NULL " +
-            "      AND ad.outtime IS NOT NULL " +
-            "      AND ad.checkindate IS NOT NULL " +
-            "      AND ad.checkoutdate IS NOT NULL " +
-            "), " +
-
-            "daily_attendance AS ( " +
-            "    SELECT " +
-            "        ar.empcode AS employeecode, " +
-            "        MAX(ar.empname) AS employeename, " +
-            "        ar.checkindate AS attendancedate, " +
-            "        MIN(ar.in_datetime) AS first_in, " +
-            "        MAX(ar.out_datetime) AS last_out, " +
-            "        TIMESTAMPDIFF( " +
-            "            MINUTE, " +
-            "            MIN(ar.in_datetime), " +
-            "            MAX(ar.out_datetime) " +
-            "        ) AS actual_work_minutes " +
-            "    FROM attendance_raw ar " +
-            "    GROUP BY " +
-            "        ar.empcode, " +
-            "        ar.checkindate " +
-            "), " +
-
-            "employee_ot AS ( " +
-            "    SELECT " +
-            "        e.employeecode, " +
-            "        e.otflag " +
-            "    FROM employee e " +
-            "    WHERE e.orgid = :orgId " +
-            "      AND e.otflag = 1 " +
-            "), " +
-
-            "daily_employee AS ( " +
-            "    SELECT " +
-            "        da.employeecode, " +
-            "        da.employeename, " +
-            "        da.attendancedate, " +
-            "        da.first_in, " +
-            "        da.last_out, " +
-            "        da.actual_work_minutes, " +
-            "        eo.otflag AS employee_otflag " +
-            "    FROM daily_attendance da " +
-            "    INNER JOIN employee_ot eo " +
-            "        ON eo.employeecode = da.employeecode " +
-            "), " +
-
-            "daily_work AS ( " +
-            "    SELECT " +
-            "        de.employeecode, " +
-            "        de.employeename, " +
-            "        de.attendancedate, " +
-            "        de.first_in, " +
-            "        de.last_out, " +
-            "        de.actual_work_minutes, " +
-            "        de.employee_otflag, " +
-            "        cs.shifthours, " +
-            "        cs.oteligiblehours, " +
-            "        ROUND(cs.shifthours * 60) AS shift_minutes, " +
-            "        ROUND(de.actual_work_minutes / 60, 2) AS actual_work_hours, " +
-            "        GREATEST( " +
-            "            de.actual_work_minutes - ROUND(cs.shifthours * 60), " +
-            "            0 " +
-            "        ) AS extra_work_minutes " +
-            "    FROM daily_employee de " +
-            "    CROSS JOIN company_settings cs " +
-            "), " +
-
-            "daily_ot AS ( " +
-            "    SELECT " +
-            "        dw.employeecode, " +
-            "        dw.employeename, " +
-            "        dw.attendancedate, " +
-            "        dw.first_in, " +
-            "        dw.last_out, " +
-            "        dw.actual_work_minutes, " +
-            "        dw.employee_otflag, " +
-            "        dw.shifthours, " +
-            "        dw.oteligiblehours, " +
-            "        dw.actual_work_hours, " +
-
-            "        CASE " +
-            "            WHEN dw.extra_work_minutes >= " +
-            "                 (COALESCE(dw.oteligiblehours, 0) * 60) " +
-            "            THEN ROUND(dw.extra_work_minutes / 60, 2) " +
-            "            ELSE 0 " +
-            "        END AS ot_hours, " +
-
-            "        CASE " +
-            "            WHEN dw.extra_work_minutes >= " +
-            "                 (COALESCE(dw.oteligiblehours, 0) * 60) " +
-            "            THEN 1 " +
-            "            ELSE 0 " +
-            "        END AS ot_days " +
-
-            "    FROM daily_work dw " +
-            "), " +
-
-            "employee_monthly AS ( " +
-            "    SELECT " +
-            "        employeecode, " +
-            "        MAX(employeename) AS employeename, " +
-            "        MIN(first_in) AS first_in, " +
-            "        MAX(last_out) AS last_out, " +
-            "        COUNT(DISTINCT attendancedate) AS present, " +
-            "        ROUND(SUM(shifthours), 2) AS shift_hours, " +
-            "        ROUND(SUM(actual_work_minutes) / 60, 2) AS actual_work_hours, " +
-            "        SUM(ot_days) AS ot_days, " +
-            "        ROUND(SUM(ot_hours), 2) AS ot_hours, " +
-
-            "        GROUP_CONCAT( " +
-            "            CASE " +
-            "                WHEN ot_days = 1 " +
-            "                THEN DATE_FORMAT(attendancedate, '%Y-%m-%d') " +
-            "                ELSE NULL " +
-            "            END " +
-            "            ORDER BY attendancedate " +
-            "            SEPARATOR ', ' " +
-            "        ) AS ot_dates " +
-
-            "    FROM daily_ot " +
-            "    GROUP BY employeecode " +
-            ") " +
-
-            "SELECT " +
-
-            "    ROW_NUMBER() OVER ( " +
-            "        ORDER BY em.ot_days DESC, em.employeecode ASC " +
-            "    ) AS `S.No`, " +
-
-            "    em.employeecode AS `Employee Code`, " +
-
-            "    em.employeename AS `Employee Name`, " +
-
-            "    DATE_FORMAT( " +
-            "        em.first_in, " +
-            "        '%Y-%m-%d %H:%i:%s' " +
-            "    ) AS `First In`, " +
-
-            "    DATE_FORMAT( " +
-            "        em.last_out, " +
-            "        '%Y-%m-%d %H:%i:%s' " +
-            "    ) AS `Last Out`, " +
-
-            "    DATEDIFF( " +
-            "        rp.to_date, " +
-            "        rp.from_date " +
-            "    ) + 1 AS `Total Days`, " +
-
-            "    em.present AS `Present`, " +
-
-            "    ROUND( " +
-            "        em.shift_hours, " +
-            "        2 " +
-            "    ) AS `Shift Hours`, " +
-
-            "    ROUND( " +
-            "        em.actual_work_hours, " +
-            "        2 " +
-            "    ) AS `Actual Work Hours`, " +
-
-            "    em.ot_days AS `OT Days`, " +
-
-            "    ROUND( " +
-            "        em.ot_hours, " +
-            "        2 " +
-            "    ) AS `OT Hours`, " +
-
-            "    COALESCE( " +
-            "        em.ot_dates, " +
-            "        '' " +
-            "    ) AS `OT Dates`, " +
-
-            "    CASE " +
-            "        WHEN em.ot_days > 0 " +
-            "        THEN 'TRUE' " +
-            "        ELSE 'FALSE' " +
-            "    END AS `OT Status` " +
-
-            "FROM employee_monthly em " +
-
-            "CROSS JOIN report_period rp " +
-
-            "ORDER BY " +
-            "    em.ot_days DESC, " +
-            "    em.employeecode ASC",
+            "WITH\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   1. REPORT PERIOD\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "report_period AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        CAST(?1 AS DATE) AS from_date,\r\n"
+            + "\r\n"
+            + "        CAST(?2 AS DATE) AS to_date\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   2. COMPANY SETTINGS\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "company_settings AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        c.companyid,\r\n"
+            + "\r\n"
+            + "        c.shifthours,\r\n"
+            + "\r\n"
+            + "        c.oteligiblehours\r\n"
+            + "\r\n"
+            + "    FROM company c\r\n"
+            + "\r\n"
+            + "    WHERE c.companyid = ?3 \r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   3. ATTENDANCE RAW\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "attendance_raw AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        ad.attendancedailyid,\r\n"
+            + "\r\n"
+            + "        ad.checkindate,\r\n"
+            + "\r\n"
+            + "        ad.checkoutdate,\r\n"
+            + "\r\n"
+            + "        ad.empcode,\r\n"
+            + "\r\n"
+            + "        ad.empname,\r\n"
+            + "\r\n"
+            + "        ad.intime,\r\n"
+            + "\r\n"
+            + "        ad.outtime,\r\n"
+            + "\r\n"
+            + "        TIMESTAMP(\r\n"
+            + "            ad.checkindate,\r\n"
+            + "            ad.intime\r\n"
+            + "        ) AS in_datetime,\r\n"
+            + "\r\n"
+            + "        TIMESTAMP(\r\n"
+            + "            ad.checkoutdate,\r\n"
+            + "            ad.outtime\r\n"
+            + "        ) AS out_datetime\r\n"
+            + "\r\n"
+            + "    FROM attendancedaily ad\r\n"
+            + "\r\n"
+            + "    CROSS JOIN report_period rp\r\n"
+            + "\r\n"
+            + "    WHERE\r\n"
+            + "\r\n"
+            + "        ad.checkindate >= rp.from_date\r\n"
+            + "\r\n"
+            + "        AND ad.checkindate <\r\n"
+            + "            DATE_ADD(\r\n"
+            + "                rp.to_date,\r\n"
+            + "                INTERVAL 1 DAY\r\n"
+            + "            )\r\n"
+            + "\r\n"
+            + "        AND ad.empcode IS NOT NULL\r\n"
+            + "\r\n"
+            + "        AND TRIM(ad.empcode) <> ''\r\n"
+            + "\r\n"
+            + "        AND ad.intime IS NOT NULL\r\n"
+            + "\r\n"
+            + "        AND ad.outtime IS NOT NULL\r\n"
+            + "\r\n"
+            + "        AND ad.checkindate IS NOT NULL\r\n"
+            + "\r\n"
+            + "        AND ad.checkoutdate IS NOT NULL\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   4. DAILY ATTENDANCE\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "daily_attendance AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        ar.empcode AS employeecode,\r\n"
+            + "\r\n"
+            + "        MAX(\r\n"
+            + "            ar.empname\r\n"
+            + "        ) AS employeename,\r\n"
+            + "\r\n"
+            + "        ar.checkindate AS attendancedate,\r\n"
+            + "\r\n"
+            + "        MIN(\r\n"
+            + "            ar.in_datetime\r\n"
+            + "        ) AS first_in,\r\n"
+            + "\r\n"
+            + "        MAX(\r\n"
+            + "            ar.out_datetime\r\n"
+            + "        ) AS last_out,\r\n"
+            + "\r\n"
+            + "        TIMESTAMPDIFF(\r\n"
+            + "            MINUTE,\r\n"
+            + "            MIN(ar.in_datetime),\r\n"
+            + "            MAX(ar.out_datetime)\r\n"
+            + "        ) AS actual_work_minutes\r\n"
+            + "\r\n"
+            + "    FROM attendance_raw ar\r\n"
+            + "\r\n"
+            + "    GROUP BY\r\n"
+            + "\r\n"
+            + "        ar.empcode,\r\n"
+            + "\r\n"
+            + "        ar.checkindate\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   5. ONLY OT ELIGIBLE EMPLOYEES\r\n"
+            + "\r\n"
+            + "   IMPORTANT:\r\n"
+            + "\r\n"
+            + "   otflag = 1 ONLY\r\n"
+            + "\r\n"
+            + "   otflag = 0 employees are completely excluded.\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "employee_ot AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        e.employeecode,\r\n"
+            + "\r\n"
+            + "        e.otflag\r\n"
+            + "\r\n"
+            + "    FROM employee e\r\n"
+            + "\r\n"
+            + "    WHERE\r\n"
+            + "\r\n"
+            + "        e.orgid = ?3 \r\n"
+            + "\r\n"
+            + "        AND e.otflag = 1\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   6. ATTENDANCE + OT ELIGIBLE EMPLOYEE\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "daily_employee AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        da.employeecode,\r\n"
+            + "\r\n"
+            + "        da.employeename,\r\n"
+            + "\r\n"
+            + "        da.attendancedate,\r\n"
+            + "\r\n"
+            + "        da.first_in,\r\n"
+            + "\r\n"
+            + "        da.last_out,\r\n"
+            + "\r\n"
+            + "        da.actual_work_minutes,\r\n"
+            + "\r\n"
+            + "        eo.otflag AS employee_otflag\r\n"
+            + "\r\n"
+            + "    FROM daily_attendance da\r\n"
+            + "\r\n"
+            + "    INNER JOIN employee_ot eo\r\n"
+            + "\r\n"
+            + "        ON eo.employeecode =\r\n"
+            + "           da.employeecode\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   7. DAILY WORK CALCULATION\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "daily_work AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        de.employeecode,\r\n"
+            + "\r\n"
+            + "        de.employeename,\r\n"
+            + "\r\n"
+            + "        de.attendancedate,\r\n"
+            + "\r\n"
+            + "        de.first_in,\r\n"
+            + "\r\n"
+            + "        de.last_out,\r\n"
+            + "\r\n"
+            + "        de.actual_work_minutes,\r\n"
+            + "\r\n"
+            + "        de.employee_otflag,\r\n"
+            + "\r\n"
+            + "        cs.shifthours,\r\n"
+            + "\r\n"
+            + "        cs.oteligiblehours,\r\n"
+            + "\r\n"
+            + "        ROUND(\r\n"
+            + "            cs.shifthours * 60\r\n"
+            + "        ) AS shift_minutes,\r\n"
+            + "\r\n"
+            + "        ROUND(\r\n"
+            + "            de.actual_work_minutes / 60,\r\n"
+            + "            2\r\n"
+            + "        ) AS actual_work_hours,\r\n"
+            + "\r\n"
+            + "        GREATEST(\r\n"
+            + "\r\n"
+            + "            de.actual_work_minutes\r\n"
+            + "\r\n"
+            + "            -\r\n"
+            + "\r\n"
+            + "            ROUND(\r\n"
+            + "                cs.shifthours * 60\r\n"
+            + "            ),\r\n"
+            + "\r\n"
+            + "            0\r\n"
+            + "\r\n"
+            + "        ) AS extra_work_minutes\r\n"
+            + "\r\n"
+            + "    FROM daily_employee de\r\n"
+            + "\r\n"
+            + "    CROSS JOIN company_settings cs\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   8. DAILY OT CALCULATION\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "daily_ot AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        dw.employeecode,\r\n"
+            + "\r\n"
+            + "        dw.employeename,\r\n"
+            + "\r\n"
+            + "        dw.attendancedate,\r\n"
+            + "\r\n"
+            + "        dw.first_in,\r\n"
+            + "\r\n"
+            + "        dw.last_out,\r\n"
+            + "\r\n"
+            + "        dw.actual_work_minutes,\r\n"
+            + "\r\n"
+            + "        dw.employee_otflag,\r\n"
+            + "\r\n"
+            + "        dw.shifthours,\r\n"
+            + "\r\n"
+            + "        dw.oteligiblehours,\r\n"
+            + "\r\n"
+            + "        dw.actual_work_hours,\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "        /* =====================================================\r\n"
+            + "           OT HOURS\r\n"
+            + "           ===================================================== */\r\n"
+            + "\r\n"
+            + "        CASE\r\n"
+            + "\r\n"
+            + "            WHEN dw.extra_work_minutes >=\r\n"
+            + "                 (\r\n"
+            + "                     COALESCE(\r\n"
+            + "                         dw.oteligiblehours,\r\n"
+            + "                         0\r\n"
+            + "                     ) * 60\r\n"
+            + "                 )\r\n"
+            + "\r\n"
+            + "            THEN ROUND(\r\n"
+            + "                dw.extra_work_minutes / 60,\r\n"
+            + "                2\r\n"
+            + "            )\r\n"
+            + "\r\n"
+            + "            ELSE 0\r\n"
+            + "\r\n"
+            + "        END AS ot_hours,\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "        /* =====================================================\r\n"
+            + "           OT DAYS\r\n"
+            + "           ===================================================== */\r\n"
+            + "\r\n"
+            + "        CASE\r\n"
+            + "\r\n"
+            + "            WHEN dw.extra_work_minutes >=\r\n"
+            + "                 (\r\n"
+            + "                     COALESCE(\r\n"
+            + "                         dw.oteligiblehours,\r\n"
+            + "                         0\r\n"
+            + "                     ) * 60\r\n"
+            + "                 )\r\n"
+            + "\r\n"
+            + "            THEN 1\r\n"
+            + "\r\n"
+            + "            ELSE 0\r\n"
+            + "\r\n"
+            + "        END AS ot_days\r\n"
+            + "\r\n"
+            + "    FROM daily_work dw\r\n"
+            + "),\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   9. EMPLOYEE PERIOD TOTAL\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "employee_monthly AS\r\n"
+            + "(\r\n"
+            + "    SELECT\r\n"
+            + "\r\n"
+            + "        employeecode,\r\n"
+            + "\r\n"
+            + "        MAX(\r\n"
+            + "            employeename\r\n"
+            + "        ) AS employeename,\r\n"
+            + "\r\n"
+            + "        MIN(\r\n"
+            + "            first_in\r\n"
+            + "        ) AS first_in,\r\n"
+            + "\r\n"
+            + "        MAX(\r\n"
+            + "            last_out\r\n"
+            + "        ) AS last_out,\r\n"
+            + "\r\n"
+            + "        COUNT(\r\n"
+            + "            DISTINCT attendancedate\r\n"
+            + "        ) AS present,\r\n"
+            + "\r\n"
+            + "        ROUND(\r\n"
+            + "            SUM(\r\n"
+            + "                shifthours\r\n"
+            + "            ),\r\n"
+            + "            2\r\n"
+            + "        ) AS shift_hours,\r\n"
+            + "\r\n"
+            + "        ROUND(\r\n"
+            + "            SUM(\r\n"
+            + "                actual_work_minutes\r\n"
+            + "            ) / 60,\r\n"
+            + "            2\r\n"
+            + "        ) AS actual_work_hours,\r\n"
+            + "\r\n"
+            + "        SUM(\r\n"
+            + "            ot_days\r\n"
+            + "        ) AS ot_days,\r\n"
+            + "\r\n"
+            + "        ROUND(\r\n"
+            + "            SUM(\r\n"
+            + "                ot_hours\r\n"
+            + "            ),\r\n"
+            + "            2\r\n"
+            + "        ) AS ot_hours,\r\n"
+            + "\r\n"
+            + "        GROUP_CONCAT(\r\n"
+            + "\r\n"
+            + "            CASE\r\n"
+            + "\r\n"
+            + "                WHEN ot_days = 1\r\n"
+            + "\r\n"
+            + "                THEN DATE_FORMAT(\r\n"
+            + "                    attendancedate,\r\n"
+            + "                    '%Y-%m-%d'\r\n"
+            + "                )\r\n"
+            + "\r\n"
+            + "                ELSE NULL\r\n"
+            + "\r\n"
+            + "            END\r\n"
+            + "\r\n"
+            + "            ORDER BY attendancedate\r\n"
+            + "\r\n"
+            + "            SEPARATOR ', '\r\n"
+            + "\r\n"
+            + "        ) AS ot_dates\r\n"
+            + "\r\n"
+            + "    FROM daily_ot\r\n"
+            + "\r\n"
+            + "    GROUP BY\r\n"
+            + "\r\n"
+            + "        employeecode\r\n"
+            + ")\r\n"
+            + "\r\n"
+            + "\r\n"
+            + "/* ============================================================\r\n"
+            + "   10. FINAL RESULT\r\n"
+            + "   ============================================================ */\r\n"
+            + "\r\n"
+            + "SELECT\r\n"
+            + "\r\n"
+            + "    ROW_NUMBER() OVER\r\n"
+            + "    (\r\n"
+            + "        ORDER BY\r\n"
+            + "\r\n"
+            + "            em.ot_days DESC,\r\n"
+            + "\r\n"
+            + "            em.employeecode ASC\r\n"
+            + "\r\n"
+            + "    ) AS `S.No`,\r\n"
+            + "\r\n"
+            + "    em.employeecode AS `Employee Code`,\r\n"
+            + "\r\n"
+            + "    em.employeename AS `Employee Name`,\r\n"
+            + "\r\n"
+            + "    DATE_FORMAT(\r\n"
+            + "        em.first_in,\r\n"
+            + "        '%Y-%m-%d %H:%i:%s'\r\n"
+            + "    ) AS `First In`,\r\n"
+            + "\r\n"
+            + "    DATE_FORMAT(\r\n"
+            + "        em.last_out,\r\n"
+            + "        '%Y-%m-%d %H:%i:%s'\r\n"
+            + "    ) AS `Last Out`,\r\n"
+            + "\r\n"
+            + "    DATEDIFF(\r\n"
+            + "        rp.to_date,\r\n"
+            + "        rp.from_date\r\n"
+            + "    ) + 1 AS `Total Days`,\r\n"
+            + "\r\n"
+            + "    em.present AS `Present`,\r\n"
+            + "\r\n"
+            + "    ROUND(\r\n"
+            + "        em.shift_hours,\r\n"
+            + "        2\r\n"
+            + "    ) AS `Shift Hours`,\r\n"
+            + "\r\n"
+            + "    ROUND(\r\n"
+            + "        em.actual_work_hours,\r\n"
+            + "        2\r\n"
+            + "    ) AS `Actual Work Hours`,\r\n"
+            + "\r\n"
+            + "    em.ot_days AS `OT Days`,\r\n"
+            + "\r\n"
+            + "    ROUND(\r\n"
+            + "        em.ot_hours,\r\n"
+            + "        2\r\n"
+            + "    ) AS `OT Hours`,\r\n"
+            + "\r\n"
+            + "    COALESCE(\r\n"
+            + "        em.ot_dates,\r\n"
+            + "        ''\r\n"
+            + "    ) AS `OT Dates`,\r\n"
+            + "\r\n"
+            + "    CASE\r\n"
+            + "\r\n"
+            + "        WHEN em.ot_days > 0\r\n"
+            + "\r\n"
+            + "        THEN 'TRUE'\r\n"
+            + "\r\n"
+            + "        ELSE 'FALSE'\r\n"
+            + "\r\n"
+            + "    END AS `OT Status`\r\n"
+            + "\r\n"
+            + "FROM employee_monthly em\r\n"
+            + "\r\n"
+            + "CROSS JOIN report_period rp\r\n"
+            + "WHERE em.ot_days > 0\r\n"
+            + "\r\n"
+            + "ORDER BY\r\n"
+            + "\r\n"
+            + "    em.ot_days DESC,\r\n"
+            + "\r\n"
+            + "    em.employeecode ASC",
 
         nativeQuery = true
     )

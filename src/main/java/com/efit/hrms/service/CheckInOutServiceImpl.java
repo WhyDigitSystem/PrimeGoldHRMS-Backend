@@ -35,6 +35,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
@@ -569,785 +571,1642 @@ public class CheckInOutServiceImpl implements CheckInOutService {
 //	----------------------------------------------------------
 
 //chaNGES aug 14
-
-	@Transactional(rollbackOn = Exception.class)
-	public Map<String, Object> createCheckInOutBiometricDevice(Long orgId, String createdBy, LocalDate fromDate,
-			LocalDate toDate, String branch, String branchCode) throws Exception {
-
-		Map<String, Object> result = new LinkedHashMap<>();
-
-		Queue<CheckInOutBiometricVO> biometricQueue = new ConcurrentLinkedQueue<>();
-
-		Queue<AttendanceDailyVO> dailyListQueue = new ConcurrentLinkedQueue<>();
-
-		AtomicInteger successCount = new AtomicInteger(0);
-
-		/*
-		 * ============================================================ 1. FETCH
-		 * ATTENDANCE LOGS
-		 *
-		 * IMPORTANT: Fetch one extra day because yesterday's OUT can be the next day's
-		 * first punch. ============================================================
-		 */
-		LocalDate fetchToDate = toDate.plusDays(1);
-
-		List<AttendanceLogVO> logs = attendanceLogRepo.findByAttendanceDateBetween(fromDate, fetchToDate);
-
-		if (logs == null || logs.isEmpty()) {
-			throw new RuntimeException("No attendance logs found.");
-		}
-
-		/*
-		 * ============================================================ 2. GROUP LOGS BY
-		 * EMPLOYEE + DATE
-		 *
-		 * We cannot process each log independently because:
-		 *
-		 * Aug 02 last punch = D1 Aug 03 first punch = D3
-		 *
-		 * Therefore Aug 03 punch becomes Aug 02 OUT.
-		 * ============================================================
-		 */
-
-		Map<String, Map<LocalDate, List<PunchRecord>>> employeeDatePunches = new HashMap<>();
-
-		for (AttendanceLogVO log : logs) {
-
-			if (log.getEmployeeCode() == null || log.getPunchRecords() == null
-					|| log.getPunchRecords().trim().isEmpty()) {
-				continue;
-			}
-
-			LocalDate attendanceDate;
-
-			try {
-				attendanceDate = LocalDate.parse(log.getAttendanceDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-			} catch (Exception e) {
-				continue;
-			}
-
-			List<PunchRecord> punches = parsePunchRecords(log.getPunchRecords(), attendanceDate);
-
-			if (punches.isEmpty()) {
-				continue;
-			}
-
-			String empCode = log.getEmployeeCode();
-
-			Map<LocalDate, List<PunchRecord>> dateMap = employeeDatePunches.computeIfAbsent(empCode,
-					k -> new TreeMap<>());
-
-			dateMap.computeIfAbsent(attendanceDate, k -> new ArrayList<>()).addAll(punches);
-		}
-
-		/*
-		 * ============================================================ 3. FETCH
-		 * EXISTING BIOMETRIC RECORDS
-		 * ============================================================
-		 */
-
-		Set<String> existingKeys = checkInOutBiometricRepo.findKeysByDateRange(fromDate, fetchToDate, orgId, branchCode)
-				.stream().map(r -> r[0] + "|" + r[1] + "|" + r[2]).collect(Collectors.toSet());
-
-		/*
-		 * ============================================================ 4. PROCESS
-		 * EMPLOYEE BY EMPLOYEE
-		 * ============================================================
-		 */
-
-		for (Map.Entry<String, Map<LocalDate, List<PunchRecord>>> empEntry : employeeDatePunches.entrySet()) {
-
-			String empCode = empEntry.getKey();
-
-			Map<LocalDate, List<PunchRecord>> dateMap = empEntry.getValue();
-
-			/*
-			 * Sort every day's punches.
-			 */
-			for (List<PunchRecord> punches : dateMap.values()) {
-
-				punches.sort(Comparator.comparing(PunchRecord::getDateTime));
-			}
-
-			/*
-			 * -------------------------------------------------------- Process each work
-			 * date. Do NOT process fetchToDate itself as a work date. It is only required
-			 * for overnight OUT detection.
-			 * --------------------------------------------------------
-			 */
-
-			for (Map.Entry<LocalDate, List<PunchRecord>> dateEntry : dateMap.entrySet()) {
-
-				LocalDate workDate = dateEntry.getKey();
-
-				if (workDate.isBefore(fromDate) || workDate.isAfter(toDate)) {
-					continue;
-				}
-
-				List<PunchRecord> dayPunches = dateEntry.getValue();
-
-				if (dayPunches == null || dayPunches.isEmpty()) {
-					continue;
-				}
-
-				/*
-				 * ==================================================== 5. FIRST PUNCH OF THE
-				 * DATE
-				 *
-				 * This is the earliest punch regardless of device.
-				 *
-				 * Example:
-				 *
-				 * 07:00 D3 08:00 D1
-				 *
-				 * First punch = 07:00 D3 ====================================================
-				 */
-
-				dayPunches.sort(Comparator.comparing(PunchRecord::getDateTime));
-
-				PunchRecord firstPunch = dayPunches.get(0);
-
-				/*
-				 * ==================================================== 6. FIRST D1/D2 =
-				 * ATTENDANCE IN ====================================================
-				 */
-
-				PunchRecord firstIn = dayPunches.stream().filter(p -> isCheckInDevice(p.getDevice())).findFirst()
-						.orElse(null);
-
-				if (firstIn == null) {
-					/*
-					 * No D1/D2 punch means we cannot create IN.
-					 */
-					continue;
-				}
-
-				/*
-				 * ==================================================== 7. LAST D3/D4 = NORMAL
-				 * OUT ====================================================
-				 */
-
-				PunchRecord lastCheckout = findLastCheckout(dayPunches);
-
-				/*
-				 * ==================================================== 8. FIND LAST PUNCH OF
-				 * THE DATE
-				 *
-				 * This is regardless of device.
-				 * ====================================================
-				 */
-
-				PunchRecord lastPunch = dayPunches.get(dayPunches.size() - 1);
-
-				PunchRecord finalOut = null;
-
-				LocalDateTime finalOutDateTime = null;
-
-				/*
-				 * ==================================================== CASE A:
-				 *
-				 * Last punch is D3/D4
-				 *
-				 * Normal OUT. ====================================================
-				 */
-
-				if (isCheckOutDevice(lastPunch.getDevice())) {
-
-					finalOut = lastPunch;
-
-					finalOutDateTime = lastPunch.getDateTime();
-				}
-
-				/*
-				 * ==================================================== CASE B:
-				 *
-				 * Last punch is D1/D2
-				 *
-				 * Employee may be continuing OT.
-				 *
-				 * Check next day's FIRST punch.
-				 * ====================================================
-				 */
-				else if (isCheckInDevice(lastPunch.getDevice())) {
-
-					LocalDate nextDate = workDate.plusDays(1);
-
-					List<PunchRecord> nextDayPunches = dateMap.get(nextDate);
-
-					PunchRecord nextDayFirstPunch = null;
-
-					if (nextDayPunches != null && !nextDayPunches.isEmpty()) {
-
-						nextDayPunches.sort(Comparator.comparing(PunchRecord::getDateTime));
-
-						/*
-						 * FIRST punch of next day regardless of device.
-						 */
-						nextDayFirstPunch = nextDayPunches.get(0);
-					}
-
-					/*
-					 * ------------------------------------------------ CASE B1:
-					 *
-					 * Next day's first punch is D3/D4.
-					 *
-					 * That punch becomes yesterday's OUT.
-					 * ------------------------------------------------
-					 */
-					if (nextDayFirstPunch != null && isCheckOutDevice(nextDayFirstPunch.getDevice())) {
-
-						finalOut = nextDayFirstPunch;
-
-						finalOutDateTime = nextDayFirstPunch.getDateTime();
-					}
-
-					/*
-					 * ------------------------------------------------ CASE B2:
-					 *
-					 * Next day's first punch is D1/D2.
-					 *
-					 * No valid next-day checkout.
-					 *
-					 * Therefore yesterday's last D1/D2 becomes OUT.
-					 * ------------------------------------------------
-					 */
-					else {
-
-						finalOut = lastPunch;
-
-						finalOutDateTime = lastPunch.getDateTime();
-					}
-				}
-
-				/*
-				 * ==================================================== 9. VALIDATION
-				 * ====================================================
-				 */
-
-				if (finalOut == null || finalOutDateTime == null) {
-					continue;
-				}
-
-				LocalDateTime inDateTime = firstIn.getDateTime();
-
-				/*
-				 * Make sure OUT is not before IN.
-				 */
-				if (finalOutDateTime.isBefore(inDateTime)) {
-
-					/*
-					 * If it is the next day, keep it. Otherwise ignore invalid record.
-					 */
-					if (!finalOutDateTime.toLocalDate().equals(workDate.plusDays(1))) {
-
-						continue;
-					}
-				}
-
-				/*
-				 * ==================================================== 10. SAVE IN
-				 * ====================================================
-				 */
-
-				String inKey = empCode + "|" + firstIn.getDateTime().toLocalDate() + "|"
-						+ firstIn.getDateTime().toLocalTime();
-
-				if (!existingKeys.contains(inKey)) {
-
-					CheckInOutBiometricVO inVo = createBiometricVO(firstIn, "In", empCode,
-							findEmployeeName(logs, empCode, workDate), orgId, createdBy, branch, branchCode);
-
-					biometricQueue.add(inVo);
-
-					existingKeys.add(inKey);
-
-					successCount.incrementAndGet();
-				}
-
-				/*
-				 * ==================================================== 11. SAVE OUT
-				 *
-				 * IMPORTANT:
-				 *
-				 * For overnight OUT we keep the ACTUAL punch date/time in biometric table.
-				 *
-				 * AttendanceDaily later assigns it back to workDate.
-				 * ====================================================
-				 */
-
-				String outKey = empCode + "|" + finalOutDateTime.toLocalDate() + "|" + finalOutDateTime.toLocalTime();
-
-				if (!existingKeys.contains(outKey)) {
-
-					CheckInOutBiometricVO outVo = createBiometricVO(finalOut, "Out", empCode,
-							findEmployeeName(logs, empCode, workDate), orgId, createdBy, branch, branchCode);
-
-					biometricQueue.add(outVo);
-
-					existingKeys.add(outKey);
-
-					successCount.incrementAndGet();
-				}
-			}
-		}
-
-		/*
-		 * ============================================================ 12. VALIDATE
-		 * BIOMETRIC DATA ============================================================
-		 */
-
-		if (biometricQueue.isEmpty()) {
-			throw new RuntimeException("No valid biometric records found from punchrecords.");
-		}
-
-		/*
-		 * ============================================================ 13. SAVE
-		 * CHECKINOUTBIOMETRIC
-		 * ============================================================
-		 */
-
-		List<CheckInOutBiometricVO> savedBiometric = checkInOutBiometricRepo.saveAll(biometricQueue);
-
-		List<Long> currentIds = savedBiometric.stream().map(CheckInOutBiometricVO::getId).collect(Collectors.toList());
-
-		if (currentIds.isEmpty()) {
-			throw new RuntimeException("No biometric records saved.");
-		}
-
-		/*
-		 * ============================================================ 14. INSERT
-		 * ATTENDANCEPROCESS
-		 * ============================================================
-		 */
-
-		BigInteger currentSeq = (BigInteger) entityManager
-				.createNativeQuery("SELECT next_val " + "FROM attendanceprocessseq").getSingleResult();
-
-		entityManager.createNativeQuery("INSERT INTO attendanceprocess (" + "attendanceprocessid, " + "empcode, "
-				+ "empname, " + "orgid, " + "branchcode, " + "branch, " + "finyear, " + "checkindate, " + "entrytime, "
-				+ "status, " + "sourceid, " + "attendancemode, " + "createdby, " + "createdon, " + "modifiedon, "
-				+ "screencode, " + "screenname" + ") " +
-
-				"SELECT " + "(:seq + ROW_NUMBER() OVER " + "(ORDER BY checkinoutbiometricid)) AS new_id, " +
-
-				"empcode, " + "empname, " + "orgid, " + "branchcode, " + "branch, " + "finyear, " + "checkindate, "
-				+ "entrytime, " + "status, " + "checkinoutbiometricid, " + "attendancemode, " + "createdby, "
-				+ "NOW(), " + "NOW(), " + "'AM', " + "'ATTENDANCE MODE' " +
-
-				"FROM checkinoutbiometric " + "WHERE checkinoutbiometricid IN (:ids)").setParameter("seq", currentSeq)
-				.setParameter("ids", currentIds).executeUpdate();
-
-		entityManager
-				.createNativeQuery("UPDATE attendanceprocessseq " + "SET next_val = next_val + " + "(SELECT COUNT(*) "
-						+ "FROM checkinoutbiometric " + "WHERE checkinoutbiometricid IN (:ids))")
-				.setParameter("ids", currentIds).executeUpdate();
-
-		/*
-		 * ============================================================ 15. FETCH
-		 * ATTENDANCE PROCESS
-		 * ============================================================
-		 */
-
-		List<AttendanceProcessVO> attendanceList = attendanceProcessRepo.findBySourceIdIn(currentIds);
-
-		Map<String, List<AttendanceProcessVO>> groupedByEmp = attendanceList.stream()
-				.collect(Collectors.groupingBy(a -> a.getEmpCode() + "_" + a.getOrgId() + "_" + a.getBranchCode()));
-
-		/*
-		 * ============================================================ 16. BUILD
-		 * ATTENDANCEDAILY ============================================================
-		 */
-
-		groupedByEmp.values().parallelStream().forEach(empRecords -> {
-
-			empRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-					.thenComparing(AttendanceProcessVO::getEntryTime));
-
-			/*
-			 * We need to assign overnight OUT to previous work date.
-			 */
-			Map<LocalDate, List<AttendanceProcessVO>> recordsByWorkDate = new LinkedHashMap<>();
-
-			for (int i = 0; i < empRecords.size(); i++) {
-
-				AttendanceProcessVO rec = empRecords.get(i);
-
-				LocalDate workDate = rec.getCheckInDate();
-
-				/*
-				 * OUT is stored with actual punch date.
-				 *
-				 * If OUT time is earlier than previous IN time, it is a normal night-shift
-				 * case.
-				 */
-				if ("Out".equalsIgnoreCase(rec.getStatus()) && i > 0) {
-
-					AttendanceProcessVO previous = empRecords.get(i - 1);
-
-					if ("In".equalsIgnoreCase(previous.getStatus())) {
-
-						LocalDateTime previousDT = LocalDateTime.of(previous.getCheckInDate(), previous.getEntryTime());
-
-						LocalDateTime currentDT = LocalDateTime.of(rec.getCheckInDate(), rec.getEntryTime());
-
-						if (currentDT.isAfter(previousDT)
-								&& currentDT.toLocalDate().isAfter(previousDT.toLocalDate())) {
-
-							/*
-							 * Overnight OUT belongs to previous work date.
-							 */
-							workDate = previous.getCheckInDate();
-						}
-					}
-				}
-
-				recordsByWorkDate.computeIfAbsent(workDate, k -> new ArrayList<>()).add(rec);
-			}
-
-			/*
-			 * ================================================= CREATE ONE ATTENDANCEDAILY
-			 * PER WORK DATE =================================================
-			 */
-
-			for (Map.Entry<LocalDate, List<AttendanceProcessVO>> entry : recordsByWorkDate.entrySet()) {
-
-				LocalDate workDate = entry.getKey();
-
-				List<AttendanceProcessVO> dayRecords = entry.getValue();
-
-				dayRecords.sort(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-						.thenComparing(AttendanceProcessVO::getEntryTime));
-
-				/*
-				 * FIRST IN
-				 */
-				AttendanceProcessVO firstIn = dayRecords.stream().filter(r -> "In".equalsIgnoreCase(r.getStatus()))
-						.findFirst().orElse(null);
-
-				/*
-				 * LAST OUT
-				 */
-				AttendanceProcessVO lastOut = dayRecords.stream().filter(r -> "Out".equalsIgnoreCase(r.getStatus()))
-						.max(Comparator.comparing(AttendanceProcessVO::getCheckInDate)
-								.thenComparing(AttendanceProcessVO::getEntryTime))
-						.orElse(null);
-
-				if (firstIn == null || lastOut == null) {
-					continue;
-				}
-
-				LocalDateTime mergedIn = LocalDateTime.of(firstIn.getCheckInDate(), firstIn.getEntryTime());
-
-				LocalDateTime mergedOut = LocalDateTime.of(lastOut.getCheckInDate(), lastOut.getEntryTime());
-
-				/*
-				 * If OUT is next day, duration works correctly.
-				 */
-				if (mergedOut.isBefore(mergedIn)) {
-					mergedOut = mergedOut.plusDays(1);
-				}
-
-				int grossHours = (int) Duration.between(mergedIn, mergedOut).toHours();
-
-				/*
-				 * For this rule, effective hours are also based on the final IN -> final OUT
-				 * span.
-				 *
-				 * If you want break deduction later, we can calculate it separately.
-				 */
-				int effectiveHours = grossHours;
-
-				AttendanceDailyVO ad = new AttendanceDailyVO();
-
-				ad.setEmpCode(firstIn.getEmpCode());
-
-				ad.setEmpName(firstIn.getEmpName());
-
-				ad.setOrgId(firstIn.getOrgId());
-
-				ad.setBranch(firstIn.getBranch());
-
-				ad.setBranchCode(firstIn.getBranchCode());
-
-				/*
-				 * IMPORTANT:
-				 *
-				 * AttendanceDaily work date = IN date.
-				 */
-				ad.setCheckInDate(workDate);
-
-				/*
-				 * Actual OUT date can be next day.
-				 */
-				ad.setCheckOutDate(lastOut.getCheckInDate());
-
-				ad.setFinyear(firstIn.getFinyear());
-
-				ad.setAttendanceMode("BIOMETRIC");
-
-				ad.setInTime(mergedIn.toLocalTime());
-
-				ad.setOutTime(mergedOut.toLocalTime());
-
-				ad.setGrossHours(grossHours);
-
-				ad.setEffectiveHours(effectiveHours);
-
-				ad.setCreatedBy(createdBy);
-
-				dailyListQueue.add(ad);
-			}
-		});
-
-		/*
-		 * ============================================================ 17. SAVE
-		 * ATTENDANCEDAILY ============================================================
-		 */
-
-		attendanceDailyRepo.saveAll(dailyListQueue);
-
-		result.put("successCount", successCount.get());
-
-		result.put("message", "Attendance processed successfully using punchrecords and device-based IN/OUT logic.");
-
-		return result;
-	}
-
-	private static class PunchRecord {
-
-		private LocalDateTime dateTime;
-		private String device;
-
-		public PunchRecord(LocalDateTime dateTime, String device) {
-
-			this.dateTime = dateTime;
-			this.device = device;
-		}
-
-		public LocalDateTime getDateTime() {
-			return dateTime;
-		}
-
-		public String getDevice() {
-			return device;
-		}
-	}
-
-	private List<PunchRecord> parsePunchRecords(String punchRecords, LocalDate attendanceDate) {
-
-		List<PunchRecord> result = new ArrayList<>();
-
-		if (punchRecords == null || punchRecords.trim().isEmpty()) {
-			return result;
-		}
-
-		String[] punches = punchRecords.split(",");
-
-		for (String punch : punches) {
-
-			if (punch == null || punch.trim().isEmpty()) {
-				continue;
-			}
-
-			try {
-
-				String value = punch.trim();
-
-				/*
-				 * Example:
-				 *
-				 * 08:00:in(D1) 12:54:out(D3) 20:33:(D1)
-				 */
-
-				int deviceStart = value.lastIndexOf("(D");
-
-				if (deviceStart < 0) {
-					continue;
-				}
-
-				int deviceEnd = value.indexOf(")", deviceStart);
-
-				if (deviceEnd < 0) {
-					continue;
-				}
-
-				String device = value.substring(deviceStart + 1, deviceEnd).trim();
-
-				/*
-				 * device becomes:
-				 *
-				 * D1 D2 D3 D4
-				 */
-
-				String timePart = value.substring(0, value.indexOf(":", value.indexOf(":") + 1));
-
-				/*
-				 * Easier extraction:
-				 *
-				 * Everything before the second colon.
-				 */
-
-				String[] parts = value.split(":");
-
-				if (parts.length < 2) {
-					continue;
-				}
-
-				String hour = parts[0].trim();
-
-				String minute = parts[1].trim();
-
-				/*
-				 * We only need HH:mm. Seconds are optional in your punchrecords.
-				 */
-				String second = "00";
-
-				if (parts.length >= 3) {
-
-					String third = parts[2];
-
-					/*
-					 * Remove text after second portion.
-					 */
-					int openBracket = third.indexOf("(");
-
-					if (openBracket >= 0) {
-
-						second = third.substring(0, openBracket).trim();
-					} else {
-
-						int textIndex = third.indexOf("in");
-
-						if (textIndex >= 0) {
-							second = third.substring(0, textIndex).trim();
-						} else {
-
-							textIndex = third.indexOf("out");
-
-							if (textIndex >= 0) {
-								second = third.substring(0, textIndex).trim();
-							}
-						}
-					}
-				}
-
-				if (second.isEmpty()) {
-					second = "00";
-				}
-
-				if (second.length() > 2) {
-					second = second.substring(0, 2);
-				}
-
-				String time = String.format("%02d:%02d:%02d", Integer.parseInt(hour), Integer.parseInt(minute),
-						Integer.parseInt(second));
-
-				LocalTime localTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm:ss"));
-
-				LocalDateTime dateTime = LocalDateTime.of(attendanceDate, localTime);
-
-				result.add(new PunchRecord(dateTime, device));
-
-			} catch (Exception e) {
-
-				/*
-				 * Ignore invalid punch format.
-				 */
-				e.printStackTrace();
-			}
-		}
-
-		result.sort(Comparator.comparing(PunchRecord::getDateTime));
-
-		return result;
-	}
-
-	private boolean isCheckInDevice(String device) {
-
-		return "D1".equalsIgnoreCase(device) || "D2".equalsIgnoreCase(device);
-	}
-
-	private boolean isCheckOutDevice(String device) {
-
-		return "D3".equalsIgnoreCase(device) || "D4".equalsIgnoreCase(device);
-	}
-
-	private PunchRecord findLastCheckout(List<PunchRecord> punches) {
-
-		for (int i = punches.size() - 1; i >= 0; i--) {
-
-			PunchRecord punch = punches.get(i);
-
-			if (isCheckOutDevice(punch.getDevice())) {
-
-				return punch;
-			}
-		}
-
-		return null;
-	}
-
-	private CheckInOutBiometricVO createBiometricVO(PunchRecord punch, String status, String empCode, String empName,
-			Long orgId, String createdBy, String branch, String branchCode) {
-
-		CheckInOutBiometricVO vo = new CheckInOutBiometricVO();
-
-		vo.setAttendanceMode("BIOMETRIC");
-
-		/*
-		 * Store actual punch date.
-		 *
-		 * For overnight OUT: 2026-08-03 08:46 D3
-		 *
-		 * will be stored as: checkInDate = 2026-08-03 entryTime = 08:46 status = Out
-		 */
-		vo.setCheckInDate(punch.getDateTime().toLocalDate());
-
-		vo.setCreatedBy(createdBy);
-
-		vo.setBranch(branch);
-
-		vo.setBranchCode(branchCode);
-
-		vo.setEmpCode(empCode);
-
-		vo.setEmpName(empName);
-
-		vo.setEntryTime(punch.getDateTime().toLocalTime());
-
-		vo.setFinyear(String.valueOf(punch.getDateTime().getYear()));
-
-		vo.setOrgId(orgId);
-
-		vo.setScreenCode("CIOB");
-
-		vo.setScreenName("CHECKINOUTBIOMETRIC");
-
-		vo.setStatus(status);
-
-		return vo;
-	}
-
-	private String findEmployeeName(List<AttendanceLogVO> logs, String empCode, LocalDate workDate) {
-
-		return logs.stream().filter(log -> empCode.equals(log.getEmployeeCode()))
-				.filter(log -> log.getAttendanceDate() != null).filter(log -> {
-
-					try {
-
-						LocalDate date = LocalDate.parse(log.getAttendanceDate(),
-								DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-
-						return workDate.equals(date);
-
-					} catch (Exception e) {
-
-						return false;
-					}
-				}).map(AttendanceLogVO::getEmployeeName).filter(Objects::nonNull).findFirst().orElse("");
-	}
+//
+//	// ============================================================
+//    // PUNCH RECORD
+//    // ============================================================
+//
+//	private static class PunchRecord {
+//
+//	    private LocalDateTime dateTime;
+//	    private String device;
+//
+//	    public PunchRecord(
+//	            LocalDateTime dateTime,
+//	            String device) {
+//
+//	        this.dateTime = dateTime;
+//	        this.device = device;
+//	    }
+//
+//	    public LocalDateTime getDateTime() {
+//	        return dateTime;
+//	    }
+//
+//	    public String getDevice() {
+//	        return device;
+//	    }
+//	}
+//
+//    // ============================================================
+//    // PUNCH PAIR
+//    // ============================================================
+//
+//	private List<PunchRecord> parsePunchRecords(
+//	        String punchRecords,
+//	        LocalDate attendanceDate) {
+//
+//	    List<PunchRecord> result = new ArrayList<>();
+//
+//	    if (punchRecords == null
+//	            || punchRecords.trim().isEmpty()
+//	            || attendanceDate == null) {
+//	        return result;
+//	    }
+//
+//	    String[] punches = punchRecords.split(",");
+//
+//	    Pattern pattern = Pattern.compile(
+//	            "(\\d{1,2}):(\\d{2})(?::(\\d{2}))?.*\\((D[1-4])\\)",
+//	            Pattern.CASE_INSENSITIVE
+//	    );
+//
+//	    for (String punch : punches) {
+//
+//	        if (punch == null || punch.trim().isEmpty()) {
+//	            continue;
+//	        }
+//
+//	        try {
+//
+//	            String value = punch.trim();
+//
+//	            Matcher matcher = pattern.matcher(value);
+//
+//	            if (!matcher.find()) {
+//	                continue;
+//	            }
+//
+//	            int hour = Integer.parseInt(matcher.group(1));
+//	            int minute = Integer.parseInt(matcher.group(2));
+//
+//	            int second = 0;
+//
+//	            if (matcher.group(3) != null) {
+//	                second = Integer.parseInt(matcher.group(3));
+//	            }
+//
+//	            String device =
+//	                    matcher.group(4).toUpperCase();
+//
+//	            LocalTime localTime =
+//	                    LocalTime.of(
+//	                            hour,
+//	                            minute,
+//	                            second
+//	                    );
+//
+//	            // IMPORTANT:
+//	            // Every punch remains on the AttendanceLog date.
+//	            // Next-day OUT logic is handled separately.
+//	            LocalDateTime dateTime =
+//	                    LocalDateTime.of(
+//	                            attendanceDate,
+//	                            localTime
+//	                    );
+//
+//	            result.add(
+//	                    new PunchRecord(
+//	                            dateTime,
+//	                            device
+//	                    )
+//	            );
+//
+//	        } catch (Exception e) {
+//
+//	            System.out.println(
+//	                    "Invalid punch : " + punch
+//	            );
+//	        }
+//	    }
+//
+//	    result.sort(
+//	            Comparator.comparing(
+//	                    PunchRecord::getDateTime
+//	            )
+//	    );
+//
+//	    return result;
+//	}
+//	
+//    // ============================================================
+//    // CREATE CHECKIN / CHECKOUT BIOMETRIC
+//    //
+//    // YOUR EXACT METHOD SIGNATURE
+//    // ============================================================
+//
+//	@Override
+//	public Map<String, Object> createCheckInOutBiometricDevice(
+//	        Long orgId,
+//	        String createdBy,
+//	        LocalDate fromDate,
+//	        LocalDate toDate,
+//	        String branch,
+//	        String branchCode) throws Exception {
+//
+//	    Map<String, Object> response =
+//	            new HashMap<>();
+//
+//	    // ============================================================
+//	    // FETCH ONE EXTRA DAY
+//	    //
+//	    // Needed for overnight OUT.
+//	    // Example:
+//	    //
+//	    // Aug 7 19:50 D1
+//	    // Aug 8 09:56 D3
+//	    //
+//	    // Aug 8 punch can become Aug 7 OUT.
+//	    // ============================================================
+//
+//	    LocalDate fetchToDate =
+//	            toDate.plusDays(1);
+//
+//	    // ============================================================
+//	    // GET ATTENDANCE LOG
+//	    // ============================================================
+//
+//	    List<AttendanceLogVO> attendanceLogs =
+//	            attendanceLogRepo
+//	                    .findByAttendanceDate(
+//	                            fromDate.toString(),
+//	                            fetchToDate.toString()
+//	                    );
+//
+//	    if (attendanceLogs == null
+//	            || attendanceLogs.isEmpty()) {
+//
+//	        response.put(
+//	                "message",
+//	                "No attendance log found"
+//	        );
+//
+//	        response.put(
+//	                "status",
+//	                false
+//	        );
+//
+//	        return response;
+//	    }
+//
+//	    // ============================================================
+//	    // EMPLOYEE -> DATE -> PUNCHES
+//	    // ============================================================
+//
+//	    Map<String,
+//	            Map<LocalDate,
+//	                    List<PunchRecord>>>
+//	            employeeDatePunchMap =
+//	            new HashMap<>();
+//
+//	    // ============================================================
+//	    // PARSE ALL ATTENDANCE LOGS
+//	    // ============================================================
+//
+//	    for (AttendanceLogVO log
+//	            : attendanceLogs) {
+//
+//	        if (log == null) {
+//	            continue;
+//	        }
+//
+//	        String empCode =
+//	                log.getEmployeeCode();
+//
+//	        if (empCode == null
+//	                || empCode.trim().isEmpty()) {
+//
+//	            continue;
+//	        }
+//
+//	        // ========================================================
+//	        // DO NOT USE intime / outtime
+//	        //
+//	        // ONLY punchrecords
+//	        // ========================================================
+//
+//	        String punchRecords =
+//	                log.getPunchRecords();
+//
+//	        if (punchRecords == null
+//	                || punchRecords.trim().isEmpty()) {
+//
+//	            continue;
+//	        }
+//
+//	        // ========================================================
+//	        // AttendanceLogVO.attendanceDate is String
+//	        // ========================================================
+//
+//	        String attendanceDateString =
+//	                log.getAttendanceDate();
+//
+//	        if (attendanceDateString == null
+//	                || attendanceDateString
+//	                        .trim()
+//	                        .isEmpty()) {
+//
+//	            continue;
+//	        }
+//
+//	        LocalDate attendanceDate;
+//
+//	        try {
+//
+//	            attendanceDate =
+//	                    LocalDate.parse(
+//	                            attendanceDateString
+//	                    );
+//
+//	        } catch (Exception e) {
+//
+//	            System.out.println(
+//	                    "Invalid attendance date : "
+//	                            + attendanceDateString
+//	            );
+//
+//	            continue;
+//	        }
+//
+//	        // ========================================================
+//	        // PARSE PUNCH RECORDS
+//	        // ========================================================
+//
+//	        List<PunchRecord> punches =
+//	                parsePunchRecords(
+//	                        punchRecords,
+//	                        attendanceDate
+//	                );
+//
+//	        if (punches == null
+//	                || punches.isEmpty()) {
+//
+//	            continue;
+//	        }
+//
+//	        // ========================================================
+//	        // EMPLOYEE DATE MAP
+//	        // ========================================================
+//
+//	        Map<LocalDate,
+//	                List<PunchRecord>> dateMap =
+//	                employeeDatePunchMap
+//	                        .computeIfAbsent(
+//	                                empCode,
+//	                                k -> new HashMap<>()
+//	                        );
+//
+//	        // ========================================================
+//	        // VERY IMPORTANT
+//	        //
+//	        // USE ACTUAL PUNCH DATE.
+//	        //
+//	        // DO NOT PUT ALL PUNCHES INTO attendanceDate.
+//	        // ========================================================
+//
+//	        for (PunchRecord punch : punches) {
+//
+//	            if (punch == null
+//	                    || punch.getDateTime() == null) {
+//
+//	                continue;
+//	            }
+//
+//	            LocalDate actualPunchDate =
+//	                    punch.getDateTime()
+//	                            .toLocalDate();
+//
+//	            dateMap
+//	                    .computeIfAbsent(
+//	                            actualPunchDate,
+//	                            k -> new ArrayList<>()
+//	                    )
+//	                    .add(punch);
+//	        }
+//	    }
+//
+//	    // ============================================================
+//	    // OVERNIGHT OUTS ALREADY USED
+//	    // ============================================================
+//
+//	    Set<String> consumedOvernightOuts =
+//	            new HashSet<>();
+//
+//	    // ============================================================
+//	    // PROCESS EMPLOYEE
+//	    // ============================================================
+//
+//	    for (Map.Entry<
+//	            String,
+//	            Map<LocalDate,
+//	                    List<PunchRecord>>>
+//	            employeeEntry
+//	            : employeeDatePunchMap.entrySet()) {
+//
+//	        String empCode =
+//	                employeeEntry.getKey();
+//
+//	        Map<LocalDate,
+//	                List<PunchRecord>> dateMap =
+//	                employeeEntry.getValue();
+//
+//	        // ========================================================
+//	        // SORT PUNCHES
+//	        // ========================================================
+//
+//	        for (List<PunchRecord> punches
+//	                : dateMap.values()) {
+//
+//	            punches.sort(
+//	                    Comparator.comparing(
+//	                            PunchRecord::getDateTime
+//	                    )
+//	            );
+//	        }
+//
+//	        // ========================================================
+//	        // SORT DATES
+//	        // ========================================================
+//
+//	        List<LocalDate> sortedDates =
+//	                new ArrayList<>(
+//	                        dateMap.keySet()
+//	                );
+//
+//	        Collections.sort(
+//	                sortedDates
+//	        );
+//
+//	        // ========================================================
+//	        // PROCESS EACH DATE
+//	        // ========================================================
+//
+//	        for (LocalDate workDate
+//	                : sortedDates) {
+//
+//	            if (workDate.isBefore(fromDate)
+//	                    || workDate.isAfter(toDate)) {
+//
+//	                continue;
+//	            }
+//
+//	            List<PunchRecord> dayPunches =
+//	                    dateMap.get(workDate);
+//
+//	            if (dayPunches == null
+//	                    || dayPunches.isEmpty()) {
+//
+//	                continue;
+//	            }
+//
+//	            dayPunches.sort(
+//	                    Comparator.comparing(
+//	                            PunchRecord::getDateTime
+//	                    )
+//	            );
+//
+//	            // ====================================================
+//	            // RULE 1
+//	            //
+//	            // FIRST PUNCH OF DATE
+//	            // REGARDLESS OF DEVICE
+//	            // ====================================================
+//
+//	            PunchRecord firstPunch =
+//	                    dayPunches.get(0);
+//
+//	            System.out.println(
+//	                    "FIRST PUNCH : "
+//	                            + empCode
+//	                            + " | "
+//	                            + workDate
+//	                            + " | "
+//	                            + firstPunch.getDateTime()
+//	                            + " | "
+//	                            + firstPunch.getDevice()
+//	            );
+//
+//	            // ====================================================
+//	            // RULE 2
+//	            //
+//	            // FIRST D1/D2 = IN
+//	            // ====================================================
+//
+//	            PunchRecord firstIn =
+//	                    null;
+//
+//	            for (PunchRecord punch
+//	                    : dayPunches) {
+//
+//	                if (!isCheckInDevice(
+//	                        punch.getDevice())) {
+//
+//	                    continue;
+//	                }
+//
+//	                String punchKey =
+//	                        createPunchKey(
+//	                                punch
+//	                        );
+//
+//	                if (consumedOvernightOuts
+//	                        .contains(punchKey)) {
+//
+//	                    continue;
+//	                }
+//
+//	                firstIn = punch;
+//
+//	                break;
+//	            }
+//
+//	            if (firstIn == null) {
+//
+//	                System.out.println(
+//	                        "NO D1/D2 IN : "
+//	                                + empCode
+//	                                + " | "
+//	                                + workDate
+//	                );
+//
+//	                continue;
+//	            }
+//
+//	            // ====================================================
+//	            // LAST PUNCH
+//	            // ====================================================
+//
+//	            PunchRecord lastPunch =
+//	                    dayPunches.get(
+//	                            dayPunches.size() - 1
+//	                    );
+//
+//	            PunchRecord finalOut =
+//	                    null;
+//
+//	            // ====================================================
+//	            // CASE 1
+//	            //
+//	            // LAST PUNCH D3/D4
+//	            //
+//	            // NORMAL OUT
+//	            // ====================================================
+//
+//	            if (isCheckOutDevice(
+//	                    lastPunch.getDevice())) {
+//
+//	                finalOut =
+//	                        lastPunch;
+//
+//	            }
+//
+//	            // ====================================================
+//	            // CASE 2
+//	            //
+//	            // LAST PUNCH D1/D2
+//	            //
+//	            // POSSIBLE OVERNIGHT
+//	            // ====================================================
+//
+//	            else if (isCheckInDevice(
+//	                    lastPunch.getDevice())) {
+//
+//	                LocalDate nextDate =
+//	                        workDate.plusDays(1);
+//
+//	                List<PunchRecord> nextDayPunches =
+//	                        dateMap.get(nextDate);
+//
+//	                PunchRecord nextDayFirstPunch =
+//	                        null;
+//
+//	                if (nextDayPunches != null
+//	                        && !nextDayPunches.isEmpty()) {
+//
+//	                    nextDayPunches.sort(
+//	                            Comparator.comparing(
+//	                                    PunchRecord::getDateTime
+//	                            )
+//	                    );
+//
+//	                    /*
+//	                     * FIRST PUNCH OF NEXT DAY
+//	                     * REGARDLESS OF DEVICE.
+//	                     */
+//	                    nextDayFirstPunch =
+//	                            nextDayPunches.get(0);
+//	                }
+//
+//	                // =================================================
+//	                // NEXT DAY FIRST = D3/D4
+//	                //
+//	                // THIS IS YESTERDAY'S OUT
+//	                // =================================================
+//
+//	                if (nextDayFirstPunch != null
+//	                        && isCheckOutDevice(
+//	                                nextDayFirstPunch
+//	                                        .getDevice())) {
+//
+//	                    finalOut =
+//	                            nextDayFirstPunch;
+//
+//	                    consumedOvernightOuts.add(
+//	                            createPunchKey(
+//	                                    nextDayFirstPunch
+//	                            )
+//	                    );
+//
+//	                    System.out.println(
+//	                            "OVERNIGHT OUT : "
+//	                                    + empCode
+//	                                    + " | WORK DATE = "
+//	                                    + workDate
+//	                                    + " | OUT = "
+//	                                    + finalOut
+//	                                            .getDateTime()
+//	                                    + " | DEVICE = "
+//	                                    + finalOut
+//	                                            .getDevice()
+//	                    );
+//	                }
+//
+//	                // =================================================
+//	                // NEXT DAY FIRST = D1/D2
+//	                //
+//	                // NO VALID NEXT-DAY OUT
+//	                //
+//	                // USE YESTERDAY LAST D1/D2
+//	                // =================================================
+//
+//	                else if (nextDayFirstPunch != null
+//	                        && isCheckInDevice(
+//	                                nextDayFirstPunch
+//	                                        .getDevice())) {
+//
+//	                    finalOut =
+//	                            lastPunch;
+//
+//	                    System.out.println(
+//	                            "NEXT DAY FIRST D1/D2 : "
+//	                                    + empCode
+//	                                    + " | WORK DATE = "
+//	                                    + workDate
+//	                                    + " | OUT = "
+//	                                    + finalOut
+//	                                            .getDateTime()
+//	                    );
+//	                }
+//
+//	                // =================================================
+//	                // NO NEXT DAY PUNCH
+//	                //
+//	                // USE LAST D1/D2
+//	                // =================================================
+//
+//	                else {
+//
+//	                    finalOut =
+//	                            lastPunch;
+//
+//	                    System.out.println(
+//	                            "NO NEXT DAY PUNCH : "
+//	                                    + empCode
+//	                                    + " | WORK DATE = "
+//	                                    + workDate
+//	                                    + " | OUT = "
+//	                                    + finalOut
+//	                                            .getDateTime()
+//	                    );
+//	                }
+//	            }
+//
+//	            // ====================================================
+//	            // NO OUT
+//	            // ====================================================
+//
+//	            if (finalOut == null) {
+//
+//	                System.out.println(
+//	                        "NO OUT FOUND : "
+//	                                + empCode
+//	                                + " | "
+//	                                + workDate
+//	                );
+//
+//	                continue;
+//	            }
+//
+//	            // ====================================================
+//	            // FINAL IN / OUT
+//	            // ====================================================
+//
+//	            LocalDateTime finalIn =
+//	                    firstIn.getDateTime();
+//
+//	            LocalDateTime finalOutDateTime =
+//	                    finalOut.getDateTime();
+//
+//	            // ====================================================
+//	            // VALIDATE
+//	            // ====================================================
+//
+//	            if (!finalOutDateTime.isAfter(
+//	                    finalIn)) {
+//
+//	                System.out.println(
+//	                        "INVALID IN OUT : "
+//	                                + empCode
+//	                                + " | "
+//	                                + workDate
+//	                                + " | IN = "
+//	                                + finalIn
+//	                                + " | OUT = "
+//	                                + finalOutDateTime
+//	                );
+//
+//	                continue;
+//	            }
+//
+//	            // ====================================================
+//	            // EMPLOYEE NAME
+//	            // ====================================================
+//
+//	            String empName = "";
+//
+//	            AttendanceLogVO currentLog =
+//	                    attendanceLogs.stream()
+//	                            .filter(
+//	                                    x -> x != null
+//	                                            && empCode.equals(
+//	                                                    x.getEmployeeCode()
+//	                                            )
+//	                            )
+//	                            .findFirst()
+//	                            .orElse(null);
+//
+//	            if (currentLog != null) {
+//
+//	                empName =
+//	                        currentLog.getEmployeeName();
+//	            }
+//
+//	            // ====================================================
+//	            // PRINT FINAL RESULT
+//	            // ====================================================
+//
+//	            System.out.println(
+//	                    "FINAL RESULT : "
+//	                            + empCode
+//	                            + " | DATE = "
+//	                            + workDate
+//	                            + " | IN = "
+//	                            + finalIn
+//	                            + " | OUT = "
+//	                            + finalOutDateTime
+//	            );
+//
+//	            // ====================================================
+//	            // CREATE CHECKINOUTBIOMETRIC - IN
+//	            // ====================================================
+//
+//	            CheckInOutBiometricVO inVO =
+//	                    new CheckInOutBiometricVO();
+//
+//	            inVO.setAttendanceMode(
+//	                    "BIOMETRIC"
+//	            );
+//
+//	            inVO.setBranch(branch);
+//	            inVO.setBranchCode(branchCode);
+//
+//	            inVO.setCheckInDate(
+//	                    finalIn.toLocalDate()
+//	            );
+//
+//	            inVO.setCreatedBy(createdBy);
+//	            inVO.setEmpCode(empCode);
+//	            inVO.setEmpName(empName);
+//
+//	            inVO.setEntryTime(
+//	                    finalIn.toLocalTime()
+//	            );
+//
+//	            inVO.setFinyear(
+//	                    String.valueOf(
+//	                            finalIn.getYear()
+//	                    )
+//	            );
+//
+//	            inVO.setOrgId(orgId);
+//
+//	            inVO.setScreenCode(
+//	                    "CIOB"
+//	            );
+//
+//	            inVO.setScreenName(
+//	                    "CHECKINOUTBIOMETRIC"
+//	            );
+//
+//	            inVO.setStatus("In");
+//
+//	            CheckInOutBiometricVO savedIn =
+//	                    checkInOutBiometricRepo.save(
+//	                            inVO
+//	                    );
+//
+//	            // ====================================================
+//	            // CREATE CHECKINOUTBIOMETRIC - OUT
+//	            // ====================================================
+//
+//	            CheckInOutBiometricVO outVO =
+//	                    new CheckInOutBiometricVO();
+//
+//	            outVO.setAttendanceMode(
+//	                    "BIOMETRIC"
+//	            );
+//
+//	            outVO.setBranch(branch);
+//	            outVO.setBranchCode(branchCode);
+//
+//	            outVO.setCheckInDate(
+//	                    finalOutDateTime
+//	                            .toLocalDate()
+//	            );
+//
+//	            outVO.setCreatedBy(createdBy);
+//	            outVO.setEmpCode(empCode);
+//	            outVO.setEmpName(empName);
+//
+//	            outVO.setEntryTime(
+//	                    finalOutDateTime
+//	                            .toLocalTime()
+//	            );
+//
+//	            outVO.setFinyear(
+//	                    String.valueOf(
+//	                            finalOutDateTime
+//	                                    .getYear()
+//	                    )
+//	            );
+//
+//	            outVO.setOrgId(orgId);
+//
+//	            outVO.setScreenCode(
+//	                    "CIOB"
+//	            );
+//
+//	            outVO.setScreenName(
+//	                    "CHECKINOUTBIOMETRIC"
+//	            );
+//
+//	            outVO.setStatus("Out");
+//
+//	            CheckInOutBiometricVO savedOut =
+//	                    checkInOutBiometricRepo.save(
+//	                            outVO
+//	                    );
+//
+//	            // ====================================================
+//	            // ATTENDANCE PROCESS - IN
+//	            // ====================================================
+//
+//	            AttendanceProcessVO processIn =
+//	                    new AttendanceProcessVO();
+//
+//	            processIn.setEmpCode(empCode);
+//	            processIn.setEmpName(empName);
+//	            processIn.setBranch(branch);
+//	            processIn.setBranchCode(branchCode);
+//
+//	            processIn.setFinyear(
+//	                    String.valueOf(
+//	                            finalIn.getYear()
+//	                    )
+//	            );
+//
+//	            processIn.setCheckInDate(
+//	                    finalIn.toLocalDate()
+//	            );
+//
+//	            processIn.setEntryTime(
+//	                    finalIn.toLocalTime()
+//	            );
+//
+//	            processIn.setStatus("In");
+//	            processIn.setOrgId(orgId);
+//
+//	            processIn.setSourceId(
+//	                    savedIn.getId()
+//	            );
+//
+//	            processIn.setCreatedBy(createdBy);
+//
+//	            processIn.setAttendanceMode(
+//	                    "BIOMETRIC"
+//	            );
+//
+//	            processIn.setScreenCode("AM");
+//	            processIn.setScreenName(
+//	                    "ATTENDANCE MODE"
+//	            );
+//
+//	            attendanceProcessRepo.save(
+//	                    processIn
+//	            );
+//
+//	            // ====================================================
+//	            // ATTENDANCE PROCESS - OUT
+//	            // ====================================================
+//
+//	            AttendanceProcessVO processOut =
+//	                    new AttendanceProcessVO();
+//
+//	            processOut.setEmpCode(empCode);
+//	            processOut.setEmpName(empName);
+//	            processOut.setBranch(branch);
+//	            processOut.setBranchCode(branchCode);
+//
+//	            processOut.setFinyear(
+//	                    String.valueOf(
+//	                            finalOutDateTime
+//	                                    .getYear()
+//	                    )
+//	            );
+//
+//	            processOut.setCheckInDate(
+//	                    finalOutDateTime
+//	                            .toLocalDate()
+//	            );
+//
+//	            processOut.setEntryTime(
+//	                    finalOutDateTime
+//	                            .toLocalTime()
+//	            );
+//
+//	            processOut.setStatus("Out");
+//	            processOut.setOrgId(orgId);
+//
+//	            processOut.setSourceId(
+//	                    savedOut.getId()
+//	            );
+//
+//	            processOut.setCreatedBy(createdBy);
+//
+//	            processOut.setAttendanceMode(
+//	                    "BIOMETRIC"
+//	            );
+//
+//	            processOut.setScreenCode("AM");
+//	            processOut.setScreenName(
+//	                    "ATTENDANCE MODE"
+//	            );
+//
+//	            attendanceProcessRepo.save(
+//	                    processOut
+//	            );
+//
+//	            // ====================================================
+//	            // ATTENDANCE DAILY
+//	            // ====================================================
+//
+//	            AttendanceDailyVO daily =
+//	                    new AttendanceDailyVO();
+//
+//	            daily.setEmpCode(empCode);
+//	            daily.setEmpName(empName);
+//	            daily.setBranch(branch);
+//	            daily.setBranchCode(branchCode);
+//
+//	            daily.setCheckInDate(
+//	                    finalIn.toLocalDate()
+//	            );
+//
+//	            daily.setCheckOutDate(
+//	                    finalOutDateTime
+//	                            .toLocalDate()
+//	            );
+//
+//	            daily.setInTime(
+//	                    finalIn.toLocalTime()
+//	            );
+//
+//	            daily.setOutTime(
+//	                    finalOutDateTime
+//	                            .toLocalTime()
+//	            );
+//
+//	            daily.setFinyear(
+//	                    String.valueOf(
+//	                            finalIn.getYear()
+//	                    )
+//	            );
+//
+//	            daily.setOrgId(orgId);
+//	            daily.setCreatedBy(createdBy);
+//
+//	            daily.setAttendanceMode(
+//	                    "BIOMETRIC"
+//	            );
+//
+//	            daily.setScreenCode("Ad");
+//	            daily.setScreenName(
+//	                    "ATTENDANCE DAILY"
+//	            );
+//
+//	            // ====================================================
+//	            // HOURS
+//	            // ====================================================
+//
+//	            long totalMinutes =
+//	                    Duration.between(
+//	                            finalIn,
+//	                            finalOutDateTime
+//	                    ).toMinutes();
+//
+//	            long totalHours =
+//	                    totalMinutes / 60;
+//
+//	            daily.setGrossHours(
+//	                    totalHours
+//	            );
+//
+//	            daily.setEffectiveHours(
+//	                    totalHours
+//	            );
+//
+//	            attendanceDailyRepo.save(
+//	                    daily
+//	            );
+//	        }
+//	    }
+//
+//	    // ============================================================
+//	    // RESPONSE
+//	    // ============================================================
+//
+//	    response.put(
+//	            "message",
+//	            "Attendance processing completed successfully"
+//	    );
+//
+//	    response.put(
+//	            "status",
+//	            true
+//	    );
+//
+//	    return response;
+//	}
+//	
+//    
+//    private boolean isCheckInDevice(String device) {
+//
+//        return "D1".equalsIgnoreCase(device)
+//                || "D2".equalsIgnoreCase(device);
+//    }
+//
+//    private boolean isCheckOutDevice(String device) {
+//
+//        return "D3".equalsIgnoreCase(device)
+//                || "D4".equalsIgnoreCase(device);
+//    }
+//
+//    private String createPunchKey(PunchRecord punch) {
+//
+//        return punch.getDateTime().toString()
+//                + "|"
+//                + punch.getDevice();
+//    }
+//    
 
 //	----------------------------------------------------------
+	
+	//claude
+	
+	
+	// ============================================================
+    // PUNCH RECORD
+    //
+    // `sequence` = position in the raw punchRecords string for
+    // that log row. Used ONLY as a tie-breaker when two punches
+    // share the exact same dateTime, so ordering never depends on
+    // incidental sort stability across multiple merge/sort passes.
+    // ============================================================
+
+    private static class PunchRecord {
+
+        private LocalDateTime dateTime;
+        private String device;
+        private int sequence;
+
+        public PunchRecord(
+                LocalDateTime dateTime,
+                String device,
+                int sequence) {
+
+            this.dateTime = dateTime;
+            this.device = device;
+            this.sequence = sequence;
+        }
+
+        public LocalDateTime getDateTime() {
+            return dateTime;
+        }
+
+        public String getDevice() {
+            return device;
+        }
+
+        public int getSequence() {
+            return sequence;
+        }
+    }
+
+    // ============================================================
+    // PUNCH PAIR
+    // ============================================================
+
+    private List<PunchRecord> parsePunchRecords(
+            String punchRecords,
+            LocalDate attendanceDate) {
+
+        List<PunchRecord> result = new ArrayList<>();
+
+        if (punchRecords == null
+                || punchRecords.trim().isEmpty()
+                || attendanceDate == null) {
+            return result;
+        }
+
+        String[] punches = punchRecords.split(",");
+
+        // Pattern captures time + device. Any "in"/"out" text label
+        // present in the raw string (e.g. "18:13:in(D3)") is
+        // intentionally ignored by ".*" — only the device code
+        // (D1-D4) decides check-in/check-out role, per the business
+        // rule. The embedded label is NOT trusted.
+        Pattern pattern = Pattern.compile(
+                "(\\d{1,2}):(\\d{2})(?::(\\d{2}))?.*\\((D[1-4])\\)",
+                Pattern.CASE_INSENSITIVE
+        );
+
+        int sequence = 0;
+
+        // ============================================================
+        // ROLLOVER DETECTION
+        //
+        // punchrecords carries a TIME ONLY, never a date. A shift that
+        // crosses midnight (e.g. "19:50:(D1),09:56:in(D1)") has ALL of
+        // its punches logged under the SAME attendanceDate row - the
+        // rollover is only reflected in the separate outtime column,
+        // which we are told not to use.
+        //
+        // Fix: walk punches in original (chronological) string order.
+        // Whenever a punch's time-of-day is EARLIER than the previous
+        // punch's time-of-day, the clock has crossed midnight, so bump
+        // the working date forward by one day. Every punch from that
+        // point on (until the next rollover) belongs to the new date.
+        // ============================================================
+
+        LocalDate rollingDate = attendanceDate;
+        LocalTime previousTime = null;
+
+        for (String punch : punches) {
+
+            if (punch == null || punch.trim().isEmpty()) {
+                continue;
+            }
+
+            try {
+
+                String value = punch.trim();
+
+                Matcher matcher = pattern.matcher(value);
+
+                if (!matcher.find()) {
+                    continue;
+                }
+
+                int hour = Integer.parseInt(matcher.group(1));
+                int minute = Integer.parseInt(matcher.group(2));
+
+                int second = 0;
+
+                if (matcher.group(3) != null) {
+                    second = Integer.parseInt(matcher.group(3));
+                }
+
+                String device =
+                        matcher.group(4).toUpperCase();
+
+                LocalTime localTime =
+                        LocalTime.of(hour, minute, second);
+
+                if (previousTime != null
+                        && localTime.isBefore(previousTime)) {
+
+                    rollingDate = rollingDate.plusDays(1);
+
+                    System.out.println(
+                            "ROLLOVER DETECTED : " + attendanceDate
+                                    + " -> " + rollingDate
+                                    + " at " + localTime
+                                    + " (" + device + ")"
+                    );
+                }
+
+                LocalDateTime dateTime =
+                        LocalDateTime.of(rollingDate, localTime);
+
+                result.add(
+                        new PunchRecord(dateTime, device, sequence)
+                );
+
+                sequence++;
+                previousTime = localTime;
+
+            } catch (Exception e) {
+
+                System.out.println("Invalid punch : " + punch);
+            }
+        }
+
+        result.sort(
+                Comparator.comparing(PunchRecord::getDateTime)
+                        .thenComparingInt(PunchRecord::getSequence)
+        );
+
+        return result;
+    }
+
+    // ============================================================
+    // CREATE CHECKIN / CHECKOUT BIOMETRIC
+    //
+    // YOUR EXACT METHOD SIGNATURE
+    // ============================================================
+
+    @Override
+    public Map<String, Object> createCheckInOutBiometricDevice(
+            Long orgId,
+            String createdBy,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String branch,
+            String branchCode) throws Exception {
+
+        Map<String, Object> response = new HashMap<>();
+
+        // ============================================================
+        // FETCH ONE EXTRA DAY — needed for overnight OUT.
+        // ============================================================
+
+        LocalDate fetchToDate = toDate.plusDays(1);
+
+        List<AttendanceLogVO> attendanceLogs =
+                attendanceLogRepo.findByAttendanceDate(
+                        fromDate.toString(),
+                        fetchToDate.toString()
+                );
+
+        if (attendanceLogs == null || attendanceLogs.isEmpty()) {
+
+            response.put("message", "No attendance log found");
+            response.put("status", false);
+            return response;
+        }
+
+        // ============================================================
+        // EMPLOYEE -> DATE -> PUNCHES
+        // ============================================================
+
+        Map<String, Map<LocalDate, List<PunchRecord>>>
+                employeeDatePunchMap = new HashMap<>();
+
+        for (AttendanceLogVO log : attendanceLogs) {
+
+            if (log == null) {
+                continue;
+            }
+
+            String empCode = log.getEmployeeCode();
+
+            if (empCode == null || empCode.trim().isEmpty()) {
+                continue;
+            }
+
+            // DO NOT USE intime / outtime — ONLY punchrecords
+            String punchRecords = log.getPunchRecords();
+
+            if (punchRecords == null || punchRecords.trim().isEmpty()) {
+                continue;
+            }
+
+            String attendanceDateString = log.getAttendanceDate();
+
+            if (attendanceDateString == null
+                    || attendanceDateString.trim().isEmpty()) {
+                continue;
+            }
+
+            LocalDate attendanceDate;
+
+            try {
+                attendanceDate = LocalDate.parse(attendanceDateString);
+            } catch (Exception e) {
+                System.out.println(
+                        "Invalid attendance date : " + attendanceDateString
+                );
+                continue;
+            }
+
+            List<PunchRecord> punches =
+                    parsePunchRecords(punchRecords, attendanceDate);
+
+            if (punches == null || punches.isEmpty()) {
+                continue;
+            }
+
+            Map<LocalDate, List<PunchRecord>> dateMap =
+                    employeeDatePunchMap.computeIfAbsent(
+                            empCode, k -> new HashMap<>()
+                    );
+
+            for (PunchRecord punch : punches) {
+
+                if (punch == null || punch.getDateTime() == null) {
+                    continue;
+                }
+
+                LocalDate actualPunchDate =
+                        punch.getDateTime().toLocalDate();
+
+                dateMap.computeIfAbsent(
+                        actualPunchDate, k -> new ArrayList<>()
+                ).add(punch);
+            }
+        }
+
+        // ============================================================
+        // OVERNIGHT OUTS ALREADY USED
+        //
+        // Key now includes empCode + sequence-stable dateTime + device,
+        // so two employees punching the same shared device at the same
+        // minute can never collide.
+        // ============================================================
+
+        Set<String> consumedOvernightOuts = new HashSet<>();
+
+        for (Map.Entry<String, Map<LocalDate, List<PunchRecord>>>
+                employeeEntry : employeeDatePunchMap.entrySet()) {
+
+            String empCode = employeeEntry.getKey();
+            Map<LocalDate, List<PunchRecord>> dateMap = employeeEntry.getValue();
+
+            for (List<PunchRecord> punches : dateMap.values()) {
+                punches.sort(
+                        Comparator.comparing(PunchRecord::getDateTime)
+                                .thenComparingInt(PunchRecord::getSequence)
+                );
+            }
+
+            List<LocalDate> sortedDates = new ArrayList<>(dateMap.keySet());
+            Collections.sort(sortedDates);
+
+            for (LocalDate workDate : sortedDates) {
+
+                if (workDate.isBefore(fromDate) || workDate.isAfter(toDate)) {
+                    continue;
+                }
+
+                List<PunchRecord> dayPunches = dateMap.get(workDate);
+
+                if (dayPunches == null || dayPunches.isEmpty()) {
+                    continue;
+                }
+
+                // ------------------------------------------------------
+                // RULE 1 — first punch of date, any device (log only)
+                // ------------------------------------------------------
+
+                PunchRecord firstPunch = dayPunches.get(0);
+
+                System.out.println(
+                        "FIRST PUNCH : " + empCode + " | " + workDate
+                                + " | " + firstPunch.getDateTime()
+                                + " | " + firstPunch.getDevice()
+                );
+
+                // ------------------------------------------------------
+                // RULE 2 — first D1/D2 = IN
+                // ------------------------------------------------------
+
+                PunchRecord firstIn = null;
+
+                for (PunchRecord punch : dayPunches) {
+
+                    if (!isCheckInDevice(punch.getDevice())) {
+                        continue;
+                    }
+
+                    firstIn = punch;
+                    break;
+                }
+
+                if (firstIn == null) {
+                    System.out.println(
+                            "NO D1/D2 IN : " + empCode + " | " + workDate
+                    );
+                    continue;
+                }
+
+                // ------------------------------------------------------
+                // LAST PUNCH
+                // ------------------------------------------------------
+
+                PunchRecord lastPunch = dayPunches.get(dayPunches.size() - 1);
+                PunchRecord finalOut = null;
+
+                // ------------------------------------------------------
+                // CASE 1 — last punch is D3/D4 → normal OUT
+                //
+                // Guard: if this exact punch was already consumed as
+                // a PREVIOUS day's overnight OUT, it cannot be reused
+                // here too.
+                // ------------------------------------------------------
+
+                if (isCheckOutDevice(lastPunch.getDevice())) {
+
+                    String lastPunchKey = createPunchKey(empCode, lastPunch);
+
+                    if (!consumedOvernightOuts.contains(lastPunchKey)) {
+
+                        finalOut = lastPunch;
+
+                    } else {
+
+                        System.out.println(
+                                "SKIP - punch already used as previous day's "
+                                        + "overnight OUT : " + empCode
+                                        + " | " + workDate
+                                        + " | " + lastPunch.getDateTime()
+                        );
+                    }
+
+                }
+
+                // ------------------------------------------------------
+                // CASE 2 — last punch is D1/D2 → possible overnight
+                // ------------------------------------------------------
+
+                else if (isCheckInDevice(lastPunch.getDevice())) {
+
+                    LocalDate nextDate = workDate.plusDays(1);
+                    List<PunchRecord> nextDayPunches = dateMap.get(nextDate);
+                    PunchRecord nextDayFirstPunch = null;
+
+                    if (nextDayPunches != null && !nextDayPunches.isEmpty()) {
+
+                        nextDayPunches.sort(
+                                Comparator.comparing(PunchRecord::getDateTime)
+                                        .thenComparingInt(PunchRecord::getSequence)
+                        );
+
+                        nextDayFirstPunch = nextDayPunches.get(0);
+                    }
+
+                    // NEXT DAY FIRST = D3/D4 → yesterday's OUT
+                    if (nextDayFirstPunch != null
+                            && isCheckOutDevice(nextDayFirstPunch.getDevice())) {
+
+                        finalOut = nextDayFirstPunch;
+
+                        consumedOvernightOuts.add(
+                                createPunchKey(empCode, nextDayFirstPunch)
+                        );
+
+                        System.out.println(
+                                "OVERNIGHT OUT : " + empCode
+                                        + " | WORK DATE = " + workDate
+                                        + " | OUT = " + finalOut.getDateTime()
+                                        + " | DEVICE = " + finalOut.getDevice()
+                        );
+                    }
+
+                    // NEXT DAY FIRST = D1/D2 → no valid next-day out,
+                    // use yesterday's own last D1/D2
+                    else if (nextDayFirstPunch != null
+                            && isCheckInDevice(nextDayFirstPunch.getDevice())) {
+
+                        finalOut = lastPunch;
+
+                        System.out.println(
+                                "NEXT DAY FIRST D1/D2 : " + empCode
+                                        + " | WORK DATE = " + workDate
+                                        + " | OUT = " + finalOut.getDateTime()
+                        );
+                    }
+
+                    // NO NEXT DAY PUNCH → use last D1/D2
+                    else {
+
+                        finalOut = lastPunch;
+
+                        System.out.println(
+                                "NO NEXT DAY PUNCH : " + empCode
+                                        + " | WORK DATE = " + workDate
+                                        + " | OUT = " + finalOut.getDateTime()
+                        );
+                    }
+                }
+
+                if (finalOut == null) {
+                    System.out.println(
+                            "NO OUT FOUND : " + empCode + " | " + workDate
+                    );
+                    continue;
+                }
+
+                LocalDateTime finalIn = firstIn.getDateTime();
+                LocalDateTime finalOutDateTime = finalOut.getDateTime();
+
+                if (!finalOutDateTime.isAfter(finalIn)) {
+                    System.out.println(
+                            "INVALID IN OUT : " + empCode + " | " + workDate
+                                    + " | IN = " + finalIn
+                                    + " | OUT = " + finalOutDateTime
+                    );
+                    continue;
+                }
+
+                String empName = "";
+
+                AttendanceLogVO currentLog =
+                        attendanceLogs.stream()
+                                .filter(x -> x != null
+                                        && empCode.equals(x.getEmployeeCode()))
+                                .findFirst()
+                                .orElse(null);
+
+                if (currentLog != null) {
+                    empName = currentLog.getEmployeeName();
+                }
+
+                System.out.println(
+                        "FINAL RESULT : " + empCode
+                                + " | DATE = " + workDate
+                                + " | IN = " + finalIn
+                                + " | OUT = " + finalOutDateTime
+                );
+
+                // ------------------------------------------------------
+                // CREATE CHECKINOUTBIOMETRIC — IN
+                // ------------------------------------------------------
+
+                CheckInOutBiometricVO inVO = new CheckInOutBiometricVO();
+                inVO.setAttendanceMode("BIOMETRIC");
+                inVO.setBranch(branch);
+                inVO.setBranchCode(branchCode);
+                inVO.setCheckInDate(finalIn.toLocalDate());
+                inVO.setCreatedBy(createdBy);
+                inVO.setEmpCode(empCode);
+                inVO.setEmpName(empName);
+                inVO.setEntryTime(finalIn.toLocalTime());
+                inVO.setFinyear(String.valueOf(finalIn.getYear()));
+                inVO.setOrgId(orgId);
+                inVO.setScreenCode("CIOB");
+                inVO.setScreenName("CHECKINOUTBIOMETRIC");
+                inVO.setStatus("In");
+
+                CheckInOutBiometricVO savedIn =
+                        checkInOutBiometricRepo.save(inVO);
+
+                // ------------------------------------------------------
+                // CREATE CHECKINOUTBIOMETRIC — OUT
+                // ------------------------------------------------------
+
+                CheckInOutBiometricVO outVO = new CheckInOutBiometricVO();
+                outVO.setAttendanceMode("BIOMETRIC");
+                outVO.setBranch(branch);
+                outVO.setBranchCode(branchCode);
+                outVO.setCheckInDate(finalOutDateTime.toLocalDate());
+                outVO.setCreatedBy(createdBy);
+                outVO.setEmpCode(empCode);
+                outVO.setEmpName(empName);
+                outVO.setEntryTime(finalOutDateTime.toLocalTime());
+                outVO.setFinyear(String.valueOf(finalOutDateTime.getYear()));
+                outVO.setOrgId(orgId);
+                outVO.setScreenCode("CIOB");
+                outVO.setScreenName("CHECKINOUTBIOMETRIC");
+                outVO.setStatus("Out");
+
+                CheckInOutBiometricVO savedOut =
+                        checkInOutBiometricRepo.save(outVO);
+
+                // ------------------------------------------------------
+                // ATTENDANCE PROCESS — IN
+                // ------------------------------------------------------
+
+                AttendanceProcessVO processIn = new AttendanceProcessVO();
+                processIn.setEmpCode(empCode);
+                processIn.setEmpName(empName);
+                processIn.setBranch(branch);
+                processIn.setBranchCode(branchCode);
+                processIn.setFinyear(String.valueOf(finalIn.getYear()));
+                processIn.setCheckInDate(finalIn.toLocalDate());
+                processIn.setEntryTime(finalIn.toLocalTime());
+                processIn.setStatus("In");
+                processIn.setOrgId(orgId);
+                processIn.setSourceId(savedIn.getId());
+                processIn.setCreatedBy(createdBy);
+                processIn.setAttendanceMode("BIOMETRIC");
+                processIn.setScreenCode("AM");
+                processIn.setScreenName("ATTENDANCE MODE");
+
+                attendanceProcessRepo.save(processIn);
+
+                // ------------------------------------------------------
+                // ATTENDANCE PROCESS — OUT
+                // ------------------------------------------------------
+
+                AttendanceProcessVO processOut = new AttendanceProcessVO();
+                processOut.setEmpCode(empCode);
+                processOut.setEmpName(empName);
+                processOut.setBranch(branch);
+                processOut.setBranchCode(branchCode);
+                processOut.setFinyear(String.valueOf(finalOutDateTime.getYear()));
+                processOut.setCheckInDate(finalOutDateTime.toLocalDate());
+                processOut.setEntryTime(finalOutDateTime.toLocalTime());
+                processOut.setStatus("Out");
+                processOut.setOrgId(orgId);
+                processOut.setSourceId(savedOut.getId());
+                processOut.setCreatedBy(createdBy);
+                processOut.setAttendanceMode("BIOMETRIC");
+                processOut.setScreenCode("AM");
+                processOut.setScreenName("ATTENDANCE MODE");
+
+                attendanceProcessRepo.save(processOut);
+
+                // ------------------------------------------------------
+                // ATTENDANCE DAILY
+                // ------------------------------------------------------
+
+                AttendanceDailyVO daily = new AttendanceDailyVO();
+                daily.setEmpCode(empCode);
+                daily.setEmpName(empName);
+                daily.setBranch(branch);
+                daily.setBranchCode(branchCode);
+                daily.setCheckInDate(finalIn.toLocalDate());
+                daily.setCheckOutDate(finalOutDateTime.toLocalDate());
+                daily.setInTime(finalIn.toLocalTime());
+                daily.setOutTime(finalOutDateTime.toLocalTime());
+                daily.setFinyear(String.valueOf(finalIn.getYear()));
+                daily.setOrgId(orgId);
+                daily.setCreatedBy(createdBy);
+                daily.setAttendanceMode("BIOMETRIC");
+                daily.setScreenCode("Ad");
+                daily.setScreenName("ATTENDANCE DAILY");
+
+                long totalMinutes =
+                        Duration.between(finalIn, finalOutDateTime).toMinutes();
+                long totalHours = totalMinutes / 60;
+
+                daily.setGrossHours(totalHours);
+                daily.setEffectiveHours(totalHours);
+
+                attendanceDailyRepo.save(daily);
+            }
+        }
+
+        response.put("message", "Attendance processing completed successfully");
+        response.put("status", true);
+
+        return response;
+    }
+
+    private boolean isCheckInDevice(String device) {
+        return "D1".equalsIgnoreCase(device)
+                || "D2".equalsIgnoreCase(device);
+    }
+
+    private boolean isCheckOutDevice(String device) {
+        return "D3".equalsIgnoreCase(device)
+                || "D4".equalsIgnoreCase(device);
+    }
+
+    private String createPunchKey(String empCode, PunchRecord punch) {
+        return empCode
+                + "|" + punch.getDateTime()
+                + "|" + punch.getDevice();
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	//----------------------------------------------------------
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
